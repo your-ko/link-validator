@@ -1,0 +1,14 @@
+name: link-validator-workflow.yml
+
+on:
+  workflow_call:
+
+jobs:
+  LNK:
+    name: LNK
+    runs-on: [ small ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+
