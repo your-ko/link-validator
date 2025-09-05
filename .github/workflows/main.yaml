@@ -1,10 +1,10 @@
-name: PR
+name: Main
 
 on:
   workflow_dispatch:
   pull_request:
     branches:
-      - master
+      - main
 
 permissions:
   contents: read
@@ -50,4 +50,4 @@ jobs:
           file: Dockerfile
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.sha.outputs.sha_short }},${{ env.DOCKER_IMAGE_NAME }}:latest
           provenance: false
-          push: false
+          push: true
