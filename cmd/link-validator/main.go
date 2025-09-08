@@ -20,11 +20,11 @@ import (
 var processors []LinkProcessor
 
 func main() {
-	logLevel := flag.String("LOG_LEVEL", GetEnv("LOG_LEVEL", "info"), "Log level")
-	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks"), ",")
-	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file")
-	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT")
-	baseUrl := *flag.String("BASE_URL", GetRequiredEnv("BASE_URL"), "GitHub BASE URL")
+	logLevel := flag.String("LOG_LEVEL", GetEnv("LOG_LEVEL", "info"), "Log level.")
+	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
+	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
+	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
+	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
 
 	logger := initLogger(*logLevel)
 	defer logger.Sync()
