@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"io/fs"
-	"link-validator/internal/git"
-	"link-validator/internal/http"
-	"link-validator/internal/local"
+	"link-validator/internal/link-validator"
+	"link-validator/pkg/git"
+	"link-validator/pkg/http"
+	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,7 +28,7 @@ type LinkProcessor interface {
 var processors []LinkProcessor
 
 func main() {
-	logger := initLogger(getLogLevel())
+	logger := link_validator.Init(link_validator.LogLevel())
 	defer func(logger *zap.Logger) {
 		_ = logger.Sync()
 	}(logger)
@@ -42,7 +43,7 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-	logger.Debug("Staring link-validator", zap.String("version", Version.Version))
+	logger.Debug("Staring link-validator", zap.String("version", link_validator.Version.Version))
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
 	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")

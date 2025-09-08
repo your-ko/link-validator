@@ -1,4 +1,4 @@
-package main
+package link_validator
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-// Create a production encoder config (JSON, ISO8601 timestamps)
-func initLogger(logLevel zapcore.Level) *zap.Logger {
+// Init Create a production encoder config (JSON, ISO8601 timestamps)
+func Init(logLevel zapcore.Level) *zap.Logger {
 	encoderCfg := zapcore.EncoderConfig{
 		TimeKey:        "", // omit timestamp, GitHub adds its own
 		LevelKey:       "level",
@@ -32,8 +32,8 @@ func initLogger(logLevel zapcore.Level) *zap.Logger {
 	return zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
 }
 
-// getLogLevel reads LOG_LEVEL and defaults to info.
-func getLogLevel() zapcore.Level {
+// LogLevel reads LOG_LEVEL and defaults to info.
+func LogLevel() zapcore.Level {
 	val := os.Getenv("LOG_LEVEL")
 	if val == "" {
 		return zapcore.InfoLevel

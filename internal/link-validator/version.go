@@ -1,4 +1,4 @@
-package main
+package link_validator
 
 type VersionInfo struct {
 	Version   string `json:"Version"`
