@@ -17,17 +17,24 @@ import (
 	"strings"
 )
 
+type LinkProcessor interface {
+	// Process expects to actually process the received text from slack from the given user
+	// TODO: return stat of processed links (good/errored, error)
+	Process(ctx context.Context, url string, logger *zap.Logger) error
+
+	Regex() *regexp.Regexp
+}
+
 var processors []LinkProcessor
 
 func main() {
-	logLevel := flag.String("LOG_LEVEL", GetEnv("LOG_LEVEL", "info"), "Log level.")
+	logger := initLogger(getLogLevel())
+	defer logger.Sync()
+
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
 	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
 	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
 	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
-
-	logger := initLogger(*logLevel)
-	defer logger.Sync()
 
 	processors = make([]LinkProcessor, 0)
 	processors = append(processors, git.New(baseUrl, pat))
@@ -118,32 +125,6 @@ func getFiles(root string, masks []string) []string {
 	return matchedFiles
 }
 
-// Create a production encoder config (JSON, ISO8601 timestamps)
-func initLogger(logLevel string) *zap.Logger {
-	encoderCfg := zapcore.EncoderConfig{
-		TimeKey:        "", // omit timestamp (GitHub adds its own timing)
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "", // hide caller for cleaner output
-		MessageKey:     "msg",
-		StacktraceKey:  "stack",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder, // colored levels
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.StringDurationEncoder,
-	}
-	// Output to stdout (GitHub Actions captures it)
-	writer := zapcore.Lock(os.Stdout)
-
-	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderCfg),
-		writer,
-		zapcore.DebugLevel, // capture everything (Debug → Fatal)
-	)
-
-	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-}
-
 func GetEnv(key, defaultValue string) string {
 	if val, ok := os.LookupEnv(key); ok {
 		return strings.ReplaceAll(val, " ", "")
@@ -169,10 +150,56 @@ func processLine(line string) map[string]LinkProcessor {
 	return found
 }
 
-type LinkProcessor interface {
-	// Process expects to actually process the received text from slack from the given user
-	// TODO: return stat of processed links (good/errored, error)
-	Process(ctx context.Context, url string, logger *zap.Logger) error
+// Create a production encoder config (JSON, ISO8601 timestamps)
+func initLogger(logLevel zapcore.Level) *zap.Logger {
+	encoderCfg := zapcore.EncoderConfig{
+		TimeKey:        "", // omit timestamp, GitHub adds its own
+		LevelKey:       "level",
+		NameKey:        "",
+		CallerKey:      "", // hide caller for cleaner output
+		MessageKey:     "msg",
+		StacktraceKey:  "stack",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    ghActionsLevelEncoder, // GH annotations
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+	}
 
-	Regex() *regexp.Regexp
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(encoderCfg),
+		zapcore.Lock(os.Stdout),
+		logLevel,
+	)
+
+	return zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
+}
+
+// getLogLevel reads LOG_LEVEL and defaults to info.
+func getLogLevel() zapcore.Level {
+	val := os.Getenv("LOG_LEVEL")
+	if val == "" {
+		return zapcore.InfoLevel
+	}
+	var lvl zapcore.Level
+	if err := lvl.Set(strings.ToLower(val)); err != nil {
+		fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL=%q, using info\n", val)
+		return zapcore.InfoLevel
+	}
+	return lvl
+}
+
+// ghActionsLevelEncoder adds ::error:: / ::warning:: prefixes for GH Actions.
+func ghActionsLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	switch l {
+	case zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel:
+		enc.AppendString("::error:: ERROR")
+	case zapcore.WarnLevel:
+		enc.AppendString("::warning:: WARN")
+	case zapcore.InfoLevel:
+		enc.AppendString("INFO")
+	case zapcore.DebugLevel:
+		enc.AppendString("DEBUG")
+	default:
+		enc.AppendString(strings.ToUpper(l.String()))
+	}
 }
