@@ -30,6 +30,17 @@ var processors []LinkProcessor
 func main() {
 	logger := initLogger(getLogLevel())
 	defer logger.Sync()
+	// Panic guard to log stacktrace if app crashes
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("panic: application crashed",
+				zap.Any("panic", r),
+				zap.Stack("stack"),
+			)
+			os.Exit(1)
+		}
+	}()
+	logger.Debug("Staring link-validator", zap.String("version", Version.Version))
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
 	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
@@ -41,7 +52,10 @@ func main() {
 	processors = append(processors, local.New(path))
 	processors = append(processors, http.New(baseUrl))
 
-	filesList := getFiles(path, fileMasks)
+	filesList, err := getFiles(path, fileMasks)
+	if err != nil {
+		logger.Fatal("Error generating file list", zap.Error(err))
+	}
 
 	stat, err := processFiles(filesList, logger)
 	if err != nil {
@@ -95,7 +109,7 @@ func processFiles(filesList []string, logger *zap.Logger) (interface{}, error) {
 	return nil, nil
 }
 
-func getFiles(root string, masks []string) []string {
+func getFiles(root string, masks []string) ([]string, error) {
 	var matchedFiles []string
 
 	matchesAnyMask := func(name string) bool {
@@ -108,7 +122,7 @@ func getFiles(root string, masks []string) []string {
 		return false
 	}
 
-	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// Just skip files/dirs we can't read
 			return nil
@@ -121,8 +135,11 @@ func getFiles(root string, masks []string) []string {
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return matchedFiles
+	return matchedFiles, nil
 }
 
 func GetEnv(key, defaultValue string) string {
