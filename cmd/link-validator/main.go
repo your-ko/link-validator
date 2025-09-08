@@ -6,35 +6,59 @@ import (
 	"flag"
 	"fmt"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io/fs"
-	"link-validator/internal/git"
-	"link-validator/internal/http"
-	"link-validator/internal/local"
+	"link-validator/internal/link-validator"
+	"link-validator/pkg/git"
+	"link-validator/pkg/http"
+	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 )
 
+type LinkProcessor interface {
+	// Process expects to actually process the received text from slack from the given user
+	// TODO: return stat of processed links (good/errored, error)
+	Process(ctx context.Context, url string, logger *zap.Logger) error
+
+	Regex() *regexp.Regexp
+}
+
 var processors []LinkProcessor
 
 func main() {
-	logLevel := flag.String("LOG_LEVEL", GetEnv("LOG_LEVEL", "info"), "Log level.")
+	logger := link_validator.Init(link_validator.LogLevel())
+	defer func(logger *zap.Logger) {
+		_ = logger.Sync()
+	}(logger)
+
+	// Panic guard to log stacktrace if app crashes
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("panic: application crashed",
+				zap.Any("panic", r),
+				zap.Stack("stack"),
+			)
+			os.Exit(1)
+		}
+	}()
+	logger.Debug("Staring link-validator", zap.String("version", link_validator.Version.Version))
+
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
 	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
 	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
 	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
-
-	logger := initLogger(*logLevel)
-	defer logger.Sync()
 
 	processors = make([]LinkProcessor, 0)
 	processors = append(processors, git.New(baseUrl, pat))
 	processors = append(processors, local.New(path))
 	processors = append(processors, http.New(baseUrl))
 
-	filesList := getFiles(path, fileMasks)
+	filesList, err := getFiles(path, fileMasks)
+	if err != nil {
+		logger.Fatal("Error generating file list", zap.Error(err))
+	}
 
 	stat, err := processFiles(filesList, logger)
 	if err != nil {
@@ -88,7 +112,7 @@ func processFiles(filesList []string, logger *zap.Logger) (interface{}, error) {
 	return nil, nil
 }
 
-func getFiles(root string, masks []string) []string {
+func getFiles(root string, masks []string) ([]string, error) {
 	var matchedFiles []string
 
 	matchesAnyMask := func(name string) bool {
@@ -101,7 +125,7 @@ func getFiles(root string, masks []string) []string {
 		return false
 	}
 
-	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// Just skip files/dirs we can't read
 			return nil
@@ -114,36 +138,11 @@ func getFiles(root string, masks []string) []string {
 		}
 		return nil
 	})
-
-	return matchedFiles
-}
-
-// Create a production encoder config (JSON, ISO8601 timestamps)
-func initLogger(logLevel string) *zap.Logger {
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.TimeKey = "timestamp"
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	level, err := zapcore.ParseLevel(logLevel)
 	if err != nil {
-		panic(fmt.Sprintf("incorrect logLevel: %s", level))
-	}
-	config := zap.Config{
-		Level:            zap.NewAtomicLevelAt(level),
-		Development:      false,
-		Encoding:         "console",
-		EncoderConfig:    encoderCfg,
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
+		return nil, err
 	}
 
-	logger, err := config.Build()
-	if err != nil {
-		panic(err)
-	}
-	logger = logger.WithOptions(zap.AddStacktrace(zapcore.FatalLevel))
-
-	logger.Info("Zap logger initialized at INFO level")
-	return logger
+	return matchedFiles, nil
 }
 
 func GetEnv(key, defaultValue string) string {
@@ -169,12 +168,4 @@ func processLine(line string) map[string]LinkProcessor {
 		}
 	}
 	return found
-}
-
-type LinkProcessor interface {
-	// Process expects to actually process the received text from slack from the given user
-	// TODO: return stat of processed links (good/errored, error)
-	Process(ctx context.Context, url string, logger *zap.Logger) error
-
-	Regex() *regexp.Regexp
 }
