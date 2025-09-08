@@ -51,4 +51,4 @@ jobs:
           file: Dockerfile
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.sha.outputs.sha_short }},${{ env.DOCKER_IMAGE_NAME }}:latest
           provenance: false
-          push: true
+          push: false
