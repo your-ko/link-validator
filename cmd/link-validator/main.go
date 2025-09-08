@@ -120,30 +120,28 @@ func getFiles(root string, masks []string) []string {
 
 // Create a production encoder config (JSON, ISO8601 timestamps)
 func initLogger(logLevel string) *zap.Logger {
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.TimeKey = "timestamp"
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	level, err := zapcore.ParseLevel(logLevel)
-	if err != nil {
-		panic(fmt.Sprintf("incorrect logLevel: %s", level))
+	encoderCfg := zapcore.EncoderConfig{
+		TimeKey:        "", // omit timestamp (GitHub adds its own timing)
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "", // hide caller for cleaner output
+		MessageKey:     "msg",
+		StacktraceKey:  "stack",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder, // colored levels
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
 	}
-	config := zap.Config{
-		Level:            zap.NewAtomicLevelAt(level),
-		Development:      false,
-		Encoding:         "console",
-		EncoderConfig:    encoderCfg,
-		OutputPaths:      []string{"stderr"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
+	// Output to stdout (GitHub Actions captures it)
+	writer := zapcore.Lock(os.Stdout)
 
-	logger, err := config.Build()
-	if err != nil {
-		panic(err)
-	}
-	logger = logger.WithOptions(zap.AddStacktrace(zapcore.FatalLevel))
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(encoderCfg),
+		writer,
+		zapcore.DebugLevel, // capture everything (Debug → Fatal)
+	)
 
-	logger.Info("Zap logger initialized at INFO level")
-	return logger
+	return zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 }
 
 func GetEnv(key, defaultValue string) string {
