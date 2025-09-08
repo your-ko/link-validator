@@ -29,7 +29,10 @@ var processors []LinkProcessor
 
 func main() {
 	logger := initLogger(getLogLevel())
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		_ = logger.Sync()
+	}(logger)
+
 	// Panic guard to log stacktrace if app crashes
 	defer func() {
 		if r := recover(); r != nil {
@@ -199,7 +202,7 @@ func getLogLevel() zapcore.Level {
 	}
 	var lvl zapcore.Level
 	if err := lvl.Set(strings.ToLower(val)); err != nil {
-		fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL=%q, using info\n", val)
+		_, _ = fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL=%q, using info\n", val)
 		return zapcore.InfoLevel
 	}
 	return lvl
