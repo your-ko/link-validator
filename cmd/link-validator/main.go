@@ -1,31 +1,13 @@
 package main
 
 import (
-	"bufio"
-	"context"
 	"flag"
 	"fmt"
 	"go.uber.org/zap"
-	"io/fs"
 	"link-validator/internal/link-validator"
-	"link-validator/pkg/git"
-	"link-validator/pkg/http"
-	"link-validator/pkg/local"
 	"os"
-	"path/filepath"
-	"regexp"
 	"strings"
 )
-
-type LinkProcessor interface {
-	// Process expects to actually process the received text from slack from the given user
-	// TODO: return stat of processed links (good/errored, error)
-	Process(ctx context.Context, url string, logger *zap.Logger) error
-
-	Regex() *regexp.Regexp
-}
-
-var processors []LinkProcessor
 
 func main() {
 	logger := link_validator.Init(link_validator.LogLevel())
@@ -50,99 +32,24 @@ func main() {
 	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
 	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
 
-	processors = make([]LinkProcessor, 0)
-	processors = append(processors, git.New(baseUrl, pat))
-	processors = append(processors, local.New(path))
-	processors = append(processors, http.New(baseUrl))
+	config := link_validator.Config{
+		BaseUrl: baseUrl,
+		Path:    path,
+		PAT:     pat,
+	}
 
-	filesList, err := getFiles(path, fileMasks)
+	validator := link_validator.New(config)
+
+	filesList, err := validator.GetFiles(path, fileMasks)
 	if err != nil {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}
 
-	stat, err := processFiles(filesList, logger)
+	stat, err := validator.ProcessFiles(filesList, logger)
 	if err != nil {
 		logger.Fatal("Error checking file", zap.Error(err))
 	}
 	fmt.Println(stat)
-
-}
-
-// TODO: return stats? So I can do a summary after the file is processed?
-func processFiles(filesList []string, logger *zap.Logger) (interface{}, error) {
-	ctx := context.Background() // TODO: fix context
-
-	for _, fileName := range filesList {
-		logger.Debug("processing file", zap.String("fileName", fileName))
-		f, err := os.Open(fileName)
-		if err != nil {
-			logger.Error("Error opening file", zap.String("file", fileName), zap.Error(err))
-			continue
-		}
-		defer f.Close()
-		scanner := bufio.NewScanner(f)
-		lineNum := 0
-		for scanner.Scan() {
-			lineNum++
-			line := scanner.Text()
-			links := processLine(line)
-			for link, processor := range links {
-				err := processor.Process(ctx, link, logger)
-				if err != nil {
-					// TODO
-					return nil, err
-				}
-			}
-
-			//if httpProcessor.Regex().MatchString(line) {
-			//	err = httpProcessor.Process(line, fileName, logger)
-			//	if err != nil {
-			//		statusCodeError := &http.StatusCodeError{}
-			//		if errors.As(err, &statusCodeError) {
-			//			logger.Error("can't read the link", zap.String("fileName", fileName), zap.Int("line", lineNum), zap.Int("statusCode", statusCodeError.StatusCode), zap.String("link", statusCodeError.Link))
-			//		} else {
-			//			logger.Error("error processing the link", zap.Error(err))
-			//		}
-			//	}
-			//}
-		}
-		logger.Debug("Processed: ", zap.Int("lines", lineNum), zap.String("fileName", fileName))
-
-	}
-	return nil, nil
-}
-
-func getFiles(root string, masks []string) ([]string, error) {
-	var matchedFiles []string
-
-	matchesAnyMask := func(name string) bool {
-		for _, mask := range masks {
-			matched, err := filepath.Match(mask, name)
-			if err == nil && matched {
-				return true
-			}
-		}
-		return false
-	}
-
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			// Just skip files/dirs we can't read
-			return nil
-		}
-		if d.IsDir() {
-			return nil
-		}
-		if matchesAnyMask(d.Name()) {
-			matchedFiles = append(matchedFiles, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return matchedFiles, nil
 }
 
 func GetEnv(key, defaultValue string) string {
@@ -157,15 +64,4 @@ func GetRequiredEnv(key string) string {
 		return strings.ReplaceAll(val, " ", "")
 	}
 	panic(fmt.Errorf("%s is not set", key))
-}
-
-func processLine(line string) map[string]LinkProcessor {
-	found := make(map[string]LinkProcessor, len(processors))
-	for _, p := range processors {
-		parts := p.Regex().FindAllString(line, -1)
-		for _, part := range parts {
-			found[part] = p
-		}
-	}
-	return found
 }
