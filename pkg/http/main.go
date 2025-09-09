@@ -1,3 +1,5 @@
+// Package http implements http links validation, i.e., any link starting with http(s),
+// but not pointing to a GitHub repo
 package http
 
 import (
@@ -62,11 +64,10 @@ func (proc *ExternalHttpLinkProcessor) Process(ctx context.Context, url string, 
 	}
 	defer r.Body.Close()
 	if r.StatusCode >= 200 && r.StatusCode <= 300 {
-		// check just first 4 KB of the body
+		// check just the first 4 KB of the body
 		bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 4096))
 		if err == nil && len(bodyBytes) > 0 {
 			body := string(bodyBytes)
-			//logger.Debug("body:", zap.String("body", body))	// TODO: remove
 			if strings.Contains(body, "404") ||
 				strings.Contains(body, "does not contain the path") ||
 				strings.Contains(body, "not found") {

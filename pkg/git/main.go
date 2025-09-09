@@ -1,3 +1,8 @@
+// Package 'git' implements git links validation
+// GitHub links are the links that point to files in other GitHub repositories
+// Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
+// links to a particular branch or commits are supported as well.
+
 package git
 
 import (
@@ -36,8 +41,8 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 	if len(match) == 0 {
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
 	}
-	owner, repo, typ, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), match[6]
-	fmt.Println(owner, repo, typ, branch, path, anchor) // TODO: remove
+	owner, repo, _, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), match[6]
+	logger.Debug("Validating internal url", zap.String("url", url))
 
 	contents, _, _, err := proc.client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
 		Ref: branch,
