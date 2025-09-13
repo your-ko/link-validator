@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"time"
 )
 
 type LinkProcessor interface {
@@ -40,8 +41,9 @@ func New(config Config) LinkValidador {
 }
 
 // TODO: return stats? So I can do a summary after the file is processed?
-func (v *LinkValidador) ProcessFiles(filesList []string, logger *zap.Logger) (interface{}, error) {
-	ctx := context.Background() // TODO: fix context
+func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) (interface{}, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
 	for _, fileName := range filesList {
 		logger.Debug("processing file", zap.String("fileName", fileName))
