@@ -7,9 +7,12 @@ package git
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/google/go-github/v74/github"
 	"go.uber.org/zap"
+	"link-validator/pkg/errs"
+	"net/http"
 	"regexp"
 	"strings"
 )
@@ -27,7 +30,7 @@ func New(baseUrl, pat string) *InternalLinkProcessor {
 	}
 	client = client.WithAuthToken(pat)
 	sanitised := strings.ReplaceAll(strings.ReplaceAll(baseUrl, ".", "\\."), "/", "\\/")
-	urlRegex := regexp.MustCompile(fmt.Sprintf("%s([^\\/]+)\\/([^\\/]+)\\/(blob|tree|raw)\\/([^\\/]+)(?:\\/([^\\#\\s\\)\\]]*))?(\\#[^\\s\\)\\]]+)?", sanitised))
+	urlRegex := regexp.MustCompile(fmt.Sprintf("%s\\/([^\\/]+)\\/([^\\/]+)\\/(blob|tree|raw)\\/([^\\/]+)(?:\\/([^\\#\\s\\)\\]]*))?(\\#[^\\s\\)\\]]+)?", sanitised))
 
 	return &InternalLinkProcessor{
 		baseUrl:  baseUrl,
@@ -42,28 +45,36 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
 	}
 	owner, repo, _, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), match[6]
-	logger.Debug("Validating internal url", zap.String("url", url))
+	logger.Debug("Validating GutHub url", zap.String("url", url))
 
 	contents, _, _, err := proc.client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
 		Ref: branch,
 	})
 	if err != nil {
-		// file is not found or some other error
+		var ghError *github.ErrorResponse
+		if errors.As(err, &ghError) {
+			if ghError.Response.StatusCode == http.StatusNotFound {
+				return errs.NotFound
+			}
+		}
+		// some other error
 		return err
 	}
+	logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
 	if len(anchor) != 0 {
 		content, err := contents.GetContent()
 		if err != nil {
 			return err
 		}
 		if !strings.Contains(content, anchor) {
-			return fmt.Errorf("url '%s' exists but doesn't have an anchor %s", url, anchor)
+			logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
+			return errs.NewNotFound(url)
 		} else {
-			// file and anchor are found
+			// url with the anchor are correct
 			return nil
 		}
 	}
-	// file is found
+	// url exists
 	return nil
 }
 
