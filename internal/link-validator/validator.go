@@ -3,8 +3,10 @@ package link_validator
 import (
 	"bufio"
 	"context"
+	"errors"
 	"go.uber.org/zap"
 	"io/fs"
+	"link-validator/pkg/errs"
 	"link-validator/pkg/git"
 	"link-validator/pkg/http"
 	"link-validator/pkg/local"
@@ -16,10 +18,15 @@ import (
 
 type LinkProcessor interface {
 	// Process expects to actually process the received text from slack from the given user
-	// TODO: return stat of processed links (good/errored, error)
 	Process(ctx context.Context, url string, logger *zap.Logger) error
 
 	Regex() *regexp.Regexp
+}
+
+type Stats struct {
+	lines int
+	links int
+	error int
 }
 
 type LinkValidador struct {
@@ -41,9 +48,10 @@ func New(config Config) LinkValidador {
 }
 
 // TODO: return stats? So I can do a summary after the file is processed?
-func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) (interface{}, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) error {
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Second)
 	defer cancel()
+	stats := Stats{}
 
 	for _, fileName := range filesList {
 		logger.Debug("processing file", zap.String("fileName", fileName))
@@ -56,33 +64,27 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		scanner := bufio.NewScanner(f)
 		lineNum := 0
 		for scanner.Scan() {
-			lineNum++
+			stats.lines++
 			line := scanner.Text()
 			links := v.processLine(line)
 			for link, processor := range links {
 				err := processor.Process(ctx, link, logger)
+				stats.links++
 				if err != nil {
-					// TODO
-					return nil, err
+					var notFound *errs.NotFoundError
+					if errors.As(err, &notFound) { // TODO: fix me
+						logger.Info("link not found", zap.String("link", notFound.Error()))
+						stats.error++
+					}
+					stats.error++
+					return err
 				}
 			}
-
-			//if httpProcessor.Regex().MatchString(line) {
-			//	err = httpProcessor.Process(line, fileName, logger)
-			//	if err != nil {
-			//		statusCodeError := &http.StatusCodeError{}
-			//		if errors.As(err, &statusCodeError) {
-			//			logger.Error("can't read the link", zap.String("fileName", fileName), zap.Int("line", lineNum), zap.Int("statusCode", statusCodeError.StatusCode), zap.String("link", statusCodeError.Link))
-			//		} else {
-			//			logger.Error("error processing the link", zap.Error(err))
-			//		}
-			//	}
-			//}
 		}
 		logger.Debug("Processed: ", zap.Int("lines", lineNum), zap.String("fileName", fileName))
 
 	}
-	return nil, nil
+	return nil
 }
 
 func (v *LinkValidador) GetFiles(root string, masks []string) ([]string, error) {
@@ -124,6 +126,7 @@ func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 		parts := p.Regex().FindAllString(line, -1)
 		for _, part := range parts {
 			found[part] = p
+			return found // TODO: Fix the regexes
 		}
 	}
 	return found

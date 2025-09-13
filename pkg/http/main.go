@@ -1,5 +1,5 @@
 // Package http implements http links validation, i.e., any link starting with http(s),
-// but not pointing to a GitHub repo
+// but not pointing to the GitHub, where the repository is (useful when run enterprise GitHub)
 package http
 
 import (
@@ -7,6 +7,7 @@ import (
 	"context"
 	"go.uber.org/zap"
 	"io"
+	"link-validator/pkg/errs"
 	"net/http"
 	"regexp"
 	"strings"
@@ -20,6 +21,8 @@ type ExternalHttpLinkProcessor struct {
 }
 
 func New(exclude string) *ExternalHttpLinkProcessor {
+	// TODO: fix regex.
+
 	//sanitized := strings.ReplaceAll(strings.TrimSuffix(strings.ReplaceAll(exclude, "https://", ""), "/"), ".", "\\.")
 	//regex := fmt.Sprintf("https:\\/\\/(?!%s)([^\\s\"']+)", sanitized)
 	//urlRegex := regexp.MustCompile(regex)
@@ -71,20 +74,15 @@ func (proc *ExternalHttpLinkProcessor) Process(ctx context.Context, url string, 
 			if strings.Contains(body, "404") ||
 				strings.Contains(body, "does not contain the path") ||
 				strings.Contains(body, "not found") {
-				//logger.Error("Broken HTTP link (soft 404)",
-				//	zap.String("file", filePath),
-				//	zap.Int("line", lineNum),
-				//	zap.String("link", link),
-				//	zap.String("body_snippet", body),
-				//)
-				return &StatusCodeError{404, url}
+
+				return errs.NewNotFound(url)
 			} else {
 				return nil
 			}
 		}
 	}
 
-	return &StatusCodeError{404, url}
+	return errs.NewNotFound(url)
 }
 
 func (proc *ExternalHttpLinkProcessor) Regex() *regexp.Regexp {

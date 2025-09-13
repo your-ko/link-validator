@@ -47,7 +47,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	_, err = validator.ProcessFiles(ctx, filesList, logger)
+	err = validator.ProcessFiles(ctx, filesList, logger)
 	if err != nil {
 		logger.Fatal("Error checking file", zap.Error(err))
 	}
