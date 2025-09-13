@@ -24,9 +24,10 @@ type LinkProcessor interface {
 }
 
 type Stats struct {
-	lines int
-	links int
-	error int
+	lines    int
+	links    int
+	error    int
+	notFound int
 }
 
 type LinkValidador struct {
@@ -71,10 +72,10 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				err := processor.Process(ctx, link, logger)
 				stats.links++
 				if err != nil {
-					var notFound *errs.NotFoundError
-					if errors.As(err, &notFound) { // TODO: fix me
+					var notFound errs.NotFoundError
+					if errors.As(err, &notFound) {
 						logger.Info("link not found", zap.String("link", notFound.Error()))
-						stats.error++
+						stats.notFound++
 					}
 					stats.error++
 					return err
