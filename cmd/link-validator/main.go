@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"go.uber.org/zap"
@@ -45,11 +46,11 @@ func main() {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}
 
-	stat, err := validator.ProcessFiles(filesList, logger)
+	ctx := context.Background()
+	_, err = validator.ProcessFiles(ctx, filesList, logger)
 	if err != nil {
 		logger.Fatal("Error checking file", zap.Error(err))
 	}
-	fmt.Println(stat)
 }
 
 func GetEnv(key, defaultValue string) string {
