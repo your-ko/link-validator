@@ -1,3 +1,5 @@
+[![Main](https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
+
 [local good dot](./Makefile)
 [local good](Makefile)
 [local bad](makefile)
