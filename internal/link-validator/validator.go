@@ -24,10 +24,10 @@ type LinkProcessor interface {
 }
 
 type Stats struct {
-	lines    int
-	links    int
-	error    int
-	notFound int
+	Lines    int
+	Links    int
+	Errors   int
+	NotFound int
 }
 
 type LinkValidador struct {
@@ -48,8 +48,7 @@ func New(config Config) LinkValidador {
 	return LinkValidador{processors}
 }
 
-// TODO: return stats? So I can do a summary after the file is processed?
-func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) error {
+func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Second)
 	defer cancel()
 	stats := Stats{}
@@ -65,27 +64,27 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		scanner := bufio.NewScanner(f)
 		lineNum := 0
 		for scanner.Scan() {
-			stats.lines++
+			stats.Lines++
 			line := scanner.Text()
 			links := v.processLine(line)
 			for link, processor := range links {
 				err := processor.Process(ctx, link, logger)
-				stats.links++
+				stats.Links++
 				if err != nil {
 					var notFound errs.NotFoundError
 					if errors.As(err, &notFound) {
 						logger.Info("link not found", zap.String("link", notFound.Error()))
-						stats.notFound++
+						stats.NotFound++
+					} else {
+						stats.Errors++
+						logger.Warn("error validating link", zap.String("link", link), zap.Error(err))
 					}
-					stats.error++
-					return err
 				}
 			}
 		}
 		logger.Debug("Processed: ", zap.Int("lines", lineNum), zap.String("fileName", fileName))
-
 	}
-	return nil
+	return stats
 }
 
 func (v *LinkValidador) GetFiles(root string, masks []string) ([]string, error) {
