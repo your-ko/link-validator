@@ -47,10 +47,13 @@ func main() {
 	}
 
 	ctx := context.Background()
-	err = validator.ProcessFiles(ctx, filesList, logger)
-	if err != nil {
-		logger.Fatal("Error checking file", zap.Error(err))
+	stats := validator.ProcessFiles(ctx, filesList, logger)
+	if stats.Errors != 0 {
+		logger.Error("Errors found:", zap.Int("errors", stats.Errors))
 	}
+	logger.Info("Links processed", zap.Int("links", stats.Links))
+	logger.Info("Links not found", zap.Int("links", stats.NotFound))
+	logger.Info("Lines processed", zap.Int("lines", stats.Lines))
 }
 
 func GetEnv(key, defaultValue string) string {

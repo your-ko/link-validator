@@ -29,7 +29,7 @@ func Init(logLevel zapcore.Level) *zap.Logger {
 		logLevel,
 	)
 
-	return zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel))
+	return zap.New(core, zap.AddStacktrace(zapcore.PanicLevel))
 }
 
 // LogLevel reads LOG_LEVEL and defaults to info.
