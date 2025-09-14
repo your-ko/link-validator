@@ -62,7 +62,6 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		}
 		defer f.Close()
 		scanner := bufio.NewScanner(f)
-		lineNum := 0
 		for scanner.Scan() {
 			stats.Lines++
 			line := scanner.Text()
@@ -82,7 +81,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				}
 			}
 		}
-		logger.Debug("Processed: ", zap.Int("lines", lineNum), zap.String("fileName", fileName))
+		logger.Debug("Processed: ", zap.Int("lines", stats.Lines), zap.String("fileName", fileName))
 	}
 	return stats
 }
