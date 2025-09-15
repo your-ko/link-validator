@@ -1,5 +1,6 @@
 // Package 'git' implements git links validation
 // GitHub links are the links that point to files in other GitHub repositories
+// These links can be considered as internal (in contrast to external in `http` package and `local` in `local` package
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
 // links to a particular branch or commits are supported as well.
 
@@ -80,4 +81,15 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 
 func (proc *InternalLinkProcessor) Regex() *regexp.Regexp {
 	return proc.urlRegex
+}
+
+func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
+	parts := proc.Regex().FindAllString(line, -1)
+	urls := make([]string, 0)
+	for _, part := range parts {
+		if part == proc.baseUrl || strings.HasSuffix(part, "."+proc.baseUrl) {
+			urls = append(urls, part)
+		}
+	}
+	return urls
 }

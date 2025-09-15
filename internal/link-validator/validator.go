@@ -21,6 +21,8 @@ type LinkProcessor interface {
 	Process(ctx context.Context, url string, logger *zap.Logger) error
 
 	Regex() *regexp.Regexp
+
+	ExtractLinks(line string) []string
 }
 
 type Stats struct {
@@ -122,10 +124,9 @@ func (v *LinkValidador) GetFiles(root string, masks []string) ([]string, error) 
 func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 	found := make(map[string]LinkProcessor, len(v.processors))
 	for _, p := range v.processors {
-		parts := p.Regex().FindAllString(line, -1)
-		for _, part := range parts {
-			found[part] = p
-			return found // TODO: Fix the regexes
+		links := p.ExtractLinks(line)
+		for _, link := range links {
+			found[link] = p
 		}
 	}
 	return found

@@ -33,6 +33,8 @@ func main() {
 	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
 	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
 
+	baseUrl = strings.TrimSpace(strings.ToLower(baseUrl))
+
 	config := link_validator.Config{
 		BaseUrl: baseUrl,
 		Path:    path,

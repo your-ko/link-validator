@@ -49,3 +49,12 @@ func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Lo
 func (proc *LinkProcessor) Regex() *regexp.Regexp {
 	return proc.fileRegex
 }
+
+func (proc *LinkProcessor) ExtractLinks(line string) []string {
+	parts := proc.Regex().FindAllString(line, -1)
+	urls := make([]string, 0)
+	for _, part := range parts {
+		urls = append(urls, part)
+	}
+	return urls
+}
