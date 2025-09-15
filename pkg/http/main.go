@@ -9,6 +9,7 @@ import (
 	"io"
 	"link-validator/pkg/errs"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -85,11 +86,26 @@ func (proc *ExternalHttpLinkProcessor) Regex() *regexp.Regexp {
 
 func (proc *ExternalHttpLinkProcessor) ExtractLinks(line string) []string {
 	parts := proc.Regex().FindAllString(line, -1)
-	urls := make([]string, 0)
-	for _, part := range parts {
-		if part != proc.exclude && !strings.HasSuffix(part, "."+proc.exclude) {
-			urls = append(urls, part)
+	urls := make([]string, 0, len(parts))
+
+	if proc.exclude == "" {
+		// nothing to exclude; return all matches quickly
+		return append(urls, parts...)
+	}
+
+	for _, raw := range parts {
+		u, err := url.Parse(raw)
+		if err != nil || u.Host == "" {
+			continue // skip malformed
 		}
+		host := strings.ToLower(u.Hostname()) // strips port, handles IPv6 brackets
+
+		// Exclude exact domain or any subdomain.
+		if host == proc.exclude || strings.HasSuffix(host, "."+proc.exclude) {
+			continue
+		}
+
+		urls = append(urls, raw)
 	}
 	return urls
 }
