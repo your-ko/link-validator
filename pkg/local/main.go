@@ -21,7 +21,6 @@ type LinkProcessor struct {
 }
 
 func New() *LinkProcessor {
-	// TODO: Is 'path' here relevant?
 	localTarget := `(?:` +
 		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
 		`|` +
