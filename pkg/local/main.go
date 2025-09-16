@@ -38,7 +38,7 @@ func New(path string) *LinkProcessor {
 }
 
 func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
-	parts := proc.Regex().FindAllStringSubmatch(url, -1)
+	parts := proc.fileRegex.FindAllStringSubmatch(url, -1)
 	if len(parts) != 1 && len(parts[0]) != 2 {
 		return fmt.Errorf("incorrect md syntax: %s", url)
 	}
@@ -54,12 +54,8 @@ func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Lo
 	return nil
 }
 
-func (proc *LinkProcessor) Regex() *regexp.Regexp {
-	return proc.fileRegex
-}
-
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	matches := proc.Regex().FindAllStringSubmatch(line, -1)
+	matches := proc.fileRegex.FindAllStringSubmatch(line, -1)
 	if len(matches) == 0 {
 		return nil
 	}

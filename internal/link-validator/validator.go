@@ -12,14 +12,11 @@ import (
 	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 )
 
 type LinkProcessor interface {
 	Process(ctx context.Context, url string, logger *zap.Logger) error
-
-	Regex() *regexp.Regexp
 
 	ExtractLinks(line string) []string
 }
