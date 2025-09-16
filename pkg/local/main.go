@@ -20,11 +20,16 @@ type LinkProcessor struct {
 }
 
 func New(path string) *LinkProcessor {
+	// TODO: Is 'path' here relevant?
+	localTarget := `(?:` +
+		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... (any depth)
+		`|` +
+		`[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*` + // bare filename / relative path
+		`)` +
+		`(?:#[^)\s]*)?` // optional fragment like #section
+
 	return &LinkProcessor{
-		// TODO: fix regex.
-		// text text ![Badge](https://github.com/your-ko/link-validator/github/.workflows/master.yaml/badge.svg)
-		// is detected as "local"
-		fileRegex: regexp.MustCompile(`\[[^\]]*\]\(([^)]+)\)`),
+		fileRegex: regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`),
 		path:      path,
 	}
 }

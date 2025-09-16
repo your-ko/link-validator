@@ -17,7 +17,6 @@ import (
 )
 
 type LinkProcessor interface {
-	// Process expects to actually process the received text from slack from the given user
 	Process(ctx context.Context, url string, logger *zap.Logger) error
 
 	Regex() *regexp.Regexp
