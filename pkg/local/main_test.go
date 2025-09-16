@@ -8,7 +8,7 @@ import (
 func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 	t.Parallel()
 
-	proc := New("")
+	proc := New()
 
 	type tc struct {
 		name string
