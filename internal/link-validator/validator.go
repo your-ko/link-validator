@@ -7,8 +7,8 @@ import (
 	"go.uber.org/zap"
 	"io/fs"
 	"link-validator/pkg/errs"
-	"link-validator/pkg/git"
-	"link-validator/pkg/http"
+	"link-validator/pkg/external"
+	"link-validator/pkg/intern"
 	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
@@ -40,9 +40,9 @@ type Config struct {
 
 func New(config Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
-	processors = append(processors, git.New(config.BaseUrl, config.PAT))
+	processors = append(processors, intern.New(config.BaseUrl, config.PAT))
 	processors = append(processors, local.New(config.Path))
-	processors = append(processors, http.New(config.BaseUrl))
+	processors = append(processors, external.New(config.BaseUrl))
 	return LinkValidador{processors}
 }
 

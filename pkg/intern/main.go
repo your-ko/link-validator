@@ -1,10 +1,11 @@
-// Package 'git' implements git links validation
-// GitHub links are the links that point to files in other GitHub repositories
-// These links can be considered as internal (in contrast to external in `http` package and `local` in `local` package
+// Package 'internal' implements internal git links validation
+// GitHub links are the links that point to files in other GitHub repositories within the same organisation
+// These links can be considered as internal (in contrast to external package and `local`  package)
+// Useful when run on the enterprise GitHub.
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
 // links to a particular branch or commits are supported as well.
 
-package git
+package intern
 
 import (
 	"context"
