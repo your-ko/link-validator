@@ -82,12 +82,8 @@ func (proc *ExternalHttpLinkProcessor) Process(ctx context.Context, url string, 
 	return errs.NewNotFound(url)
 }
 
-func (proc *ExternalHttpLinkProcessor) Regex() *regexp.Regexp {
-	return proc.urlRegex
-}
-
 func (proc *ExternalHttpLinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.Regex().FindAllString(line, -1)
+	parts := proc.urlRegex.FindAllString(line, -1)
 	urls := make([]string, 0, len(parts))
 
 	if proc.exclude == "" {

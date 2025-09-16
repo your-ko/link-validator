@@ -102,12 +102,8 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 	return nil
 }
 
-func (proc *InternalLinkProcessor) Regex() *regexp.Regexp {
-	return proc.urlRegex
-}
-
 func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.Regex().FindAllString(line, -1)
+	parts := proc.urlRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
