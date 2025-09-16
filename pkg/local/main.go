@@ -1,6 +1,7 @@
 // Package 'local' implements local links validation
 // Local links are the links found in the given repository, which point to files in the same repository.
 // Example: [README](../../README.md)
+// http(s):// links are not processes
 
 package local
 
@@ -22,14 +23,16 @@ type LinkProcessor struct {
 func New(path string) *LinkProcessor {
 	// TODO: Is 'path' here relevant?
 	localTarget := `(?:` +
-		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... (any depth)
+		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
 		`|` +
 		`[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*` + // bare filename / relative path
 		`)` +
-		`(?:#[^)\s]*)?` // optional fragment like #section
+		`(?:#[^)\s]*)?` // optional fragment
+
+	regexp := regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`)
 
 	return &LinkProcessor{
-		fileRegex: regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`),
+		fileRegex: regexp,
 		path:      path,
 	}
 }
@@ -56,10 +59,16 @@ func (proc *LinkProcessor) Regex() *regexp.Regexp {
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.Regex().FindAllString(line, -1)
-	urls := make([]string, 0)
-	for _, part := range parts {
-		urls = append(urls, part)
+	matches := proc.Regex().FindAllStringSubmatch(line, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+	urls := make([]string, 0, len(matches))
+	for _, m := range matches {
+		// m[0] = full token "[txt](target)", m[1] = captured target
+		if len(m) > 1 && m[1] != "" {
+			urls = append(urls, m[1])
+		}
 	}
 	return urls
 }
