@@ -28,9 +28,11 @@ func New(exclude string) *ExternalHttpLinkProcessor {
 		Timeout:       10 * time.Second,
 		CheckRedirect: checkRedirect,
 	}
+	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
+
 	return &ExternalHttpLinkProcessor{
 		httpClient: httpClient,
-		urlRegex:   regexp.MustCompile(`https:\/\/[^\s"']+`),
+		urlRegex:   urlRegex,
 		exclude:    exclude,
 	}
 }

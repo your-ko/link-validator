@@ -64,6 +64,15 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://three.com",
 			},
 		},
+		{
+			name:    "test for MD link",
+			exclude: "github.mycorp.com",
+			line:    `qqq https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml) qqq`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
+			},
+		},
 	}
 
 	for _, tt := range tests {
