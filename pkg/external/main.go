@@ -1,6 +1,5 @@
-// Package http implements http links validation, i.e., any link starting with http(s),
-// but not pointing to the GitHub, where the repository is (useful when run enterprise GitHub)
-package http
+// Package external implements http links validation, i.e., any link starting with http(s)
+package external
 
 import (
 	"bytes"
