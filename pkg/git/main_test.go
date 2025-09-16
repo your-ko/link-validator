@@ -1,53 +1,74 @@
 package git
 
 import (
-	"regexp"
+	"reflect"
 	"testing"
 )
 
-func TestInternalLinkProcessor_Regex(t *testing.T) {
-	tests := []struct {
-		name    string
-		url     string
-		baseURL string
-		want    bool
-	}{
-		{"external domain should not match", "https://google.com", "https://google.com", false},
-		{"same host but base equals URL should not count as internal file link", "https://github.com", "https://github.com", false},
-		{"github blob README internal", "https://github.com/your-ko/link-validator/blob/main/README.md", "https://github.com", true},
-		{"github blob Dockerfile internal", "https://github.com/your-ko/link-validator/blob/main/Dockerfile", "https://github.com", true},
-		{"query string stays internal", "https://github.com/your-ko/link-validator/blob/main/README.md?utm=1", "https://github.com", true},
-		{"different host must not match", "https://example.com/your-ko/link-validator/blob/main/README.md", "https://github.com", false},
+func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
+	t.Parallel()
+
+	p := New("https://github.mycorp.com", "") // PAT not needed for regex tests
+
+	type tc struct {
+		name string
+		line string
+		want []string
 	}
+
+	tests := []tc{
+		{
+			name: "keeps internal blob/tree/raw; drops externals",
+			line: `see https://github.mycorp.com/org/repo/blob/main/README.md
+			       and https://google.com/x
+			       then https://github.mycorp.com/org/repo/tree/main/dir
+			       and https://example.com/y
+			       and https://github.mycorp.com/org/repo/raw/main/file.txt`,
+			want: []string{
+				"https://github.mycorp.com/org/repo/blob/main/README.md",
+				"https://github.mycorp.com/org/repo/tree/main/dir",
+				"https://github.mycorp.com/org/repo/raw/main/file.txt",
+			},
+		},
+		{
+			name: "includes subdomain uploads.* as internal",
+			line: `assets at https://uploads.github.mycorp.com/org/repo/raw/main/image.png
+			       and external https://gitlab.mycorp.com/a/b
+			       and internal https://github.mycorp.com/acme/proj/blob/main/notes.md`,
+			want: []string{
+				"https://uploads.github.mycorp.com/org/repo/raw/main/image.png",
+				"https://github.mycorp.com/acme/proj/blob/main/notes.md",
+			},
+		},
+		{
+			name: "ignores non-matching schemes and hosts",
+			line: `http://github.mycorp.com/org/repo/blob/main/README.md
+			       https://other.com/org/repo/blob/main/README.md
+			       https://api.github.mycorp.com/org/repo/tree/main/folder`,
+			want: []string{
+				"https://api.github.mycorp.com/org/repo/tree/main/folder",
+			},
+		},
+		{
+			name: "handles anchors and query strings",
+			line: `https://github.mycorp.com/team/proj/blob/main/file.md#L10-L20
+			       https://github.mycorp.com/team/proj/tree/main/docs?tab=readme
+			       https://example.com/u/v/raw/main/w.txt?download=1`,
+			want: []string{
+				"https://github.mycorp.com/team/proj/blob/main/file.md#L10-L20",
+				"https://github.mycorp.com/team/proj/tree/main/docs?tab=readme",
+			},
+		},
+	}
+
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			proc := New(tt.baseURL, "")
-			re := proc.Regex()
-			if re == nil {
-				t.Fatalf("Regex() returned nil")
-			}
-			if _, ok := any(re).(*regexp.Regexp); !ok {
-				t.Fatalf("Regex() did not return *regexp.Regexp")
-			}
-
-			// We expect the regex to match the whole URL when it's "internal".
-			got := re.FindString(tt.url)
-			matched := got == tt.url
-
-			if matched != tt.want {
-				t.Fatalf("Regex().FindString(%q) = %q (matched=%v), want matched=%v; baseURL=%q",
-					tt.url, got, matched, tt.want, tt.baseURL)
-			}
-
-			// Optional: be stricter — if not wanted, ensure no partial matches either.
-			if !tt.want {
-				if idx := re.FindStringIndex(tt.url); idx != nil {
-					t.Fatalf("Regex() unexpectedly found a partial match at %v in %q; baseURL=%q",
-						idx, tt.url, tt.baseURL)
-				}
+			got := p.ExtractLinks(tt.line)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Fatalf("ExtractLinks mismatch\nbase=%q\nline=%q\ngot = %#v\nwant= %#v",
+					p.baseUrl, tt.line, got, tt.want)
 			}
 		})
 	}
