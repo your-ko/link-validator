@@ -13,62 +13,62 @@ func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 	type tc struct {
 		name string
 		line string
-		want []string // full markdown link matches like "[txt](../../README.md)"
+		want []string // full markdown link tokens, e.g. "[txt](../a.md)"
 	}
 
 	tests := []tc{
 		{
-			name: "single relative up-two-levels",
-			line: `see [readme](../../README.md) for details`,
+			name: "bare filename allowed",
+			line: `build with [make](Makefile)`,
 			want: []string{
-				"[readme](../../README.md)",
+				"[make](Makefile)",
 			},
 		},
 		{
-			name: "relative current dir and parent dir",
-			line: `open [doc](./docs/guide.md) and [up](../CONTRIBUTING.md)`,
+			name: "relative nested path allowed",
+			line: `see [guide](docs/guide.md) and [spec](api/v1/spec.md)`,
 			want: []string{
-				"[doc](./docs/guide.md)",
+				"[guide](docs/guide.md)",
+				"[spec](api/v1/spec.md)",
+			},
+		},
+		{
+			name: "./ and ../ prefixes allowed (any depth)",
+			line: `open [here](./README.md) then [up](../CONTRIBUTING.md) and [up2](../../docs/ref.md)`,
+			want: []string{
+				"[here](./README.md)",
 				"[up](../CONTRIBUTING.md)",
+				"[up2](../../docs/ref.md)",
 			},
 		},
 		{
-			name: "bare filename is local",
-			line: `see [root](README.md)`,
+			name: "fragment after local path is allowed",
+			line: `jump to [section](docs/guide.md#install) and [another](../a/b.md#L10-L20)`,
 			want: []string{
-				"[root](README.md)",
+				"[section](docs/guide.md#install)",
+				"[another](../a/b.md#L10-L20)",
 			},
 		},
 		{
-			name: "mixed local and external – keep only local",
-			line: `local [a](./a.md), external [g](https://google.com), local [b](../b.md)`,
+			name: "external links are ignored (https, http, mailto, protocol-relative, absolute path)",
+			line: `ext1 [g](https://google.com) ext2 [e](http://example.com) mail [m](mailto:me@ex.com) proto [p](//cdn.example.com/x) abs [r](/root/readme.md) local [l](docs/ok.md)`,
 			want: []string{
-				"[a](./a.md)",
-				"[b](../b.md)",
+				"[l](docs/ok.md)",
 			},
 		},
 		{
-			name: "ignore mailto and http",
-			line: `email [me](mailto:me@example.com) and site [ex](http://example.com) and local [c](docs/c.md)`,
-			want: []string{
-				"[c](docs/c.md)",
-			},
-		},
-		{
-			name: "ignore anchors",
-			line: `section [here](#intro) and local [spec](specs/api.md)`,
-			want: []string{
-				"[spec](specs/api.md)",
-			},
-		},
-		{
-			name: "multiple locals on one line",
-			line: `[one](a.md) [two](b/c.md) [three](../d/e.md)`,
+			name: "multiple locals mixed with externals",
+			line: `[one](a.md) [two](https://ex.com) [three](b/c.md) [four](mailto:x@y) [five](../d/e.md)`,
 			want: []string{
 				"[one](a.md)",
-				"[two](b/c.md)",
-				"[three](../d/e.md)",
+				"[three](b/c.md)",
+				"[five](../d/e.md)",
 			},
+		},
+		{
+			name: "no matches",
+			line: `nothing here: https://example.com and mailto:me@example.com`,
+			want: nil,
 		},
 	}
 
@@ -78,8 +78,7 @@ func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 			t.Parallel()
 			got := proc.ExtractLinks(tt.line)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Fatalf("ExtractLinks mismatch\nline=%q\ngot = %#v\nwant= %#v",
-					tt.line, got, tt.want)
+				t.Fatalf("ExtractLinks mismatch\nline=%q\ngot = %#v\nwant= %#v", tt.line, got, tt.want)
 			}
 		})
 	}
