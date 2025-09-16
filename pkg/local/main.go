@@ -1,6 +1,7 @@
 // Package 'local' implements local links validation
 // Local links are the links found in the given repository, which point to files in the same repository.
 // Example: [README](../../README.md)
+// http(s):// links are not processes
 
 package local
 
@@ -20,11 +21,18 @@ type LinkProcessor struct {
 }
 
 func New(path string) *LinkProcessor {
+	// TODO: Is 'path' here relevant?
+	localTarget := `(?:` +
+		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
+		`|` +
+		`[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*` + // bare filename / relative path
+		`)` +
+		`(?:#[^)\s]*)?` // optional fragment
+
+	regexp := regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`)
+
 	return &LinkProcessor{
-		// TODO: fix regex.
-		// text text ![Badge](https://github.com/your-ko/link-validator/github/.workflows/master.yaml/badge.svg)
-		// is detected as "local"
-		fileRegex: regexp.MustCompile(`\[[^\]]*\]\(([^)]+)\)`),
+		fileRegex: regexp,
 		path:      path,
 	}
 }
@@ -48,4 +56,19 @@ func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Lo
 
 func (proc *LinkProcessor) Regex() *regexp.Regexp {
 	return proc.fileRegex
+}
+
+func (proc *LinkProcessor) ExtractLinks(line string) []string {
+	matches := proc.Regex().FindAllStringSubmatch(line, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+	urls := make([]string, 0, len(matches))
+	for _, m := range matches {
+		// m[0] = full token "[txt](target)", m[1] = captured target
+		if len(m) > 1 && m[1] != "" {
+			urls = append(urls, m[1])
+		}
+	}
+	return urls
 }

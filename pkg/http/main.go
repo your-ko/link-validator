@@ -9,6 +9,7 @@ import (
 	"io"
 	"link-validator/pkg/errs"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -21,21 +22,17 @@ type ExternalHttpLinkProcessor struct {
 }
 
 func New(exclude string) *ExternalHttpLinkProcessor {
-	// TODO: fix regex.
-
-	//sanitized := strings.ReplaceAll(strings.TrimSuffix(strings.ReplaceAll(exclude, "https://", ""), "/"), ".", "\\.")
-	//regex := fmt.Sprintf("https:\\/\\/(?!%s)([^\\s\"']+)", sanitized)
-	//urlRegex := regexp.MustCompile(regex)
+	exclude = strings.TrimPrefix(strings.TrimPrefix(exclude, "https://"), "http://")
+	exclude = strings.TrimPrefix(strings.TrimSuffix(exclude, "/"), ".")
 	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
-		// TODO: not sure whether it is a good idea
+		Timeout:       10 * time.Second,
 		CheckRedirect: checkRedirect,
-		// Otherwise follow redirects by default
-		// If you want to limit the number of redirects, set CheckRedirect
 	}
+	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
+
 	return &ExternalHttpLinkProcessor{
 		httpClient: httpClient,
-		urlRegex:   regexp.MustCompile(`https:\/\/[^\s"']+`),
+		urlRegex:   urlRegex,
 		exclude:    exclude,
 	}
 }
@@ -87,4 +84,30 @@ func (proc *ExternalHttpLinkProcessor) Process(ctx context.Context, url string, 
 
 func (proc *ExternalHttpLinkProcessor) Regex() *regexp.Regexp {
 	return proc.urlRegex
+}
+
+func (proc *ExternalHttpLinkProcessor) ExtractLinks(line string) []string {
+	parts := proc.Regex().FindAllString(line, -1)
+	urls := make([]string, 0, len(parts))
+
+	if proc.exclude == "" {
+		// nothing to exclude; return all matches quickly
+		return append(urls, parts...)
+	}
+
+	for _, raw := range parts {
+		u, err := url.Parse(raw)
+		if err != nil || u.Host == "" {
+			continue // skip malformed
+		}
+		host := strings.ToLower(u.Hostname()) // strips port, handles IPv6 brackets
+
+		// Exclude exact domain or any subdomain.
+		if host == proc.exclude || strings.HasSuffix(host, "."+proc.exclude) {
+			continue
+		}
+
+		urls = append(urls, raw)
+	}
+	return urls
 }

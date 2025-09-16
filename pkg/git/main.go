@@ -1,5 +1,6 @@
 // Package 'git' implements git links validation
 // GitHub links are the links that point to files in other GitHub repositories
+// These links can be considered as internal (in contrast to external in `http` package and `local` in `local` package
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
 // links to a particular branch or commits are supported as well.
 
@@ -13,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -24,13 +26,35 @@ type InternalLinkProcessor struct {
 }
 
 func New(baseUrl, pat string) *InternalLinkProcessor {
-	client, err := github.NewClient(nil).WithEnterpriseURLs(baseUrl, strings.ReplaceAll(baseUrl, "https://", "https://uploads."))
+	client, err := github.NewClient(nil).WithEnterpriseURLs(
+		baseUrl,
+		strings.ReplaceAll(baseUrl, "https://", "https://uploads."),
+	)
 	if err != nil {
 		panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
 	}
 	client = client.WithAuthToken(pat)
-	sanitised := strings.ReplaceAll(strings.ReplaceAll(baseUrl, ".", "\\."), "/", "\\/")
-	urlRegex := regexp.MustCompile(fmt.Sprintf("%s\\/([^\\/]+)\\/([^\\/]+)\\/(blob|tree|raw)\\/([^\\/]+)(?:\\/([^\\#\\s\\)\\]]*))?(\\#[^\\s\\)\\]]+)?", sanitised))
+
+	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
+
+	u, err := url.Parse(baseUrl)
+	if err != nil || u.Hostname() == "" {
+		panic(fmt.Sprintf("invalid baseUrl: %q", baseUrl))
+	}
+	host := u.Hostname()
+
+	// Escape dots for regex, build a subdomain-capable host: (?:[A-Za-z0-9-]+\.)*github\.mycorp\.com
+	escHost := regexp.QuoteMeta(host)
+	hostPattern := fmt.Sprintf(`(?:[A-Za-z0-9-]+\.)*%s`, escHost)
+
+	// Keep  path structure (org/repo/(blob|tree|raw)/branch/optional path ... optional #fragment)
+	// Allow optional query/fragment tails in the last groups (your original already allowed #...).
+	pattern := fmt.Sprintf(
+		`https://%s/([^/\s"']+)/([^/\s"']+)/(blob|tree|raw)/([^/\s"']+)(?:/([^\#\s\)\]]*))?(#[^\s\)\]]+)?`,
+		hostPattern,
+	)
+
+	urlRegex := regexp.MustCompile(pattern)
 
 	return &InternalLinkProcessor{
 		baseUrl:  baseUrl,
@@ -80,4 +104,33 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 
 func (proc *InternalLinkProcessor) Regex() *regexp.Regexp {
 	return proc.urlRegex
+}
+
+func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
+	parts := proc.Regex().FindAllString(line, -1)
+	if len(parts) == 0 {
+		return nil
+	}
+
+	// Parse base hostname once
+	base, err := url.Parse(proc.baseUrl)
+	if err != nil || base.Hostname() == "" {
+		return nil
+	}
+	baseHost := strings.ToLower(base.Hostname())
+
+	urls := make([]string, 0, len(parts))
+	for _, raw := range parts {
+		u, err := url.Parse(raw)
+		if err != nil || u.Hostname() == "" {
+			continue
+		}
+		h := strings.ToLower(u.Hostname())
+
+		// Keep only internal: exact host or any subdomain of it
+		if h == baseHost || strings.HasSuffix(h, "."+baseHost) {
+			urls = append(urls, raw)
+		}
+	}
+	return urls
 }
