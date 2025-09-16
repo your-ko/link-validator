@@ -20,7 +20,7 @@ type LinkProcessor struct {
 	path      string
 }
 
-func New(path string) *LinkProcessor {
+func New() *LinkProcessor {
 	// TODO: Is 'path' here relevant?
 	localTarget := `(?:` +
 		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
@@ -33,7 +33,6 @@ func New(path string) *LinkProcessor {
 
 	return &LinkProcessor{
 		fileRegex: regexp,
-		path:      path,
 	}
 }
 
