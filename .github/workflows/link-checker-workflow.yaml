@@ -3,12 +3,27 @@ name: link-validator-workflow.yml
 on:
   workflow_call:
 
+env:
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:latest # TODO: set version
+
 jobs:
-  LNK:
-    name: LNK
+  link-validator:
+    name: link-validator
     runs-on: [ small ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
+
+      - name: Run Link validation
+        id: lnk
+        env:
+          FILE_MASKS: "*.md"
+          LOOKUP_PATH: "."
+          PAT: ${{ secrets.PAT }}
+          BASE_URL: "https://github.com"
+        shell: bash
+        run: |
+          docker run --rm -e FILE_MASKS -e LOOKUP_PATH -e PAT -e AWS_ENV  -e BASE_URL ${env.DOCKER_VALIDATOR}
+
 
 
