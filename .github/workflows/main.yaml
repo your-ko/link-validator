@@ -17,7 +17,7 @@ env:
 jobs:
   PR:
     name: PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu:22.04
     outputs:
       sha_short: ${{ steps.sha.outputs.sha_short }}
     steps:
