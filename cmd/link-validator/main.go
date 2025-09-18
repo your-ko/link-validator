@@ -64,9 +64,11 @@ func main() {
 	if stats.Errors != 0 {
 		logger.Error("Errors found:", zap.Int("errors", stats.Errors))
 	}
+	if stats.NotFound > 0 {
+		logger.Error("Links not found", zap.Int("links", stats.NotFound))
+	}
 	logger.Info("Files processed", zap.Int("files", stats.Files))
 	logger.Info("Links processed", zap.Int("links", stats.Links))
-	logger.Info("Links not found", zap.Int("links", stats.NotFound))
 	logger.Info("Lines processed", zap.Int("lines", stats.Lines))
 }
 
