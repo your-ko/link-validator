@@ -70,6 +70,10 @@ func main() {
 	logger.Info("Files processed", zap.Int("files", stats.Files))
 	logger.Info("Links processed", zap.Int("links", stats.Links))
 	logger.Info("Lines processed", zap.Int("lines", stats.Lines))
+
+	if stats.Errors > 0 || stats.NotFound > 0 {
+		os.Exit(1)
+	}
 }
 
 func GetEnv(key, defaultValue string) string {

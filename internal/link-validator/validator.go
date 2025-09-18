@@ -61,9 +61,9 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			continue
 		}
 		defer f.Close()
+		lines := 0
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
-			stats.Lines++
 			line := scanner.Text()
 			links := v.processLine(line)
 			for link, processor := range links {
@@ -72,7 +72,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				if err != nil {
 					var notFound errs.NotFoundError
 					if errors.As(err, &notFound) {
-						logger.Info("link not found", zap.String("link", notFound.Error()))
+						logger.Warn("link not found", zap.String("link", notFound.Error()), zap.String("filename", fileName), zap.Int("line", lines))
 						stats.NotFound++
 					} else {
 						stats.Errors++
@@ -80,7 +80,9 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 					}
 				}
 			}
+			lines++
 		}
+		stats.Lines = stats.Lines + lines
 		logger.Debug("Processed: ", zap.Int("lines", stats.Lines), zap.String("fileName", fileName))
 	}
 	return stats
