@@ -36,11 +36,7 @@ func New() *LinkProcessor {
 }
 
 func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
-	parts := proc.fileRegex.FindAllStringSubmatch(url, -1)
-	if len(parts) != 1 && len(parts[0]) != 2 {
-		return fmt.Errorf("incorrect md syntax: %s", url)
-	}
-	fileName := fmt.Sprintf("%s/%s", proc.path, parts[0][1])
+	fileName := fmt.Sprintf("%s/%s", proc.path, url)
 	logger.Debug("validating local path", zap.String("filename", fileName))
 	_, err := os.ReadFile(fileName)
 	if err != nil {
