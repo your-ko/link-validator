@@ -43,7 +43,7 @@ jobs:
           pwd
           ls -l 
           echo "----"
-          docker run --rm \ 
+          docker run --rm \
             -e LOG_LEVEL \
             -e FILE_MASKS \
             -e LOOKUP_PATH \
