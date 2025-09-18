@@ -80,6 +80,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 					}
 				}
 			}
+			lines++
 		}
 		stats.Lines = stats.Lines + lines
 		logger.Debug("Processed: ", zap.Int("lines", stats.Lines), zap.String("fileName", fileName))
