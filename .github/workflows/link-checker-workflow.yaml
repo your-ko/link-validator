@@ -40,6 +40,7 @@ jobs:
           BASE_URL: "https://github.com"
         shell: bash
         run: |
+          pwd
           docker run --rm -e FILE_MASKS -e LOOKUP_PATH -e PAT -e AWS_ENV  -e BASE_URL ${DOCKER_VALIDATOR}
 
 
