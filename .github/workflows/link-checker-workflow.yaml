@@ -9,7 +9,7 @@ env:
 jobs:
   link-validator:
     name: link-validator
-    runs-on: [ small ]
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
