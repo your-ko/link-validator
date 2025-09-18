@@ -26,7 +26,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-	logger.Debug("Staring link-validator", zap.String("version", link_validator.Version.Version))
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
 	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
