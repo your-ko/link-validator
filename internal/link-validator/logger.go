@@ -50,9 +50,9 @@ func LogLevel() zapcore.Level {
 func ghActionsLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 	switch l {
 	case zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel:
-		enc.AppendString("::error:: ERROR")
+		enc.AppendString("::error::")
 	case zapcore.WarnLevel:
-		enc.AppendString("::warning:: WARN")
+		enc.AppendString("::warning::")
 	case zapcore.InfoLevel:
 		enc.AppendString("INFO")
 	case zapcore.DebugLevel:
