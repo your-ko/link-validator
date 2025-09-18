@@ -40,9 +40,6 @@ jobs:
           BASE_URL: "https://github.com"
         shell: bash
         run: |
-          pwd
-          ls -l 
-          echo "----"
           docker run --rm \
             -e LOG_LEVEL \
             -e FILE_MASKS \
