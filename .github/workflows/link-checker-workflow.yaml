@@ -34,7 +34,7 @@ jobs:
         id: lnk
         env:
           LOG_LEVEL: "debug"
-#          FILE_MASKS: "*.md"
+          FILE_MASKS: "*.md"
           LOOKUP_PATH: "."
           PAT: ${{ secrets.GITHUB_TOKEN }}
           BASE_URL: "https://github.com"
@@ -43,7 +43,15 @@ jobs:
           pwd
           ls -l 
           echo "----"
-          docker run --rm -e LOG_LEVEL -e FILE_MASKS -e LOOKUP_PATH -e PAT -e AWS_ENV  -e BASE_URL ${DOCKER_VALIDATOR}
+          docker run --rm \ 
+            -e LOG_LEVEL \
+            -e FILE_MASKS \
+            -e LOOKUP_PATH \
+            -e PAT \
+            -e BASE_URL \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            ${DOCKER_VALIDATOR}
 
 
 
