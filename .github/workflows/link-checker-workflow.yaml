@@ -1,4 +1,4 @@
-name: link-validator-workflow.yml
+name: Link validation
 
 on:
   workflow_call:
@@ -33,6 +33,7 @@ jobs:
       - name: Run Link validation
         id: lnk
         env:
+          LOG_LEVEL: "debug"
           FILE_MASKS: "*.md"
           LOOKUP_PATH: "."
           PAT: ${{ secrets.GITHUB_TOKEN }}
