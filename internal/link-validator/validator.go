@@ -72,7 +72,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				if err != nil {
 					var notFound errs.NotFoundError
 					if errors.As(err, &notFound) {
-						logger.Info("link not found", zap.String("link", notFound.Error()))
+						logger.Warn("link not found", zap.String("link", notFound.Error()), zap.String("filename", fileName))
 						stats.NotFound++
 					} else {
 						stats.Errors++
