@@ -35,6 +35,12 @@ func main() {
 
 	baseUrl = strings.TrimSpace(strings.ToLower(baseUrl))
 
+	logger.Info("Starting Link Validator",
+		zap.String("version", link_validator.Version.Version),
+		zap.String("build date", link_validator.Version.BuildDate),
+		zap.String("git commit", link_validator.Version.GitCommit),
+	)
+
 	config := link_validator.Config{
 		BaseUrl: baseUrl,
 		Path:    path,
@@ -47,6 +53,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}
+	logger.Debug("Found files", zap.Strings("files", filesList))
 
 	ctx := context.Background()
 	stats := validator.ProcessFiles(ctx, filesList, logger)
