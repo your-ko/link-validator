@@ -26,6 +26,7 @@ type Stats struct {
 	Links    int
 	Errors   int
 	NotFound int
+	Files    int
 }
 
 type LinkValidador struct {
@@ -53,6 +54,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 
 	for _, fileName := range filesList {
 		logger.Debug("processing file", zap.String("fileName", fileName))
+		stats.Files++
 		f, err := os.Open(fileName)
 		if err != nil {
 			logger.Error("Error opening file", zap.String("file", fileName), zap.Error(err))

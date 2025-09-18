@@ -20,14 +20,14 @@ WORKDIR /src
 ENV CGO_ENABLED=0
 RUN GOOS=linux GOARCH=amd64 make build
 
-FROM alpine:3.20
-#FROM scratch
-#
-#COPY --from=builder /etc/passwd_gouser /etc/passwd
-#USER gouser
+#FROM alpine:3.20
+FROM scratch
+
+COPY --from=builder /etc/passwd_gouser /etc/passwd
+USER gouser
 #
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /src/bin/link-validator /app/link-validator
-#ENTRYPOINT ["/app/link-validator"]
-ENTRYPOINT ["/bin/sh"]
-CMD []
+ENTRYPOINT ["/app/link-validator"]
+#ENTRYPOINT ["/bin/sh"]
+#CMD []
