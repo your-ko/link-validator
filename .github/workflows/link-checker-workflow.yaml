@@ -2,6 +2,12 @@ name: link-validator-workflow.yml
 
 on:
   workflow_call:
+# TODO
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+      - main
 
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:latest # TODO: set version
