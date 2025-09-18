@@ -35,7 +35,7 @@ jobs:
         env:
           FILE_MASKS: "*.md"
           LOOKUP_PATH: "."
-          PAT: ${{ secrets.PAT }}
+          PAT: ${{ secrets.GITHUB_TOKEN }}
           BASE_URL: "https://github.com"
         shell: bash
         run: |
