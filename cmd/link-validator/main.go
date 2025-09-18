@@ -26,7 +26,6 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-	logger.Debug("Staring link-validator", zap.String("version", link_validator.Version.Version))
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
 	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
@@ -34,6 +33,17 @@ func main() {
 	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
 
 	baseUrl = strings.TrimSpace(strings.ToLower(baseUrl))
+
+	logger.Info("Starting Link Validator",
+		zap.String("version", link_validator.Version.Version),
+		zap.String("build date", link_validator.Version.BuildDate),
+		zap.String("git commit", link_validator.Version.GitCommit),
+	)
+	logger.Debug("Running with parameters",
+		zap.Strings("FILE_MASKS", fileMasks),
+		zap.String("LOOKUP_PATH", path),
+		zap.String("BASE_URL", baseUrl),
+	)
 
 	config := link_validator.Config{
 		BaseUrl: baseUrl,
@@ -47,12 +57,14 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}
+	logger.Debug("Found files", zap.Strings("files", filesList))
 
 	ctx := context.Background()
 	stats := validator.ProcessFiles(ctx, filesList, logger)
 	if stats.Errors != 0 {
 		logger.Error("Errors found:", zap.Int("errors", stats.Errors))
 	}
+	logger.Info("Files processed", zap.Int("files", stats.Files))
 	logger.Info("Links processed", zap.Int("links", stats.Links))
 	logger.Info("Links not found", zap.Int("links", stats.NotFound))
 	logger.Info("Lines processed", zap.Int("lines", stats.Lines))
