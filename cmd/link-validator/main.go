@@ -40,6 +40,11 @@ func main() {
 		zap.String("build date", link_validator.Version.BuildDate),
 		zap.String("git commit", link_validator.Version.GitCommit),
 	)
+	logger.Debug("Running with parameters",
+		zap.Strings("FILE_MASKS", fileMasks),
+		zap.String("LOOKUP_PATH", path),
+		zap.String("BASE_URL", baseUrl),
+	)
 
 	config := link_validator.Config{
 		BaseUrl: baseUrl,
