@@ -22,6 +22,14 @@ RUN GOOS=linux GOARCH=amd64 make build
 
 #FROM alpine:3.20
 FROM scratch
+LABEL org.opencontainers.image.title="Link Validator" \
+      org.opencontainers.image.description="A simple link validator for markdown and code repositories" \
+      org.opencontainers.image.url="https://github.com/your-org/link-validator" \
+      org.opencontainers.image.source="https://github.com/your-org/link-validator" \
+      org.opencontainers.image.version="0.0.0" \
+      org.opencontainers.image.created=$BUILD_DATE \
+      org.opencontainers.image.revision=$GIT_COMMIT \
+      org.opencontainers.image.licenses="MIT"
 
 COPY --from=builder /etc/passwd_gouser /etc/passwd
 USER gouser
