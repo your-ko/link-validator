@@ -37,6 +37,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug
+        run: |
+          cat internal/link-validator/version.tpl
+
+
       - name: Set build metadata
         id: meta
         run: |
