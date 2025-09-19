@@ -39,8 +39,10 @@ jobs:
 
       - name: Debug
         run: |
-          cat internal/link-validator/version.tpl
-
+          cat internal/link-validator/version.tpl | \ 
+          sed -e 's/0.0.0/${{ inputs.version }}/' | \
+          sed -e 's/xxx_git_commit_xxx/${{ steps.meta.outputs.GIT_COMMIT }}/' | \
+          sed -e 's/xxx_build_date_xxx/${{ steps.meta.outputs.BUILD_DATE }}/' > internal/link-validator/version.go
 
       - name: Set build metadata
         id: meta
