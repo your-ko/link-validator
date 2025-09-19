@@ -22,6 +22,10 @@ RUN GOOS=linux GOARCH=amd64 make build
 
 #FROM alpine:3.20
 FROM scratch
+
+ARG BUILD_DATE
+ARG GIT_COMMIT
+
 LABEL org.opencontainers.image.title="Link Validator" \
       org.opencontainers.image.description="A simple link validator for markdown and code repositories" \
       org.opencontainers.image.url="https://github.com/your-org/link-validator" \

@@ -34,7 +34,7 @@ jobs:
         id: lnk
         env:
           LOG_LEVEL: "debug"
-          FILE_MASKS: "*.md"
+          FILE_MASKS: "*.md,*.yaml"
           LOOKUP_PATH: "."
           PAT: ${{ secrets.GITHUB_TOKEN }}
           BASE_URL: "https://github.com"
