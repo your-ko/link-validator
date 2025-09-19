@@ -39,6 +39,8 @@ jobs:
 
       - name: Debug
         run: |
+          sed --help
+          echo 
           cat internal/link-validator/version.tpl | \ 
           sed -e 's/0.0.0/${{ inputs.version }}/' | \
           sed -e 's/xxx_git_commit_xxx/${{ steps.meta.outputs.GIT_COMMIT }}/' | \
@@ -61,9 +63,9 @@ jobs:
           context: .
           file: Dockerfile
           build-args: |
-            VERSION=${{ inputs.version }}
+            VERSION="0.0.0"
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }}
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }}
           provenance: false
           push: false
