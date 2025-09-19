@@ -84,7 +84,7 @@ jobs:
             VERSION=${{ inputs.version }}
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }}
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }}
           provenance: false
           push: true
 
