@@ -23,12 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
-# waiting for lint shipping newer version of golang
-#      - name: Lint
-#        run: make docker-generate docker-lint
-
-#      - name: Test
-#        run: make docker-test
+      - uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: './go.mod'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.10.0
@@ -40,15 +37,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get SHA
-        id: sha
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Set build metadata
         id: meta
         run: |
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Test
+        shell: bash
+        run: |
+          CGO_ENABLED=1 go test -race ./cmd/... ./internal/... ./pkg/...
 
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
@@ -56,8 +54,9 @@ jobs:
           context: .
           file: Dockerfile
           build-args: |
+            VERSION=${{ inputs.version }}
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.sha.outputs.sha_short }},${{ env.DOCKER_IMAGE_NAME }}:latest
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }}
           provenance: false
           push: false
