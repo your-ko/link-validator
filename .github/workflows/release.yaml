@@ -41,12 +41,21 @@ jobs:
         run: |
           CGO_ENABLED=1 go test -race ./cmd/... ./internal/... ./pkg/...
 
+      - name: Go mod tidy
+        run: |
+          go mod tidy
+
       - name: Set version
         run: |
-          cat internal/link-validator/version.tpl | \ 
-            sed -e 's/0.0.0/${{ inputs.version }}/' | \
-            sed -e 's/xxx_git_commit_xxx/${{ steps.meta.outputs.GIT_COMMIT }}/' | \
-            sed -e 's/xxx_build_date_xxx/${{ steps.meta.outputs.BUILD_DATE }}/' > internal/link-validator/version.go
+          cat internal/link-validator/version.tpl | sed -e 's/0.0.0/${{ inputs.version }}/' | sed -e 's/xxx_git_commit_xxx/${{ steps.meta.outputs.GIT_COMMIT }}/' | sed -e 's/xxx_build_date_xxx/${{ steps.meta.outputs.BUILD_DATE }}/' > internal/link-validator/version.go
+
+      - name: Commit changes
+        run: |
+          git add internal/link-validator/version.go
+          git add go.mod
+          git add go.sum
+          git commit -am "Releasing: Set version to ${{ inputs.version }}. Go mod tidy" || true
+          git push
 
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
