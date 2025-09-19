@@ -7,7 +7,7 @@ type VersionInfo struct {
 }
 
 var Version = VersionInfo{
-	Version:   "0.2.0",
-	GitCommit: "05dda04dfac323239a226006b1ac0648d8d4cdb1",
-	BuildDate: "2025-09-19T19:05:00Z",
+	Version:   "0.3.0",
+	GitCommit: "37516e0b7c3dcc31bf0bf975605ac293730df8ca",
+	BuildDate: "2025-09-19T19:07:58Z",
 }
