@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+env:
+  DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
+
+
 jobs:
   Release:
     name: Release
