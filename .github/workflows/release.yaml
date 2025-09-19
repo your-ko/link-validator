@@ -16,6 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
 
+      - name: SetUp
+        run: |
+          git config --local user.name  "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
       - uses: actions/setup-go@v6.0.0
         with:
           go-version-file: './go.mod'
@@ -51,16 +56,20 @@ jobs:
 
       - name: Commit changes
         env:
-          PAT: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           
           git add internal/link-validator/version.go
           git add go.mod
           git add go.sum
-          git commit -am "Releasing: Set version to ${{ inputs.version }}. Go mod tidy" || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Releasing: Set version to ${{ inputs.version }}. Go mod tidy"
+          fi
 
-          git remote set-url origin "https://x-access-token:${PAT}@https://github.com/your-ko/link-validator.git"
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/your-ko/link-validator.git"
           git push origin HEAD:main
 
       - name: Build Check image
