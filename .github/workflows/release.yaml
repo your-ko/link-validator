@@ -56,7 +56,7 @@ jobs:
 
       - name: Commit changes
         env:
-          PAT: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           
