@@ -44,11 +44,20 @@ jobs:
         id: sha
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Set build metadata
+        id: meta
+        run: |
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
         with:
           context: .
           file: Dockerfile
+          build-args: |
+            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ GITHUB_SHA }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.sha.outputs.sha_short }},${{ env.DOCKER_IMAGE_NAME }}:latest
           provenance: false
           push: true
