@@ -8,6 +8,14 @@ on:
         required: true
         type: string
 
+permissions:
+  packages: write
+  contents: write
+
+env:
+  DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
+
+
 jobs:
   Release:
     name: Release
@@ -15,6 +23,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
+
+      - name: SetUp
+        run: |
+          git config --local user.name  "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
       - uses: actions/setup-go@v6.0.0
         with:
@@ -41,12 +54,31 @@ jobs:
         run: |
           CGO_ENABLED=1 go test -race ./cmd/... ./internal/... ./pkg/...
 
+      - name: Go mod tidy
+        run: |
+          go mod tidy
+
       - name: Set version
         run: |
-          cat internal/link-validator/version.tpl | \ 
-            sed -e 's/0.0.0/${{ inputs.version }}/' | \
-            sed -e 's/xxx_git_commit_xxx/${{ steps.meta.outputs.GIT_COMMIT }}/' | \
-            sed -e 's/xxx_build_date_xxx/${{ steps.meta.outputs.BUILD_DATE }}/' > internal/link-validator/version.go
+          cat internal/link-validator/version.tpl | sed -e 's/0.0.0/${{ inputs.version }}/' | sed -e 's/xxx_git_commit_xxx/${{ steps.meta.outputs.GIT_COMMIT }}/' | sed -e 's/xxx_build_date_xxx/${{ steps.meta.outputs.BUILD_DATE }}/' > internal/link-validator/version.go
+
+      - name: Commit changes
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          
+          git add internal/link-validator/version.go
+          git add go.mod
+          git add go.sum
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Releasing: Set version to ${{ inputs.version }}. Go mod tidy"
+          fi
+
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/your-ko/link-validator.git"
+          git push origin HEAD:main
 
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
@@ -57,7 +89,7 @@ jobs:
             VERSION=${{ inputs.version }}
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }}
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }},${{ env.DOCKER_IMAGE_NAME }}:latest
           provenance: false
           push: true
 
