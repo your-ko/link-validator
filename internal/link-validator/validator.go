@@ -86,7 +86,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		stats.Lines = stats.Lines + lines
 
 		if zapcore.DebugLevel == logger.Level() {
-			logger.Debug("Processed: ", zap.Int("lines", stats.Lines), zap.String("fileName", fileName))
+			logger.Debug("Processed: ", zap.Int("lines", lines), zap.String("fileName", fileName))
 		} else {
 			logger.Info("Processed: ", zap.String("fileName", fileName))
 		}
