@@ -28,10 +28,10 @@ func New() *LinkProcessor {
 		`)` +
 		`(?:#[^)\s]*)?` // optional fragment
 
-	regexp := regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`)
+	regex := regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`)
 
 	return &LinkProcessor{
-		fileRegex: regexp,
+		fileRegex: regex,
 	}
 }
 

@@ -14,13 +14,13 @@ import (
 	"time"
 )
 
-type ExternalHttpLinkProcessor struct {
+type HttpLinkProcessor struct {
 	httpClient *http.Client
 	urlRegex   *regexp.Regexp
 	exclude    string
 }
 
-func New(exclude string) *ExternalHttpLinkProcessor {
+func New(exclude string) *HttpLinkProcessor {
 	exclude = strings.TrimPrefix(strings.TrimPrefix(exclude, "https://"), "http://")
 	exclude = strings.TrimPrefix(strings.TrimSuffix(exclude, "/"), ".")
 	httpClient := &http.Client{
@@ -29,7 +29,7 @@ func New(exclude string) *ExternalHttpLinkProcessor {
 	}
 	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
 
-	return &ExternalHttpLinkProcessor{
+	return &HttpLinkProcessor{
 		httpClient: httpClient,
 		urlRegex:   urlRegex,
 		exclude:    exclude,
@@ -40,7 +40,7 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-func (proc *ExternalHttpLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
+func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
 	if !strings.Contains(url, proc.exclude) {
 		// excluded url found, skip it
 		return nil
@@ -81,7 +81,7 @@ func (proc *ExternalHttpLinkProcessor) Process(ctx context.Context, url string, 
 	return errs.NewNotFound(url)
 }
 
-func (proc *ExternalHttpLinkProcessor) ExtractLinks(line string) []string {
+func (proc *HttpLinkProcessor) ExtractLinks(line string) []string {
 	parts := proc.urlRegex.FindAllString(line, -1)
 	urls := make([]string, 0, len(parts))
 
