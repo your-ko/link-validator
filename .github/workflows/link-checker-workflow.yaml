@@ -34,7 +34,7 @@ jobs:
             VERSION="0.0.0"
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:test
+          tags: ${{ env.DOCKER_IMAGE_NAME }}
           provenance: false
           push: false
       - name: Run Link validation
