@@ -55,4 +55,4 @@ jobs:
             -e BASE_URL \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            ${{ env.DOCKER_IMAGE_NAME }}:test
+            ${{ env.DOCKER_IMAGE_NAME }}
