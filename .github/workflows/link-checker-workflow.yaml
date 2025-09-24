@@ -25,6 +25,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Check image
+        uses: docker/build-push-action@v6.15.0
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |
+            VERSION="0.0.0"
+            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }}
+          provenance: false
+          push: false
       - name: Run Link validation
         id: lnk
         env:
@@ -43,4 +55,4 @@ jobs:
             -e BASE_URL \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            ${DOCKER_VALIDATOR}
+            ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }}
