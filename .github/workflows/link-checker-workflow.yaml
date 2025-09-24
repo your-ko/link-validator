@@ -34,7 +34,7 @@ jobs:
             VERSION="0.0.0"
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }}
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:test
           provenance: false
           push: false
       - name: Run Link validation
@@ -55,4 +55,4 @@ jobs:
             -e BASE_URL \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }}
+            ${{ env.DOCKER_IMAGE_NAME }}:test
