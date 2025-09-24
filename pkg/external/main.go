@@ -41,7 +41,7 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 }
 
 func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
-	if !strings.Contains(url, proc.exclude) {
+	if strings.Contains(url, proc.exclude) {
 		// excluded url found, skip it
 		return nil
 	}
