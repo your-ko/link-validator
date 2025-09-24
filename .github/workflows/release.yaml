@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
 
       - name: SetUp
         run: |
@@ -79,7 +81,7 @@ jobs:
       - name: Commit changes
         shell: bash
         env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           set -e
           
