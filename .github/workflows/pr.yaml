@@ -13,7 +13,6 @@ permissions:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
-  YQ_VERSION: v4.44.3
 
 jobs:
   PR:
