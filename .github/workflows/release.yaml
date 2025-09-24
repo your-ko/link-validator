@@ -81,7 +81,7 @@ jobs:
       - name: Commit changes
         shell: bash
         env:
-          TOKEN: ${{ secrets.TOKEN }}
+          TOKEN: ${{ secrets.PAT }}
         run: |
           set -e
           
