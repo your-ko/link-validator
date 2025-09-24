@@ -50,7 +50,8 @@ func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *za
 		return err
 	}
 	req.Header.Set("Accept", "text/html")
-
+	logger.Debug("Validating url", zap.String("url", url))
+	
 	//proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 	//	for key, val := range via[0].Header {
 	//		req.Header[key] = val
