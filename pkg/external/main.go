@@ -41,7 +41,8 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 }
 
 func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
-	if !strings.Contains(url, proc.exclude) {
+	logger.Debug("Validating external url", zap.String("url", url))
+	if strings.Contains(url, proc.exclude) {
 		// excluded url found, skip it
 		return nil
 	}
@@ -50,7 +51,6 @@ func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *za
 		return err
 	}
 	req.Header.Set("Accept", "text/html")
-	logger.Debug("Validating external url", zap.String("url", url))
 
 	//proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 	//	for key, val := range via[0].Header {
