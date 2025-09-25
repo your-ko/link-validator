@@ -68,7 +68,7 @@ jobs:
 #          FILE_MASKS: "*.md,*.yaml"
           FILE_MASKS: "*.md"
           LOOKUP_PATH: "."
-          PAT: ${{ secrets.GITHUB_TOKEN }}
+          PAT: ${{ secrets.PAT }}
           BASE_URL: "https://google.com"
         shell: bash
         run: |
