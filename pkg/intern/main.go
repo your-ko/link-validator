@@ -70,7 +70,7 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
 	}
 	owner, repo, _, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), match[6]
-	logger.Debug("Validating GutHub url", zap.String("url", url))
+	logger.Debug("Validating internal url", zap.String("url", url))
 
 	contents, _, _, err := proc.client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
 		Ref: branch,

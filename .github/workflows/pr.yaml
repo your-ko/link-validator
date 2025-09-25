@@ -65,7 +65,8 @@ jobs:
         id: lnk
         env:
           LOG_LEVEL: "debug"
-          FILE_MASKS: "*.md,*.yaml"
+#          FILE_MASKS: "*.md,*.yaml"
+          FILE_MASKS: "*.md"
           LOOKUP_PATH: "."
           PAT: ${{ secrets.GITHUB_TOKEN }}
           BASE_URL: "https://google.com"
