@@ -36,7 +36,7 @@ jobs:
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}
           provenance: false
-          push: false
+          push: true
       - name: Run Link validation
         id: lnk
         env:
