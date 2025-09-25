@@ -54,7 +54,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 	stats := Stats{}
 
 	for _, fileName := range filesList {
-		logger.Debug("processing file", zap.String("fileName", fileName))
+		logger.Debug("Processing file:", zap.String("fileName", fileName))
 		stats.Files++
 		f, err := os.Open(fileName)
 		if err != nil {
@@ -63,13 +63,14 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		}
 		defer f.Close()
 		lines := 0
+		linksFound := 0
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			line := scanner.Text()
 			links := v.processLine(line)
 			for link, processor := range links {
 				err := processor.Process(ctx, link, logger)
-				stats.Links++
+				linksFound++
 				if err != nil {
 					var notFound errs.NotFoundError
 					if errors.As(err, &notFound) {
@@ -84,9 +85,10 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			lines++
 		}
 		stats.Lines = stats.Lines + lines
+		stats.Links = stats.Links + linksFound
 
 		if zapcore.DebugLevel == logger.Level() {
-			logger.Debug("Processed: ", zap.Int("lines", lines), zap.String("fileName", fileName))
+			logger.Debug("Processed: ", zap.Int("lines", lines), zap.Int("links", linksFound), zap.String("fileName", fileName))
 		} else {
 			logger.Info("Processed: ", zap.String("fileName", fileName))
 		}

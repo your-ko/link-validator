@@ -37,7 +37,7 @@ func New() *LinkProcessor {
 
 func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
 	fileName := fmt.Sprintf("%s/%s", proc.path, url)
-	logger.Debug("validating local path", zap.String("filename", fileName))
+	logger.Debug("validating local url", zap.String("filename", fileName))
 	_, err := os.ReadFile(fileName)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
