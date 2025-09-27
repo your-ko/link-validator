@@ -81,6 +81,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 						logger.Warn("error validating link", zap.String("link", link), zap.Error(err))
 					}
 				}
+				logger.Debug("link validation successful", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines))
 			}
 			lines++
 		}
