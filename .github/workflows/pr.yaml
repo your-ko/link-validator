@@ -54,19 +54,19 @@ jobs:
           context: .
           file: Dockerfile
           build-args: |
-            VERSION="0.0.0"
+            VERSION="PR"
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }}
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR # TODO
           provenance: false
-          push: true
+          push: true  # TODO
 
       - name: Run Link validation
         id: lnk
         env:
           LOG_LEVEL: "debug"
-#          FILE_MASKS: "*.md,*.yaml"
-          FILE_MASKS: "*.md"
+          FILE_MASKS: "*.md,*.yaml"
+#          FILE_MASKS: "*.md" # TODO
           LOOKUP_PATH: "."
           PAT: ${{ secrets.PAT }}
           BASE_URL: "https://google.com"
