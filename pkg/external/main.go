@@ -42,46 +42,43 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 
 func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating external url", zap.String("url", url))
-	if strings.Contains(url, proc.exclude) {
-		// excluded url found, skip it
-		return nil
-	}
+
 	req, err := http.NewRequest("GET", url, bytes.NewBuffer(nil))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Accept", "text/html")
-	req.Header.Set("Accept", "text/html")
 	req.Header.Set("User-Agent", "link-validator/1.0 (+https://github.com/your-ko/link-validator)")
 
-	//proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-	//	for key, val := range via[0].Header {
-	//		req.Header[key] = val
-	//	}
-	//	return err
-	//}
 	r, err := proc.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer r.Body.Close()
-	if r.StatusCode >= 200 && r.StatusCode <= 300 {
-		// check just the first 4 KB of the body
-		bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 4096))
-		if err == nil && len(bodyBytes) > 0 {
-			body := string(bodyBytes)
-			if strings.Contains(body, "404") ||
-				strings.Contains(body, "does not contain the path") ||
-				strings.Contains(body, "not found") {
-
-				return errs.NewNotFound(url)
-			} else {
-				return nil
-			}
-		}
+	if r.StatusCode < 200 || r.StatusCode >= 300 {
+		return errs.NewNotFound(url)
 	}
 
-	return errs.NewNotFound(url)
+	// check just the first 4 KB of the body
+	bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 4096))
+	if err != nil {
+		// we can't read body, something is off
+		return err
+	}
+	if len(bodyBytes) == 0 {
+		// body is empty, doesn't count as a healthy URL
+		return errs.EmptyBody
+	}
+
+	body := strings.ToLower(string(bodyBytes))
+	if strings.Contains(body, "404") ||
+		strings.Contains(body, "does not contain the path") ||
+		strings.Contains(body, "not found") {
+
+		return errs.NewNotFound(url)
+	} else {
+		return nil
+	}
 }
 
 func (proc *HttpLinkProcessor) ExtractLinks(line string) []string {
