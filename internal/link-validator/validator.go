@@ -42,7 +42,9 @@ type Config struct {
 
 func New(config Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
-	processors = append(processors, intern.New(config.BaseUrl, config.PAT))
+	if config.BaseUrl != "" {
+		processors = append(processors, intern.New(config.BaseUrl, config.PAT))
+	}
 	processors = append(processors, local.New())
 	processors = append(processors, external.New(config.BaseUrl))
 	return LinkValidador{processors}
