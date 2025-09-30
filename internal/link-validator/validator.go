@@ -35,9 +35,12 @@ type LinkValidador struct {
 }
 
 type Config struct {
-	BaseUrl string
-	Path    string
-	PAT     string
+	BaseUrl     string
+	Path        string
+	PAT         string
+	FileMasks   []string
+	ExcludePath string
+	LookupPath  string
 }
 
 func New(config Config) LinkValidador {
@@ -75,8 +78,12 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				linksFound++
 				if err != nil {
 					var notFound errs.NotFoundError
+					var empty errs.EmptyBodyError
 					if errors.As(err, &notFound) {
 						logger.Warn("link not found", zap.String("link", notFound.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+						stats.NotFound++
+					} else if errors.As(err, &empty) {
+						logger.Warn("link not found", zap.String("link", empty.Error()), zap.String("filename", fileName), zap.Int("line", lines))
 						stats.NotFound++
 					} else {
 						stats.Errors++
@@ -99,11 +106,11 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 	return stats
 }
 
-func (v *LinkValidador) GetFiles(root string, masks []string) ([]string, error) {
+func (v *LinkValidador) GetFiles(config Config) ([]string, error) {
 	var matchedFiles []string
 
 	matchesAnyMask := func(name string) bool {
-		for _, mask := range masks {
+		for _, mask := range config.FileMasks {
 			matched, err := filepath.Match(mask, name)
 			if err == nil && matched {
 				return true
@@ -112,7 +119,7 @@ func (v *LinkValidador) GetFiles(root string, masks []string) ([]string, error) 
 		return false
 	}
 
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(config.LookupPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			// Just skip files/dirs we can't read
 			return nil

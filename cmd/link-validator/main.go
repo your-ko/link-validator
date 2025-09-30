@@ -28,7 +28,9 @@ func main() {
 	}()
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
-	path := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup file.")
+	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path.")
+	excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path.")
+	files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate."), ",")
 	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
 	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
 
@@ -41,19 +43,24 @@ func main() {
 	)
 	logger.Debug("Running with parameters",
 		zap.Strings("FILE_MASKS", fileMasks),
-		zap.String("LOOKUP_PATH", path),
+		zap.String("LOOKUP_PATH", lookUpPath),
+		zap.String("EXCLUDE_PATH", excludePath),
+		zap.Strings("FILE_LIST", files),
 		zap.String("BASE_URL", baseUrl),
 	)
 
 	config := link_validator.Config{
-		BaseUrl: baseUrl,
-		Path:    path,
-		PAT:     pat,
+		BaseUrl:     baseUrl,
+		Path:        lookUpPath,
+		PAT:         pat,
+		FileMasks:   fileMasks,
+		LookupPath:  lookUpPath,
+		ExcludePath: excludePath,
 	}
 
 	validator := link_validator.New(config)
 
-	filesList, err := validator.GetFiles(path, fileMasks)
+	filesList, err := validator.GetFiles(config)
 	if err != nil {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}
