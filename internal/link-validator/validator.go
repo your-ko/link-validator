@@ -35,21 +35,21 @@ type LinkValidador struct {
 }
 
 type Config struct {
-	BaseUrl     string
-	Path        string
-	PAT         string
-	FileMasks   []string
-	ExcludePath string
-	LookupPath  string
+	CorpGitHubUrl string
+	Path          string
+	PAT           string
+	FileMasks     []string
+	ExcludePath   string
+	LookupPath    string
 }
 
 func New(config Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
-	if config.BaseUrl != "" {
-		processors = append(processors, intern.New(config.BaseUrl, config.PAT))
+	if config.CorpGitHubUrl != "" {
+		processors = append(processors, intern.New(config.CorpGitHubUrl, config.PAT))
 	}
 	processors = append(processors, local.New())
-	processors = append(processors, external.New(config.BaseUrl))
+	processors = append(processors, external.New(config.CorpGitHubUrl))
 	return LinkValidador{processors}
 }
 

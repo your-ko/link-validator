@@ -68,7 +68,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			got := p.ExtractLinks(tt.line)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("ExtractLinks mismatch\nbase=%q\nline=%q\ngot = %#v\nwant= %#v",
-					p.baseUrl, tt.line, got, tt.want)
+					p.corpGitHubUrl, tt.line, got, tt.want)
 			}
 		})
 	}

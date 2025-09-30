@@ -28,13 +28,13 @@ func main() {
 	}()
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
-	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path.")
-	excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path.")
-	files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate."), ",")
+	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
+	excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
+	files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate. Useful for PR validation, for example"), ",")
 	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
-	baseUrl := *flag.String("BASE_URL", GetEnv("BASE_URL", "https://github.com"), "GitHub BASE URL.")
+	corpGitHub := *flag.String("CORP_URL", GetEnv("CORP_URL", "https://github.com"), "Corporate GitHub URL.")
 
-	baseUrl = strings.TrimSpace(strings.ToLower(baseUrl))
+	corpGitHub = strings.TrimSpace(strings.ToLower(corpGitHub))
 
 	logger.Info("Starting Link Validator",
 		zap.String("version", link_validator.Version.Version),
@@ -46,16 +46,16 @@ func main() {
 		zap.String("LOOKUP_PATH", lookUpPath),
 		zap.String("EXCLUDE_PATH", excludePath),
 		zap.Strings("FILE_LIST", files),
-		zap.String("BASE_URL", baseUrl),
+		zap.String("CORP_URL", corpGitHub),
 	)
 
 	config := link_validator.Config{
-		BaseUrl:     baseUrl,
-		Path:        lookUpPath,
-		PAT:         pat,
-		FileMasks:   fileMasks,
-		LookupPath:  lookUpPath,
-		ExcludePath: excludePath,
+		CorpGitHubUrl: corpGitHub,
+		Path:          lookUpPath,
+		PAT:           pat,
+		FileMasks:     fileMasks,
+		LookupPath:    lookUpPath,
+		ExcludePath:   excludePath,
 	}
 
 	validator := link_validator.New(config)

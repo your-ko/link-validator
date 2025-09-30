@@ -8,7 +8,6 @@ package local
 import (
 	"context"
 	"errors"
-	"fmt"
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
@@ -17,7 +16,6 @@ import (
 
 type LinkProcessor struct {
 	fileRegex *regexp.Regexp
-	path      string
 }
 
 func New() *LinkProcessor {
@@ -36,12 +34,11 @@ func New() *LinkProcessor {
 }
 
 func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
-	fileName := fmt.Sprintf("%s/%s", proc.path, url)
-	logger.Debug("validating local url", zap.String("filename", fileName))
-	_, err := os.ReadFile(fileName)
+	logger.Debug("validating local url", zap.String("filename", url))
+	_, err := os.ReadFile(url)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return errs.NewNotFound(fileName)
+			return errs.NewNotFound(url)
 		}
 		return err
 	}
