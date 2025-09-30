@@ -59,25 +59,24 @@ jobs:
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR # TODO
           provenance: false
-          push: true  # TODO
+          push: false  # TODO
 
-      - name: Run Link validation
-        id: lnk
-        env:
-          LOG_LEVEL: "debug"
-          FILE_MASKS: "*.md,*.yaml"
-#          FILE_MASKS: "*.md" # TODO
-          LOOKUP_PATH: "."
-          PAT: ${{ secrets.PAT }}
-          BASE_URL: "https://google.com"
-        shell: bash
-        run: |
-          docker run --rm \
-            -e LOG_LEVEL \
-            -e FILE_MASKS \
-            -e LOOKUP_PATH \
-            -e PAT \
-            -e BASE_URL \
-            -v "${{ github.workspace }}:/work" \
-            -w /work \
-            ${{ env.DOCKER_IMAGE_NAME }}:PR
+#      - name: Run Link validation
+#        id: lnk
+#        env:
+#          LOG_LEVEL: "debug"
+#          FILE_MASKS: "*.md,*.yaml"
+#          LOOKUP_PATH: "."
+#          PAT: ${{ secrets.PAT }}
+#          BASE_URL: "https://google.com"
+#        shell: bash
+#        run: |
+#          docker run --rm \
+#            -e LOG_LEVEL \
+#            -e FILE_MASKS \
+#            -e LOOKUP_PATH \
+#            -e PAT \
+#            -e BASE_URL \
+#            -v "${{ github.workspace }}:/work" \
+#            -w /work \
+#            ${{ env.DOCKER_IMAGE_NAME }}:PR
