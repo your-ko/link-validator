@@ -50,12 +50,12 @@ func main() {
 	)
 
 	config := link_validator.Config{
-		BaseUrl:     corpGitHub,
-		Path:        lookUpPath,
-		PAT:         pat,
-		FileMasks:   fileMasks,
-		LookupPath:  lookUpPath,
-		ExcludePath: excludePath,
+		CorpGitHubUrl: corpGitHub,
+		Path:          lookUpPath,
+		PAT:           pat,
+		FileMasks:     fileMasks,
+		LookupPath:    lookUpPath,
+		ExcludePath:   excludePath,
 	}
 
 	validator := link_validator.New(config)

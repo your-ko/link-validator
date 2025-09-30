@@ -21,15 +21,15 @@ import (
 )
 
 type InternalLinkProcessor struct {
-	baseUrl  string
-	client   *github.Client
-	urlRegex *regexp.Regexp
+	corpGitHubUrl string
+	client        *github.Client
+	urlRegex      *regexp.Regexp
 }
 
-func New(baseUrl, pat string) *InternalLinkProcessor {
+func New(corpGitHubUrl, pat string) *InternalLinkProcessor {
 	client, err := github.NewClient(nil).WithEnterpriseURLs(
-		baseUrl,
-		strings.ReplaceAll(baseUrl, "https://", "https://uploads."),
+		corpGitHubUrl,
+		strings.ReplaceAll(corpGitHubUrl, "https://", "https://uploads."),
 	)
 	if err != nil {
 		panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
@@ -38,9 +38,9 @@ func New(baseUrl, pat string) *InternalLinkProcessor {
 
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 
-	u, err := url.Parse(baseUrl)
+	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
-		panic(fmt.Sprintf("invalid baseUrl: %q", baseUrl))
+		panic(fmt.Sprintf("invalid baseUrl: %q", corpGitHubUrl))
 	}
 	host := u.Hostname()
 
@@ -58,9 +58,9 @@ func New(baseUrl, pat string) *InternalLinkProcessor {
 	urlRegex := regexp.MustCompile(pattern)
 
 	return &InternalLinkProcessor{
-		baseUrl:  baseUrl,
-		client:   client,
-		urlRegex: urlRegex,
+		corpGitHubUrl: corpGitHubUrl,
+		client:        client,
+		urlRegex:      urlRegex,
 	}
 }
 
@@ -110,7 +110,7 @@ func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
 	}
 
 	// Parse base hostname once
-	base, err := url.Parse(proc.baseUrl)
+	base, err := url.Parse(proc.corpGitHubUrl)
 	if err != nil || base.Hostname() == "" {
 		return nil
 	}
