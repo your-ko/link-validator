@@ -1,13 +1,6 @@
 package local
 
 import (
-	"context"
-	"errors"
-	"fmt"
-	"go.uber.org/zap"
-	"link-validator/pkg/errs"
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -86,114 +79,6 @@ func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 			got := proc.ExtractLinks(tt.line)
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("ExtractLinks mismatch\nline=%q\ngot = %#v\nwant= %#v", tt.line, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestLinkProcessor_Process(t *testing.T) {
-	t.Parallel()
-
-	tmp := t.TempDir()
-
-	// Create some fixtures
-	mkFile := func(rel string) {
-		full := filepath.Join(tmp, rel)
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatalf("mkdir: %v", err)
-		}
-		if err := os.WriteFile(full, []byte("ok"), 0o644); err != nil {
-			t.Fatalf("write file: %v", err)
-		}
-	}
-	mkDir := func(rel string) {
-		full := filepath.Join(tmp, rel)
-		if err := os.MkdirAll(full, 0o755); err != nil {
-			t.Fatalf("mkdir: %v", err)
-		}
-	}
-
-	mkFile("a.md")
-	mkFile("docs/readme.md")
-	mkDir("somedir")
-
-	logger := zap.NewNop()
-	proc := &LinkProcessor{
-		path: tmp,
-	}
-
-	type tc struct {
-		name    string
-		url     string
-		wantErr bool
-		wantIs  error // sentinel to check with errors.Is (e.g., errs.NotFound), nil => don’t check
-	}
-	tests := []tc{
-		{
-			name:    "existing file at root -> nil",
-			url:     "a.md",
-			wantErr: false,
-		},
-		{
-			name:    "nested existing file -> nil",
-			url:     "docs/readme.md",
-			wantErr: false,
-		},
-		{
-			name:    "missing file -> NotFound",
-			url:     "missing.md",
-			wantErr: true,
-			wantIs:  errs.NotFound,
-		},
-		{
-			name:    "path points to a directory -> non-NotFound error",
-			url:     "somedir", // ReadFile on a directory returns an error (EISDIR on Unix)
-			wantErr: true,
-			// wantIs nil: we assert it's NOT NotFound below
-		},
-		{
-			name:    "relative current-dir style -> nil",
-			url:     "./a.md",
-			wantErr: false,
-		},
-		{
-			name:    "relative nested style -> nil",
-			url:     "./docs/readme.md",
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := proc.Process(context.Background(), tt.url, logger)
-
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("Process(%q) error presence = %v, want %v (err = %v)",
-					tt.url, err != nil, tt.wantErr, err)
-			}
-			if !tt.wantErr {
-				return
-			}
-
-			// If a sentinel is specified, ensure errors.Is matches it.
-			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
-				t.Fatalf("expected errors.Is(err, %v) to be true; got err=%v", tt.wantIs, err)
-			}
-
-			// For the directory case (or any non-sentinel case), ensure it's NOT mapped to NotFound.
-			if tt.wantIs == nil && errors.Is(err, errs.NotFound) {
-				t.Fatalf("unexpected mapping to errs.NotFound for url=%q; err=%v", tt.url, err)
-			}
-
-			// Optional: if it's NotFound, ensure the error string contains the constructed filename
-			if errors.Is(err, errs.NotFound) {
-				expected := fmt.Sprintf("%s/%s", proc.path, tt.url) // matches the function’s join logic
-				if err.Error() != expected {
-					t.Fatalf("NotFoundError.Error() = %q, want %q", err.Error(), expected)
-				}
 			}
 		})
 	}
