@@ -17,7 +17,7 @@ import (
 
 type LinkProcessor struct {
 	fileRegex *regexp.Regexp
-	path      string
+	path      string // path to heck
 }
 
 func New() *LinkProcessor {

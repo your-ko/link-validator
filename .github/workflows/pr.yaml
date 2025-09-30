@@ -68,7 +68,7 @@ jobs:
 #          FILE_MASKS: "*.md,*.yaml"
 #          LOOKUP_PATH: "."
 #          PAT: ${{ secrets.PAT }}
-#          BASE_URL: "https://google.com"
+#          CORP_URL: "https://google.com"
 #        shell: bash
 #        run: |
 #          docker run --rm \
@@ -76,7 +76,7 @@ jobs:
 #            -e FILE_MASKS \
 #            -e LOOKUP_PATH \
 #            -e PAT \
-#            -e BASE_URL \
+#            -e CORP_URL \
 #            -v "${{ github.workspace }}:/work" \
 #            -w /work \
 #            ${{ env.DOCKER_IMAGE_NAME }}:PR

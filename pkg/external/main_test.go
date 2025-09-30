@@ -100,6 +100,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 }
 
 func TestHttpLinkProcessor_Process(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		exclude string
 		status  int
