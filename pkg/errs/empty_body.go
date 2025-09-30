@@ -12,5 +12,5 @@ type EmptyBodyError struct {
 }
 
 func (e EmptyBodyError) Error() string {
-	return fmt.Sprintf("%s has empty response body", e.link)
+	return fmt.Sprintf("'%s' has empty response body", e.link)
 }
