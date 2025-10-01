@@ -144,10 +144,15 @@ func TestLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.NotFound,
 		},
 		{
-			name:    "path points to a directory -> non-NotFound error",
+			name:    "path points to an existing directory",
 			url:     "somedir", // ReadFile on a directory returns an error (EISDIR on Unix)
+			wantErr: false,
+		},
+		{
+			name:    "path points to a non-existing directory",
+			url:     "nonexisting", // ReadFile on a directory returns an error (EISDIR on Unix)
 			wantErr: true,
-			// wantIs nil: we assert it's NOT NotFound below
+			wantIs:  errs.NotFound,
 		},
 		{
 			name:    "relative current-dir style -> nil",

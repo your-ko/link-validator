@@ -33,12 +33,12 @@ func New() *LinkProcessor {
 	}
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
-	logger.Debug("validating local url", zap.String("filename", url))
-	_, err := os.ReadFile(url)
+func (proc *LinkProcessor) Process(_ context.Context, path string, logger *zap.Logger) error {
+	logger.Debug("validating local url", zap.String("filename", path))
+	_, err := os.Stat(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return errs.NewNotFound(url)
+			return errs.NewNotFound(path)
 		}
 		return err
 	}
