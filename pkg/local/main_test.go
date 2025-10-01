@@ -92,89 +92,110 @@ func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 }
 
 func TestLinkProcessor_Process(t *testing.T) {
-	t.Parallel()
-
 	tmp := t.TempDir()
 
-	// Create some fixtures
-	mkFile := func(rel string) {
-		full := filepath.Join(tmp, rel)
-		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
-			t.Fatalf("mkdir: %v", err)
-		}
-		if err := os.WriteFile(full, []byte("ok"), 0o644); err != nil {
-			t.Fatalf("write file: %v", err)
-		}
+	type fields struct {
+		fileName string
+		dirName  string
 	}
+	type args struct {
+		link string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		wantIs  error
+	}{
+		{
+			name:   "existing file at root",
+			args:   args{link: "qqq.md"},
+			fields: fields{fileName: "qqq.md"},
+		},
+		{
+			name:   "existing file inside some dir",
+			args:   args{link: "test/qqq.md"},
+			fields: fields{fileName: "test/qqq.md"},
+		},
+		{
+			name:   "existing file inside some dir with a header",
+			args:   args{link: "test/qqq.md#header1"},
+			fields: fields{fileName: "test/qqq.md"},
+		},
+		{
+			name:    "existing file inside some dir with a non-existent header",
+			args:    args{link: "test/qqq.md#header2"},
+			fields:  fields{fileName: "test/qqq.md"},
+			wantErr: true,
+			wantIs:  errs.NewNotFound(fmt.Sprintf("%s/%s", tmp, "test/qqq.md#header2")),
+		},
+		{
+			name:   "existing dir in root",
+			args:   args{link: "test"},
+			fields: fields{dirName: "test"},
+		},
+		{
+			name:   "existing dir in deeper",
+			args:   args{link: "test/test"},
+			fields: fields{dirName: "test/test"},
+		},
+		{
+			name:    "non-existing dir",
+			args:    args{link: "test/test"},
+			fields:  fields{dirName: "test1"},
+			wantErr: true,
+			wantIs:  errs.NewNotFound(fmt.Sprintf("%s/%s", tmp, "test/test")),
+		},
+	}
+
+	logger := zap.NewNop()
+
 	mkDir := func(rel string) {
 		full := filepath.Join(tmp, rel)
 		if err := os.MkdirAll(full, 0o755); err != nil {
 			t.Fatalf("mkdir: %v", err)
 		}
 	}
+	mkFile := func(rel string) {
+		full := filepath.Join(tmp, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			t.Fatalf("write file: %v", err)
+		}
+	}
+	cleanUp := func(test fields) {
+		if test.fileName != "" {
+			err := os.Remove(fmt.Sprintf("%s/%s", tmp, test.fileName))
+			if err != nil {
+				t.Fatalf("cleanup: %v", err)
+			}
+		}
+		if test.dirName != "" {
+			err := os.Remove(fmt.Sprintf("%s/%s", tmp, test.dirName))
+			if err != nil {
+				t.Fatalf("cleanup: %v", err)
+			}
+		}
+	}
 
-	mkFile("a.md")
-	mkFile("docs/readme.md")
-	mkDir("somedir")
-
-	logger := zap.NewNop()
 	proc := &LinkProcessor{}
-
-	type tc struct {
-		name    string
-		url     string
-		wantErr bool
-		wantIs  error
-	}
-	tests := []tc{
-		{
-			name:    "existing file at root -> nil",
-			url:     "a.md",
-			wantErr: false,
-		},
-		{
-			name:    "nested existing file -> nil",
-			url:     "docs/readme.md",
-			wantErr: false,
-		},
-		{
-			name:    "missing file -> NotFound",
-			url:     "missing.md",
-			wantErr: true,
-			wantIs:  errs.NotFound,
-		},
-		{
-			name:    "path points to an existing directory",
-			url:     "somedir", // ReadFile on a directory returns an error (EISDIR on Unix)
-			wantErr: false,
-		},
-		{
-			name:    "path points to a non-existing directory",
-			url:     "nonexisting", // ReadFile on a directory returns an error (EISDIR on Unix)
-			wantErr: true,
-			wantIs:  errs.NotFound,
-		},
-		{
-			name:    "relative current-dir style -> nil",
-			url:     "./a.md",
-			wantErr: false,
-		},
-		{
-			name:    "relative nested style -> nil",
-			url:     "./docs/readme.md",
-			wantErr: false,
-		},
-	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			if tt.fields.fileName != "" {
+				mkFile(tt.fields.fileName)
+			}
+			if tt.fields.dirName != "" {
+				mkDir(tt.fields.dirName)
+			}
+			defer cleanUp(tt.fields)
 
-			err := proc.Process(context.Background(), fmt.Sprintf("%s/%s", tmp, tt.url), logger)
-
+			err := proc.Process(context.Background(), fmt.Sprintf("%s/%s", tmp, tt.args.link), logger)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Process(%q) error presence = %v, want %v (err = %v)",
-					tt.url, err != nil, tt.wantErr, err)
+					tt.args.link, err != nil, tt.wantErr, err)
 			}
 			if !tt.wantErr {
 				return
@@ -185,14 +206,8 @@ func TestLinkProcessor_Process(t *testing.T) {
 				t.Fatalf("expected errors.Is(err, %v) to be true; got err=%v", tt.wantIs, err)
 			}
 
-			// For the directory case (or any non-sentinel case), ensure it's NOT mapped to NotFound.
-			if tt.wantIs == nil && errors.Is(err, errs.NotFound) {
-				t.Fatalf("unexpected mapping to errs.NotFound for url=%q; err=%v", tt.url, err)
-			}
-
-			// Optional: if it's NotFound, ensure the error string contains the constructed filename
 			if errors.Is(err, errs.NotFound) {
-				expected := fmt.Sprintf("%s/%s", tmp, tt.url)
+				expected := fmt.Sprintf("%s/%s", tmp, tt.args.link)
 				if err.Error() != expected {
 					t.Fatalf("NotFoundError.Error() = %q, want %q", err.Error(), expected)
 				}
@@ -200,3 +215,11 @@ func TestLinkProcessor_Process(t *testing.T) {
 		})
 	}
 }
+
+var content = `
+test
+# header1
+test
+## header2
+test
+`

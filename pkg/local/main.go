@@ -6,12 +6,15 @@
 package local
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
 	"regexp"
+	"strings"
 )
 
 type LinkProcessor struct {
@@ -33,16 +36,55 @@ func New() *LinkProcessor {
 	}
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, path string, logger *zap.Logger) error {
-	logger.Debug("validating local url", zap.String("filename", path))
-	_, err := os.Stat(path)
+func (proc *LinkProcessor) Process(_ context.Context, link string, logger *zap.Logger) error {
+	logger.Debug("validating local url", zap.String("filename", link))
+	split := strings.Split(link, "#")
+	if len(split) > 2 {
+		return errors.New("incorrect link. Contains more than one #")
+	}
+	fileName := split[0]
+	var header string
+	if len(split) > 1 {
+		header = split[1]
+	}
+
+	info, err := os.Stat(fileName)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return errs.NewNotFound(path)
+			return errs.NewNotFound(fileName)
 		}
 		return err
 	}
-	return nil
+	if info.IsDir() {
+		if header != "" {
+			return errors.New("incorrect link. It points to dir but contains a pointer to a header")
+		}
+		return nil
+	}
+
+	if header == "" {
+		// we found the file, so everything is good
+		return nil
+	}
+
+	// if the link contains #, then we need to look inside the file
+	file, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	re := regexp.MustCompile(fmt.Sprintf(`^#\s+%s`, regexp.QuoteMeta(header)))
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if re.MatchString(scanner.Text()) {
+			return nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return errs.NewNotFound(link)
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
