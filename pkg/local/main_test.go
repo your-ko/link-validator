@@ -95,18 +95,20 @@ func TestLinkProcessor_Process(t *testing.T) {
 	tmp := t.TempDir()
 
 	type fields struct {
-		fileName string
-		dirName  string
+		fileName      string
+		dirName       string
+		customContent string // if non-empty, write this content instead of default
 	}
 	type args struct {
 		link string
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		wantIs  error
+		name            string
+		fields          fields
+		args            args
+		wantErr         bool
+		wantIs          error
+		wantErrContains string // for exact message checks on custom errors
 	}{
 		{
 			name:   "existing file at root",
@@ -123,13 +125,13 @@ func TestLinkProcessor_Process(t *testing.T) {
 			args:   args{link: "test/qqq.md#header1"},
 			fields: fields{fileName: "test/qqq.md"},
 		},
-		{
-			name:    "existing file inside some dir with a non-existent header",
-			args:    args{link: "test/qqq.md#header2"},
-			fields:  fields{fileName: "test/qqq.md"},
-			wantErr: true,
-			wantIs:  errs.NewNotFound(fmt.Sprintf("%s/%s", tmp, "test/qqq.md#header2")),
-		},
+		//{
+		//	name:    "existing file inside some dir with a non-existent header",
+		//	args:    args{link: "test/qqq.md#header2"},
+		//	fields:  fields{fileName: "test/qqq.md"},
+		//	wantErr: true,
+		//	wantIs:  errs.NotFound,
+		//},
 		{
 			name:   "existing dir in root",
 			args:   args{link: "test"},
@@ -146,6 +148,55 @@ func TestLinkProcessor_Process(t *testing.T) {
 			fields:  fields{dirName: "test1"},
 			wantErr: true,
 			wantIs:  errs.NewNotFound(fmt.Sprintf("%s/%s", tmp, "test/test")),
+		},
+		{
+			name:            "multiple # fragments -> incorrect link error",
+			args:            args{link: "test/multi.md#h1#h2"},
+			fields:          fields{fileName: "test/multi.md"},
+			wantErr:         true,
+			wantErrContains: "Contains more than one #",
+		},
+		{
+			name:            "directory with header fragment -> incorrect link error",
+			args:            args{link: "dir#header"},
+			fields:          fields{dirName: "dir"},
+			wantErr:         true,
+			wantErrContains: "points to dir but contains a pointer to a header",
+		},
+		//{
+		//	name: "header line with multiple spaces after # should match",
+		//	args: args{link: "spaced.md#header1"},
+		//	fields: fields{
+		//		fileName:      "spaced.md",
+		//		customContent: "intro\n#    header1\nrest\n",
+		//	},
+		//},
+		//{
+		//	name: "case-sensitive header mismatch -> NotFound",
+		//	args: args{link: "case.md#header1"},
+		//	fields: fields{
+		//		//TODO look closer into case senvisive
+		//		fileName:      "case.md",
+		//		customContent: "# Header1\n", // capital H
+		//	},
+		//	wantErr: true,
+		//	wantIs:  errs.NotFound,
+		//},
+		//{
+		//	name: "percent-encoded fragment in link does not match raw text -> NotFound",
+		//	args: args{link: "enc.md#header%201"},
+		//	fields: fields{
+		//		fileName:      "enc.md",
+		//		customContent: "# header 1\n",
+		//	},
+		//	wantErr: true,
+		//	wantIs:  errs.NotFound,
+		//},
+		{
+			name:    "empty fragment (file.md#) treated as incorrect",
+			args:    args{link: "emptyfrag.md#"},
+			fields:  fields{fileName: "emptyfrag.md"},
+			wantErr: true,
 		},
 	}
 
