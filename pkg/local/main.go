@@ -39,14 +39,14 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, logger *zap.L
 	split := strings.Split(link, "#")
 
 	// validate link format
-	if len(split) > 2 {
-		return errors.New("incorrect link. Contains more than one #")
-	}
+	//if len(split) > 2 {
+	//	return errors.New("incorrect link. Contains more than one #")
+	//}
 	var header string
 	if len(split) > 1 {
 		if len(split[1]) == 0 {
 			// case [text](../link#) is incorrect
-			return errors.New("incorrect link. Contains empty header")
+			return errs.NewEmptyHeadingError(link)
 		}
 		header = split[1]
 		//re := regexp.MustCompile(`^[a-z0-9]+$`) TODO: improve
@@ -65,12 +65,13 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, logger *zap.L
 	}
 	if info.IsDir() {
 		if header != "" {
-			return errors.New("incorrect link. It points to dir but contains a pointer to a header")
+			return errs.NewHeadingLinkToDir(link)
 		}
 		return nil
 	}
 	return nil
 
+	// TODO: heading validation will be done later
 	//if header == "" {
 	//	// we found the file, so everything is good
 	//	return nil

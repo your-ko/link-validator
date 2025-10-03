@@ -112,18 +112,18 @@ func TestLinkProcessor_Process(t *testing.T) {
 	}{
 		{
 			name:   "existing file at root",
-			args:   args{link: "qqq.md"},
-			fields: fields{fileName: "qqq.md"},
+			args:   args{link: "README.md"},
+			fields: fields{fileName: "README.md"},
 		},
 		{
 			name:   "existing file inside some dir",
-			args:   args{link: "test/qqq.md"},
-			fields: fields{fileName: "test/qqq.md"},
+			args:   args{link: "test/README.md"},
+			fields: fields{fileName: "test/README.md"},
 		},
 		{
 			name:   "existing file inside some dir with a header",
-			args:   args{link: "test/qqq.md#header1"},
-			fields: fields{fileName: "test/qqq.md"},
+			args:   args{link: "test/README.md#header1"},
+			fields: fields{fileName: "test/README.md"},
 		},
 		//{
 		//	name:    "existing file inside some dir with a non-existent header",
@@ -147,21 +147,29 @@ func TestLinkProcessor_Process(t *testing.T) {
 			args:    args{link: "test/test"},
 			fields:  fields{dirName: "test1"},
 			wantErr: true,
-			wantIs:  errs.NewNotFound(fmt.Sprintf("%s/%s", tmp, "test/test")),
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:            "multiple # fragments -> incorrect link error",
-			args:            args{link: "test/multi.md#h1#h2"},
-			fields:          fields{fileName: "test/multi.md"},
-			wantErr:         true,
-			wantErrContains: "Contains more than one #",
+			name:    "non-existing file",
+			args:    args{link: "doesnt_exists.md"},
+			fields:  fields{fileName: "README.md"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
+
+		//{
+		//	name:            "multiple # fragments -> incorrect link error",
+		//	args:            args{link: "test/multi.md#h1#h2"},
+		//	fields:          fields{fileName: "test/multi.md"},
+		//	wantErr:         true,
+		//	wantErrContains: "Contains more than one #",
+		//},
 		{
-			name:            "directory with header fragment -> incorrect link error",
-			args:            args{link: "dir#header"},
-			fields:          fields{dirName: "dir"},
-			wantErr:         true,
-			wantErrContains: "points to dir but contains a pointer to a header",
+			name:    "directory with header fragment -> incorrect link error",
+			args:    args{link: "dir#header"},
+			fields:  fields{dirName: "dir"},
+			wantErr: true,
+			wantIs:  errs.HeadingLinkToDir,
 		},
 		//{
 		//	name: "header line with multiple spaces after # should match",
@@ -195,8 +203,9 @@ func TestLinkProcessor_Process(t *testing.T) {
 		{
 			name:    "empty fragment (file.md#) treated as incorrect",
 			args:    args{link: "emptyfrag.md#"},
-			fields:  fields{fileName: "emptyfrag.md"},
+			fields:  fields{fileName: "README.md"},
 			wantErr: true,
+			wantIs:  errs.EmptyHeading,
 		},
 	}
 
@@ -254,14 +263,12 @@ func TestLinkProcessor_Process(t *testing.T) {
 
 			// If a sentinel is specified, ensure errors.Is matches it.
 			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
-				t.Fatalf("expected errors.Is(err, %v) to be true; got err=%v", tt.wantIs, err)
+				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 
-			if errors.Is(err, errs.NotFound) {
-				expected := fmt.Sprintf("%s/%s", tmp, tt.args.link)
-				if err.Error() != expected {
-					t.Fatalf("NotFoundError.Error() = %q, want %q", err.Error(), expected)
-				}
+			expected := fmt.Sprintf("%s. incorrect link: '%s/%s'", tt.wantIs, tmp, tt.args.link)
+			if err.Error() != expected {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
 			}
 		})
 	}
