@@ -1,6 +1,9 @@
 package errs
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var NotFound = errors.New("not found")
 
@@ -15,7 +18,7 @@ type NotFoundError struct {
 }
 
 func (e NotFoundError) Error() string {
-	return e.link
+	return fmt.Sprintf("%s. incorrect link: '%s'", NotFound.Error(), e.link)
 }
 
 func (e NotFoundError) Is(target error) bool { return target == NotFound }

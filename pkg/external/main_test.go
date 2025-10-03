@@ -119,7 +119,6 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		wantErr         error
 		expectNoRequest bool // true => server handler must not be hit (excluded host short-circuit)
 		timeoutClient   bool // true => override client with short timeout; expect non-sentinel error
-
 	}{
 		{
 			name:           "200 with body",
