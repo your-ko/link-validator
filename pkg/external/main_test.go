@@ -116,7 +116,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		fields          fields
 		args            args
 		whetherWantErr  bool
-		wantErr         error
+		wantIs          error
 		expectNoRequest bool // true => server handler must not be hit (excluded host short-circuit)
 		timeoutClient   bool // true => override client with short timeout; expect non-sentinel error
 	}{
@@ -131,49 +131,49 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			fields:         fields{"", 200, "", 0, ""},
 			args:           args{url: "/path"},
 			whetherWantErr: true,
-			wantErr:        errs.EmptyBody, // assumes you added this sentinel
+			wantIs:         errs.EmptyBody, // assumes you added this sentinel
 		},
 		{
 			name:           "200 with body containing 'not found' -> NotFound",
 			fields:         fields{"", 200, "blah not found blah", 0, ""},
 			args:           args{url: "/path"},
 			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			wantIs:         errs.NotFound,
 		},
 		{
 			name:           "404 with body -> NotFound",
 			fields:         fields{"", 404, "blah not found blah", 0, ""},
 			args:           args{url: "/path"},
 			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			wantIs:         errs.NotFound,
 		},
 		{
 			name:           "301 redirect (no follow) -> NotFound",
 			fields:         fields{"", http.StatusMovedPermanently, "", 0, "/other"},
 			args:           args{url: "/redir"},
 			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			wantIs:         errs.NotFound,
 		},
 		{
 			name:           "204 No Content -> EmptyBody",
 			fields:         fields{"", http.StatusNoContent, "", 0, ""},
 			args:           args{url: "/nocontent"},
 			whetherWantErr: true,
-			wantErr:        errs.EmptyBody,
+			wantIs:         errs.EmptyBody,
 		},
 		{
 			name:           "500 -> NotFound (generic fallback)",
 			fields:         fields{"", http.StatusInternalServerError, "oops", 0, ""},
 			args:           args{url: "/err"},
 			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			wantIs:         errs.NotFound,
 		},
 		{
 			name:           "Network timeout -> non-sentinel error",
 			fields:         fields{"", 200, "OK but too slow", 200 * time.Millisecond, ""},
 			args:           args{url: "/slow"},
 			whetherWantErr: true,
-			wantErr:        nil, // don't check sentinel; we'll assert it's NOT NotFound
+			wantIs:         nil, // don't check sentinel; we'll assert it's NOT NotFound
 			timeoutClient:  true,
 		},
 		{
@@ -181,14 +181,14 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			fields:         fields{"", 200, "repository exists but does not contain the path", 0, ""},
 			args:           args{url: "/missing-path"},
 			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			wantIs:         errs.NotFound,
 		},
 		{
 			name:           "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
 			fields:         fields{"", 200, "NOT FOUND", 0, ""},
 			args:           args{url: "/caps"},
 			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			wantIs:         errs.NotFound,
 		},
 		{
 			name: "Large body with 'not found' after 4KB is ignored -> no error",
@@ -236,14 +236,14 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}
 
 			if (err != nil) != tt.whetherWantErr {
-				t.Fatalf("Process() err presence = %v, wantErr=%v (err=%v)", err != nil, tt.wantErr, err)
+				t.Fatalf("Process() err presence = %v, wantIs=%v (err=%v)", err != nil, tt.wantIs, err)
 			}
 			if !tt.whetherWantErr {
 				return
 			}
 
-			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
-				t.Fatalf("Process() error '%v' does not match sentinel '%v'", err, tt.wantErr)
+			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
+				t.Fatalf("Process() error '%v' does not match sentinel '%v'", err, tt.wantIs)
 			}
 		})
 	}
