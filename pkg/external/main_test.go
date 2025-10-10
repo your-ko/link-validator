@@ -218,7 +218,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 
 				_, _ = res.Write([]byte(tt.fields.body))
 			}))
-			defer func() { testServer.Close() }()
+			t.Cleanup(testServer.Close)
 
 			proc := New(tt.fields.exclude)
 			// Make sure we don't follow redirects (aligns with your policy).
