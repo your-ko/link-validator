@@ -3,6 +3,7 @@ package external
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"net/http"
@@ -131,7 +132,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			fields:  fields{"", 200, "", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
-			wantIs:  errs.EmptyBody, // assumes you added this sentinel
+			wantIs:  errs.EmptyBody,
 		},
 		{
 			name:    "200 with body containing 'not found' -> NotFound",
@@ -173,7 +174,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			fields:        fields{"", 200, "OK but too slow", 200 * time.Millisecond, ""},
 			args:          args{url: "/slow"},
 			wantErr:       true,
-			wantIs:        nil, // don't check sentinel; we'll assert it's NOT NotFound
+			wantIs:        nil,
 			timeoutClient: true,
 		},
 		{
@@ -242,13 +243,18 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				return
 			}
 
+			if tt.wantIs == nil {
+				return
+			}
+
 			// If a sentinel is specified, ensure errors.Is matches it.
-			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
+			if !errors.Is(err, tt.wantIs) {
 				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 
-			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
-				t.Fatalf("Process() error '%v' does not match sentinel '%v'", err, tt.wantIs)
+			expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, testServer.URL, tt.args.url)
+			if err.Error() != expected {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
 			}
 		})
 	}

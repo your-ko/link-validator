@@ -260,8 +260,12 @@ func TestLinkProcessor_Process(t *testing.T) {
 				return
 			}
 
+			if tt.wantIs == nil {
+				return
+			}
+
 			// If a sentinel is specified, ensure errors.Is matches it.
-			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
+			if !errors.Is(err, tt.wantIs) {
 				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 

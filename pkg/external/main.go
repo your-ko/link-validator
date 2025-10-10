@@ -67,7 +67,7 @@ func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *za
 	}
 	if len(bodyBytes) == 0 {
 		// body is empty, doesn't count as a healthy URL
-		return errs.EmptyBody
+		return errs.NewEmptyBody(url)
 	}
 
 	body := strings.ToLower(string(bodyBytes))
