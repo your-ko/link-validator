@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/google/go-github/v74/github"
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
@@ -93,10 +94,13 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		path   string
 		body   string
 	}
+	type args struct {
+		link string
+	}
 	type tc struct {
 		name    string
-		link    string
 		fields  fields
+		args    args
 		setup   func(w http.ResponseWriter, r *http.Request)
 		wantErr bool
 		wantIs  error // sentinel check via errors.Is; nil => no sentinel check
@@ -104,8 +108,8 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 
 	tests := []tc{
 		{
-			name: "file exists, no anchor -> nil",
-			link: "/acme/proj/blob/main/README.md",
+			name: "file exists, no anchor",
+			args: args{link: "/acme/proj/blob/main/README.md"},
 			fields: fields{
 				status: http.StatusOK,
 				path:   "/acme/proj/blob/main/README.md",
@@ -113,8 +117,8 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			},
 		},
 		{
-			name: "file exists, anchor present in content -> nil",
-			link: "/acme/proj/blob/main/README.md#header2",
+			name: "file exists, anchor present in content",
+			args: args{link: "/acme/proj/blob/main/README.md#header2"},
 			fields: fields{
 				status: http.StatusOK,
 				path:   "/acme/proj/blob/main/README.md",
@@ -123,7 +127,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name: "file exists, anchor missing -> errs.NotFound",
-			link: "/acme/proj/blob/main/README.md#no-such-anchor",
+			args: args{link: "/acme/proj/blob/main/README.md#no-such-anchor"},
 			fields: fields{
 				status: http.StatusOK,
 				path:   "/acme/proj/blob/main/README.md",
@@ -134,7 +138,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name: "GitHub returns 404 -> errs.NotFound",
-			link: "/acme/proj/blob/main/README.md",
+			args: args{link: "/acme/proj/blob/main/README.md"},
 			fields: fields{
 				status: http.StatusNotFound,
 				path:   "/acme/proj/blob/main/README.md",
@@ -146,33 +150,33 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name: "GitHub returns 500 -> non-sentinel error",
-			link: "/acme/proj/blob/main/README.md",
-			setup: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusInternalServerError)
-				_, _ = w.Write([]byte(`{"message":"boom"}`))
+			args: args{link: "/acme/proj/blob/main/README.md"},
+			fields: fields{
+				status: http.StatusInternalServerError,
+				path:   "/acme/proj/blob/main/README.md",
+				body:   content,
 			},
 			wantErr: true,
-			// wantIs nil => assert not mapped to errs.NotFound below
 		},
 		{
-			name: "repo root (no path) -> nil",
+			name: "repo root (no path)",
 			// URL without path after branch; regex yields empty path → GetContents at repo root.
-			link: "/acme/proj/blob/main",
-			setup: func(w http.ResponseWriter, r *http.Request) {
-				// Return a directory listing ([]), fileContent=nil in go-github terms.
-				// Any JSON array is fine here.
-				_, _ = w.Write([]byte(`[]`))
+			args: args{link: "/acme/proj/blob/main"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/acme/proj/blob/main/README.md",
+				body:   content,
 			},
 		},
-		//{
-		//	name: "invalid URL for this processor -> error",
-		//	link: "https://other.example.com/owner/repo/blob/main/README.md",
-		//	setup: func(w http.ResponseWriter, r *http.Request) {
-		//		t.Fatalf("server should not be called for invalid URL")
-		//	},
-		//	wantErr: true,
-		//	// error is a normal fmt.Errorf("invalid or unsupported...") – not a sentinel
-		//},
+		{
+			name: "file exists, link to branch",
+			args: args{link: "/acme/proj/blob/branch/main/README.md#header2"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/acme/proj/blob/main/README.md",
+				body:   content,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -189,25 +193,11 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 					Encoding: "base64",
 					Content:  base64.StdEncoding.EncodeToString([]byte(tt.fields.body)),
 				})
-
-				//_, _ = res.Write([]byte(tt.fields.body))
 			}))
 			t.Cleanup(testServer.Close)
 
-			//ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//	// Ensure the expected endpoint shape (best-effort).
-			//	if got, want := r.URL.Path, "/repos/acme/proj/contents/README.md"; strings.Contains(corp+tt.link, "README.md") {
-			//		// For README cases we expect this path; for other cases (root/no path), any /repos/.../contents is OK.
-			//		if !strings.HasPrefix(got, "/repos/acme/proj/contents") {
-			//			t.Fatalf("unexpected API path: %s", got)
-			//		}
-			//	}
-			//	tt.setup(w, r)
-			//}))
-			//t.Cleanup(ts.Close)
-
 			proc := mockValidator(testServer, corp)
-			err := proc.Process(context.Background(), corp+tt.link, logger)
+			err := proc.Process(context.Background(), corp+tt.args.link, logger)
 
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error presence %v, want %v (err=%v)", err != nil, tt.wantErr, err)
@@ -223,15 +213,25 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			if tt.wantIs == nil && errors.Is(err, errs.NotFound) {
 				t.Fatalf("unexpected mapping to errs.NotFound: %v", err)
 			}
-			if (err != nil) != tt.whetherWantErr {
+			if (err != nil) != tt.wantErr {
 				t.Fatalf("Process() err presence = %v, wantErr=%v (err=%v)", err != nil, tt.wantErr, err)
 			}
-			if !tt.whetherWantErr {
+			if !tt.wantErr {
 				return
 			}
 
-			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
-				t.Fatalf("Process() error '%v' does not match sentinel '%v'", err, tt.wantErr)
+			if tt.wantIs == nil {
+				return
+			}
+
+			// If a sentinel is specified, ensure errors.Is matches it.
+			if !errors.Is(err, tt.wantIs) {
+				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
+			}
+
+			expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, corp, tt.args.link)
+			if err.Error() != expected {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
 			}
 
 		})
