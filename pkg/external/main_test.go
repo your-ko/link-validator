@@ -3,6 +3,7 @@ package external
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"net/http"
@@ -115,80 +116,80 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		name            string
 		fields          fields
 		args            args
-		whetherWantErr  bool
-		wantErr         error
+		wantErr         bool
+		wantIs          error
 		expectNoRequest bool // true => server handler must not be hit (excluded host short-circuit)
 		timeoutClient   bool // true => override client with short timeout; expect non-sentinel error
 	}{
 		{
-			name:           "200 with body",
-			fields:         fields{"", 200, "OK", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: false,
+			name:    "200 with body",
+			fields:  fields{"", 200, "OK", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: false,
 		},
 		{
-			name:           "200 with no body -> EmptyBody",
-			fields:         fields{"", 200, "", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: true,
-			wantErr:        errs.EmptyBody, // assumes you added this sentinel
+			name:    "200 with no body -> EmptyBody",
+			fields:  fields{"", 200, "", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.EmptyBody,
 		},
 		{
-			name:           "200 with body containing 'not found' -> NotFound",
-			fields:         fields{"", 200, "blah not found blah", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			name:    "200 with body containing 'not found' -> NotFound",
+			fields:  fields{"", 200, "blah not found blah", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "404 with body -> NotFound",
-			fields:         fields{"", 404, "blah not found blah", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			name:    "404 with body -> NotFound",
+			fields:  fields{"", 404, "blah not found blah", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "301 redirect (no follow) -> NotFound",
-			fields:         fields{"", http.StatusMovedPermanently, "", 0, "/other"},
-			args:           args{url: "/redir"},
-			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			name:    "301 redirect (no follow) -> NotFound",
+			fields:  fields{"", http.StatusMovedPermanently, "", 0, "/other"},
+			args:    args{url: "/redir"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "204 No Content -> EmptyBody",
-			fields:         fields{"", http.StatusNoContent, "", 0, ""},
-			args:           args{url: "/nocontent"},
-			whetherWantErr: true,
-			wantErr:        errs.EmptyBody,
+			name:    "204 No Content -> EmptyBody",
+			fields:  fields{"", http.StatusNoContent, "", 0, ""},
+			args:    args{url: "/nocontent"},
+			wantErr: true,
+			wantIs:  errs.EmptyBody,
 		},
 		{
-			name:           "500 -> NotFound (generic fallback)",
-			fields:         fields{"", http.StatusInternalServerError, "oops", 0, ""},
-			args:           args{url: "/err"},
-			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			name:    "500 -> NotFound (generic fallback)",
+			fields:  fields{"", http.StatusInternalServerError, "oops", 0, ""},
+			args:    args{url: "/err"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "Network timeout -> non-sentinel error",
-			fields:         fields{"", 200, "OK but too slow", 200 * time.Millisecond, ""},
-			args:           args{url: "/slow"},
-			whetherWantErr: true,
-			wantErr:        nil, // don't check sentinel; we'll assert it's NOT NotFound
-			timeoutClient:  true,
+			name:          "Network timeout -> non-sentinel error",
+			fields:        fields{"", 200, "OK but too slow", 200 * time.Millisecond, ""},
+			args:          args{url: "/slow"},
+			wantErr:       true,
+			wantIs:        nil,
+			timeoutClient: true,
 		},
 		{
-			name:           "Body contains 'does not contain the path' -> NotFound",
-			fields:         fields{"", 200, "repository exists but does not contain the path", 0, ""},
-			args:           args{url: "/missing-path"},
-			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			name:    "Body contains 'does not contain the path' -> NotFound",
+			fields:  fields{"", 200, "repository exists but does not contain the path", 0, ""},
+			args:    args{url: "/missing-path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
-			fields:         fields{"", 200, "NOT FOUND", 0, ""},
-			args:           args{url: "/caps"},
-			whetherWantErr: true,
-			wantErr:        errs.NotFound,
+			name:    "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
+			fields:  fields{"", 200, "NOT FOUND", 0, ""},
+			args:    args{url: "/caps"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
 			name: "Large body with 'not found' after 4KB is ignored -> no error",
@@ -197,8 +198,8 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				status:  200,
 				body:    strings.Repeat("A", 5000) + " not found", // beyond the 4096 read limit
 			},
-			args:           args{url: "/long"},
-			whetherWantErr: false,
+			args:    args{url: "/long"},
+			wantErr: false,
 		},
 	}
 	logger, _ := zap.NewDevelopment()
@@ -235,15 +236,25 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				t.Fatalf("expected no HTTP request to be made, but handler was hit")
 			}
 
-			if (err != nil) != tt.whetherWantErr {
-				t.Fatalf("Process() err presence = %v, wantErr=%v (err=%v)", err != nil, tt.wantErr, err)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("Process() err presence = %v, wantIs=%v (err=%v)", err != nil, tt.wantIs, err)
 			}
-			if !tt.whetherWantErr {
+			if !tt.wantErr {
 				return
 			}
 
-			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
-				t.Fatalf("Process() error '%v' does not match sentinel '%v'", err, tt.wantErr)
+			if tt.wantIs == nil {
+				return
+			}
+
+			// If a sentinel is specified, ensure errors.Is matches it.
+			if !errors.Is(err, tt.wantIs) {
+				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
+			}
+
+			expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, testServer.URL, tt.args.url)
+			if err.Error() != expected {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
 			}
 		})
 	}

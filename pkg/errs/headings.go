@@ -13,7 +13,7 @@ type HeadingLinkToDirError struct {
 }
 
 func (e HeadingLinkToDirError) Error() string {
-	return fmt.Sprintf("%s. incorrect link: '%s'",
+	return fmt.Sprintf("%s. Incorrect link: '%s'",
 		HeadingLinkToDir.Error(), e.Link)
 }
 
@@ -28,7 +28,7 @@ type EmptyHeadingError struct {
 }
 
 func (e EmptyHeadingError) Error() string {
-	return fmt.Sprintf("%s. incorrect link: '%s'",
+	return fmt.Sprintf("%s. Incorrect link: '%s'",
 		EmptyHeading.Error(), e.link)
 }
 

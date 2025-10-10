@@ -103,12 +103,11 @@ func TestLinkProcessor_Process(t *testing.T) {
 		link string
 	}
 	tests := []struct {
-		name            string
-		fields          fields
-		args            args
-		wantErr         bool
-		wantIs          error
-		wantErrContains string // for exact message checks on custom errors
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		wantIs  error
 	}{
 		{
 			name:   "existing file at root",
@@ -261,12 +260,16 @@ func TestLinkProcessor_Process(t *testing.T) {
 				return
 			}
 
+			if tt.wantIs == nil {
+				return
+			}
+
 			// If a sentinel is specified, ensure errors.Is matches it.
-			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
+			if !errors.Is(err, tt.wantIs) {
 				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 
-			expected := fmt.Sprintf("%s. incorrect link: '%s/%s'", tt.wantIs, tmp, tt.args.link)
+			expected := fmt.Sprintf("%s. Incorrect link: '%s/%s'", tt.wantIs, tmp, tt.args.link)
 			if err.Error() != expected {
 				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
 			}
