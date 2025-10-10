@@ -11,6 +11,14 @@ type EmptyBodyError struct {
 	link string
 }
 
-func (e EmptyBodyError) Error() string {
-	return fmt.Sprintf("'%s' has empty response body", e.link)
+func NewEmptyBody(link string) EmptyBodyError {
+	return EmptyBodyError{
+		link: link,
+	}
 }
+
+func (e EmptyBodyError) Error() string {
+	return fmt.Sprintf("empty response body. Incorrect link: '%s'", e.link)
+}
+
+func (e EmptyBodyError) Is(target error) bool { return target == EmptyBody }
