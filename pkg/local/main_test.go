@@ -277,7 +277,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 	}
 }
 
-var content = `
+const content = `
 test
 # header1
 test

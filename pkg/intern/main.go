@@ -37,7 +37,6 @@ func New(corpGitHubUrl, pat string) *InternalLinkProcessor {
 	client = client.WithAuthToken(pat)
 
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
-
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
 		panic(fmt.Sprintf("invalid baseUrl: %q", corpGitHubUrl))
@@ -65,12 +64,12 @@ func New(corpGitHubUrl, pat string) *InternalLinkProcessor {
 }
 
 func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
+	logger.Debug("Validating internal url", zap.String("url", url))
 	match := proc.urlRegex.FindStringSubmatch(url)
 	if len(match) == 0 {
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
 	}
-	owner, repo, _, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), match[6]
-	logger.Debug("Validating internal url", zap.String("url", url))
+	owner, repo, _, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), strings.ReplaceAll(match[6], "#", "")
 
 	contents, _, _, err := proc.client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
 		Ref: branch,
@@ -79,28 +78,34 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 		var ghError *github.ErrorResponse
 		if errors.As(err, &ghError) {
 			if ghError.Response.StatusCode == http.StatusNotFound {
-				return errs.NotFound
+				return errs.NewNotFound(url)
 			}
 		}
 		// some other error
 		return err
 	}
-	logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
-	if len(anchor) != 0 {
-		content, err := contents.GetContent()
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(content, anchor) {
-			logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
-			return errs.NewNotFound(url)
-		} else {
-			// url with the anchor are correct
-			return nil
-		}
+	if contents == nil {
+		// contents should not be nil, so something is not ok
+		return errs.NewNotFound(url)
 	}
-	// url exists
-	return nil
+
+	if len(anchor) == 0 {
+		// link points to a file or dir, it is found
+		return nil
+	}
+
+	logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
+	content, err := contents.GetContent()
+	if err != nil {
+		return err
+	}
+	if !strings.Contains(content, anchor) {
+		logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
+		return errs.NewNotFound(url)
+	} else {
+		// url with the anchor are correct
+		return nil
+	}
 }
 
 func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
