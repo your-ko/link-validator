@@ -115,80 +115,80 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		name            string
 		fields          fields
 		args            args
-		whetherWantErr  bool
+		wantErr         bool
 		wantIs          error
 		expectNoRequest bool // true => server handler must not be hit (excluded host short-circuit)
 		timeoutClient   bool // true => override client with short timeout; expect non-sentinel error
 	}{
 		{
-			name:           "200 with body",
-			fields:         fields{"", 200, "OK", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: false,
+			name:    "200 with body",
+			fields:  fields{"", 200, "OK", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: false,
 		},
 		{
-			name:           "200 with no body -> EmptyBody",
-			fields:         fields{"", 200, "", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: true,
-			wantIs:         errs.EmptyBody, // assumes you added this sentinel
+			name:    "200 with no body -> EmptyBody",
+			fields:  fields{"", 200, "", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.EmptyBody, // assumes you added this sentinel
 		},
 		{
-			name:           "200 with body containing 'not found' -> NotFound",
-			fields:         fields{"", 200, "blah not found blah", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: true,
-			wantIs:         errs.NotFound,
+			name:    "200 with body containing 'not found' -> NotFound",
+			fields:  fields{"", 200, "blah not found blah", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "404 with body -> NotFound",
-			fields:         fields{"", 404, "blah not found blah", 0, ""},
-			args:           args{url: "/path"},
-			whetherWantErr: true,
-			wantIs:         errs.NotFound,
+			name:    "404 with body -> NotFound",
+			fields:  fields{"", 404, "blah not found blah", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "301 redirect (no follow) -> NotFound",
-			fields:         fields{"", http.StatusMovedPermanently, "", 0, "/other"},
-			args:           args{url: "/redir"},
-			whetherWantErr: true,
-			wantIs:         errs.NotFound,
+			name:    "301 redirect (no follow) -> NotFound",
+			fields:  fields{"", http.StatusMovedPermanently, "", 0, "/other"},
+			args:    args{url: "/redir"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "204 No Content -> EmptyBody",
-			fields:         fields{"", http.StatusNoContent, "", 0, ""},
-			args:           args{url: "/nocontent"},
-			whetherWantErr: true,
-			wantIs:         errs.EmptyBody,
+			name:    "204 No Content -> EmptyBody",
+			fields:  fields{"", http.StatusNoContent, "", 0, ""},
+			args:    args{url: "/nocontent"},
+			wantErr: true,
+			wantIs:  errs.EmptyBody,
 		},
 		{
-			name:           "500 -> NotFound (generic fallback)",
-			fields:         fields{"", http.StatusInternalServerError, "oops", 0, ""},
-			args:           args{url: "/err"},
-			whetherWantErr: true,
-			wantIs:         errs.NotFound,
+			name:    "500 -> NotFound (generic fallback)",
+			fields:  fields{"", http.StatusInternalServerError, "oops", 0, ""},
+			args:    args{url: "/err"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "Network timeout -> non-sentinel error",
-			fields:         fields{"", 200, "OK but too slow", 200 * time.Millisecond, ""},
-			args:           args{url: "/slow"},
-			whetherWantErr: true,
-			wantIs:         nil, // don't check sentinel; we'll assert it's NOT NotFound
-			timeoutClient:  true,
+			name:          "Network timeout -> non-sentinel error",
+			fields:        fields{"", 200, "OK but too slow", 200 * time.Millisecond, ""},
+			args:          args{url: "/slow"},
+			wantErr:       true,
+			wantIs:        nil, // don't check sentinel; we'll assert it's NOT NotFound
+			timeoutClient: true,
 		},
 		{
-			name:           "Body contains 'does not contain the path' -> NotFound",
-			fields:         fields{"", 200, "repository exists but does not contain the path", 0, ""},
-			args:           args{url: "/missing-path"},
-			whetherWantErr: true,
-			wantIs:         errs.NotFound,
+			name:    "Body contains 'does not contain the path' -> NotFound",
+			fields:  fields{"", 200, "repository exists but does not contain the path", 0, ""},
+			args:    args{url: "/missing-path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
-			name:           "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
-			fields:         fields{"", 200, "NOT FOUND", 0, ""},
-			args:           args{url: "/caps"},
-			whetherWantErr: true,
-			wantIs:         errs.NotFound,
+			name:    "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
+			fields:  fields{"", 200, "NOT FOUND", 0, ""},
+			args:    args{url: "/caps"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
 		},
 		{
 			name: "Large body with 'not found' after 4KB is ignored -> no error",
@@ -197,8 +197,8 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				status:  200,
 				body:    strings.Repeat("A", 5000) + " not found", // beyond the 4096 read limit
 			},
-			args:           args{url: "/long"},
-			whetherWantErr: false,
+			args:    args{url: "/long"},
+			wantErr: false,
 		},
 	}
 	logger, _ := zap.NewDevelopment()
@@ -235,10 +235,10 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				t.Fatalf("expected no HTTP request to be made, but handler was hit")
 			}
 
-			if (err != nil) != tt.whetherWantErr {
+			if (err != nil) != tt.wantErr {
 				t.Fatalf("Process() err presence = %v, wantIs=%v (err=%v)", err != nil, tt.wantIs, err)
 			}
-			if !tt.whetherWantErr {
+			if !tt.wantErr {
 				return
 			}
 
