@@ -194,7 +194,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			name: "Large body with 'not found' after 4KB is ignored -> no error",
 			fields: fields{
 				exclude: "",
-				status:  200,
+				status:  http.StatusOK,
 				body:    strings.Repeat("A", 5000) + " not found", // beyond the 4096 read limit
 			},
 			args:           args{url: "/long"},
@@ -218,7 +218,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 
 				_, _ = res.Write([]byte(tt.fields.body))
 			}))
-			defer func() { testServer.Close() }()
+			t.Cleanup(testServer.Close)
 
 			proc := New(tt.fields.exclude)
 			// Make sure we don't follow redirects (aligns with your policy).
