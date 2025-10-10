@@ -103,12 +103,11 @@ func TestLinkProcessor_Process(t *testing.T) {
 		link string
 	}
 	tests := []struct {
-		name            string
-		fields          fields
-		args            args
-		wantErr         bool
-		wantIs          error
-		wantErrContains string // for exact message checks on custom errors
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		wantIs  error
 	}{
 		{
 			name:   "existing file at root",
