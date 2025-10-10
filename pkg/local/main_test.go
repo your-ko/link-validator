@@ -269,7 +269,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 
-			expected := fmt.Sprintf("%s. incorrect link: '%s/%s'", tt.wantIs, tmp, tt.args.link)
+			expected := fmt.Sprintf("%s. Incorrect link: '%s/%s'", tt.wantIs, tmp, tt.args.link)
 			if err.Error() != expected {
 				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
 			}
