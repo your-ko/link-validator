@@ -242,6 +242,11 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				return
 			}
 
+			// If a sentinel is specified, ensure errors.Is matches it.
+			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
+				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
+			}
+
 			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
 				t.Fatalf("Process() error '%v' does not match sentinel '%v'", err, tt.wantIs)
 			}
