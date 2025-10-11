@@ -27,21 +27,21 @@ type InternalLinkProcessor struct {
 }
 
 func New(corpGitHubUrl, pat string) *InternalLinkProcessor {
-	client, err := github.NewClient(nil).WithEnterpriseURLs(
-		corpGitHubUrl,
-		strings.ReplaceAll(corpGitHubUrl, "https://", "https://uploads."),
-	)
-	if err != nil {
-		panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
-	}
-	client = client.WithAuthToken(pat)
-
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
 		panic(fmt.Sprintf("invalid baseUrl: %q", corpGitHubUrl))
 	}
 	host := u.Hostname()
+
+	client, err := github.NewClient(nil).WithEnterpriseURLs(
+		host,
+		strings.ReplaceAll(host, "https://", "https://uploads."),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
+	}
+	client = client.WithAuthToken(pat)
 
 	// Escape dots for regex, build a subdomain-capable host: (?:[A-Za-z0-9-]+\.)*github\.mycorp\.com
 	escHost := regexp.QuoteMeta(host)
@@ -57,7 +57,7 @@ func New(corpGitHubUrl, pat string) *InternalLinkProcessor {
 	urlRegex := regexp.MustCompile(pattern)
 
 	return &InternalLinkProcessor{
-		corpGitHubUrl: corpGitHubUrl,
+		corpGitHubUrl: host,
 		client:        client,
 		urlRegex:      urlRegex,
 	}
@@ -114,13 +114,6 @@ func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
 		return nil
 	}
 
-	// Parse base hostname once
-	base, err := url.Parse(proc.corpGitHubUrl)
-	if err != nil || base.Hostname() == "" {
-		return nil
-	}
-	baseHost := strings.ToLower(base.Hostname())
-
 	urls := make([]string, 0, len(parts))
 	for _, raw := range parts {
 		u, err := url.Parse(raw)
@@ -130,7 +123,7 @@ func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
 		h := strings.ToLower(u.Hostname())
 
 		// Keep only internal: exact host or any subdomain of it
-		if h == baseHost || strings.HasSuffix(h, "."+baseHost) {
+		if h == proc.corpGitHubUrl || strings.HasSuffix(h, "."+proc.corpGitHubUrl) {
 			urls = append(urls, raw)
 		}
 	}
