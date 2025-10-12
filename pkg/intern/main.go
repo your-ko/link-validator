@@ -1,7 +1,6 @@
-// Package 'internal' implements internal git links validation
-// GitHub links are the links that point to files in other GitHub repositories within the same organisation
-// These links can be considered as internal (in contrast to external package and `local`  package)
-// Useful when run on the enterprise GitHub.
+// Package 'internal' implements git repository links validation
+// GitHub links are the links that point to files in other GitHub repositories within the same owner
+// (either it is public or enterprise GitHub)
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
 // links to a particular branch or commits are supported as well.
 
@@ -25,6 +24,7 @@ type InternalLinkProcessor struct {
 	corpClient    *github.Client
 	client        *github.Client
 	urlRegex      *regexp.Regexp
+	repoRegex     *regexp.Regexp
 }
 
 func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
@@ -51,22 +51,32 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 		client = client.WithAuthToken(pat)
 	}
 
-	// Keep  path structure (org/repo/(blob|tree|raw)/branch/optional path ... optional #fragment)
-	// Allow optional query/fragment tails in the last groups.
-	pattern := "https:\\/\\/((?:[A-Za-z0-9-]+\\.)*(?:github\\.com|github\\.mpi(?:-|\\.)internal\\.com))\\/([^/\\s\"']+)\\/([^/\\s\"']+)\\/(blob|tree|raw)\\/([^/\\s\"']+)(?:\\/([^\\#\\s\\)\\]]*))?(?:\\#([^\\s\\)\\]]+))?"
+	repoRegex := regexp.MustCompile(
+		`https:\/\/` + //
+			`(github\.com|github\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)` + // 2: host = public or ANY enterprise (e.g., github.mycorp.com, github.example.co.uk)
+			`(?:\/` +
+			`([^\/\s"'()?#\]]+)\/` + // 3: org/user
+			`([^\/\s"'()?#\]]+)\/` + // 4: repo
+			`(blob|tree|raw)\/` + // 5: kind
+			`([^\/\s"'()?#\]]+)` + // 6: ref (branch/tag/SHA)
+			`(?:\/([^\s"'()?#\]]+))?` + // 7: path (optional, may include /)
+			`)?` +
+			`(?:\#([^\s)\]]+))?`, // 8: fragment (no '#', optional)
+	)
 
-	urlRegex := regexp.MustCompile(pattern)
+	urlRegex := regexp.MustCompile("(?i)\\bhttps://(?:[A-Za-z0-9-]+\\.)*github(?:\\.[A-Za-z0-9-]+)+(?:/[^\\s\"'()<>\\[\\]{}]*)?")
 
 	return &InternalLinkProcessor{
 		corpClient: corpClient,
 		client:     client,
 		urlRegex:   urlRegex,
+		repoRegex:  repoRegex,
 	}
 }
 
 func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
-	match := proc.urlRegex.FindStringSubmatch(url)
+	match := proc.repoRegex.FindStringSubmatch(url)
 	var client *github.Client
 	if len(match) == 0 {
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
