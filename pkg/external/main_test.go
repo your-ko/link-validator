@@ -18,16 +18,14 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
 
 	type tc struct {
-		name    string
-		exclude string
-		line    string
-		want    []string
+		name string
+		line string
+		want []string
 	}
 
 	tests := []tc{
 		{
-			name:    "exclude exact host and its subdomains",
-			exclude: "https://github.mycorp.com",
+			name: "exclude exact host and its subdomains",
 			line: `see https://github.mycorp.com/org/repo
 			       and https://api.github.mycorp.com/x
 			       and https://example.com/page
@@ -39,34 +37,30 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name:    "exclude without scheme still filters",
-			exclude: "github.mycorp.com",
-			line:    `https://github.mycorp.com a https://api.github.mycorp.com b https://google.com?q=1`,
+			name: "exclude without scheme still filters",
+			line: `https://github.mycorp.com a https://api.github.mycorp.com b https://google.com?q=1`,
 			want: []string{
 				"https://google.com?q=1",
 			},
 		},
 		{
-			name:    "exclude with leading dot works same",
-			exclude: ".github.mycorp.com",
-			line:    `https://github.mycorp.com https://sub.github.mycorp.com https://other.com`,
+			name: "exclude with leading dot works same",
+			line: `https://github.mycorp.com https://sub.github.mycorp.com https://other.com`,
 			want: []string{
 				"https://other.com",
 			},
 		},
 		{
-			name:    "http links are not matched by regex (https only)",
-			exclude: "github.mycorp.com",
-			line:    `http://github.mycorp.com https://github.mycorp.com https://ok.com`,
+			name: "http links are not matched by regex (https only)",
+			line: `http://github.mycorp.com https://github.mycorp.com https://ok.com`,
 			want: []string{
 				// http://... is ignored by regex; https://github.mycorp.com excluded; only ok.com remains
 				"https://ok.com",
 			},
 		},
 		{
-			name:    "mixed unrelated https remain",
-			exclude: "github.mycorp.com",
-			line:    `https://one.com https://two.com https://github.mycorp.com https://three.com`,
+			name: "mixed unrelated https remain",
+			line: `https://one.com https://two.com https://github.mycorp.com https://github.com/your-ko/link-validator/README.md, https://three.com`,
 			want: []string{
 				"https://one.com",
 				"https://two.com",
@@ -74,13 +68,9 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name:    "test for MD link",
-			exclude: "github.mycorp.com",
-			line:    `qqq https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml) qqq`,
-			want: []string{
-				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
-				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
-			},
+			name: "test for GitHub links",
+			line: `qqq https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml) qqq`,
+			want: []string{},
 		},
 	}
 
@@ -89,12 +79,11 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			proc := New(tt.exclude)
+			proc := New()
 			got := proc.ExtractLinks(tt.line)
 
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Fatalf("ExtractLinks() mismatch\nexclude=%q\nline=%q\ngot = %#v\nwant= %#v",
-					tt.exclude, tt.line, got, tt.want)
+				t.Fatalf("ExtractLinks() mismatch\nline=%q\ngot = %#v\nwant= %#v", tt.line, got, tt.want)
 			}
 		})
 	}
@@ -103,11 +92,10 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 func TestHttpLinkProcessor_Process(t *testing.T) {
 	t.Parallel()
 	type fields struct {
-		exclude string
-		status  int
-		body    string
-		sleep   time.Duration // optional server delay
-		loc     string        // optional redirect Location
+		status int
+		body   string
+		sleep  time.Duration // optional server delay
+		loc    string        // optional redirect Location
 	}
 	type args struct {
 		url string
@@ -123,55 +111,55 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 	}{
 		{
 			name:    "200 with body",
-			fields:  fields{"", http.StatusOK, "OK", 0, ""},
+			fields:  fields{http.StatusOK, "OK", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: false,
 		},
 		{
 			name:    "200 with no body -> EmptyBody",
-			fields:  fields{"", http.StatusOK, "", 0, ""},
+			fields:  fields{http.StatusOK, "", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
 			wantIs:  errs.EmptyBody,
 		},
 		{
 			name:    "200 with body containing 'not found' -> NotFound",
-			fields:  fields{"", http.StatusOK, "blah not found blah", 0, ""},
+			fields:  fields{http.StatusOK, "blah not found blah", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
 			name:    "404 with body -> NotFound",
-			fields:  fields{"", 404, "blah not found blah", 0, ""},
+			fields:  fields{404, "blah not found blah", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
 			name:    "301 redirect (no follow) -> NotFound",
-			fields:  fields{"", http.StatusMovedPermanently, "", 0, "/other"},
+			fields:  fields{http.StatusMovedPermanently, "", 0, "/other"},
 			args:    args{url: "/redir"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
 			name:    "204 No Content -> EmptyBody",
-			fields:  fields{"", http.StatusNoContent, "", 0, ""},
+			fields:  fields{http.StatusNoContent, "", 0, ""},
 			args:    args{url: "/nocontent"},
 			wantErr: true,
 			wantIs:  errs.EmptyBody,
 		},
 		{
 			name:    "500 -> NotFound (generic fallback)",
-			fields:  fields{"", http.StatusInternalServerError, "oops", 0, ""},
+			fields:  fields{http.StatusInternalServerError, "oops", 0, ""},
 			args:    args{url: "/err"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
 			name:          "Network timeout -> non-sentinel error",
-			fields:        fields{"", http.StatusOK, "OK but too slow", 200 * time.Millisecond, ""},
+			fields:        fields{http.StatusOK, "OK but too slow", 200 * time.Millisecond, ""},
 			args:          args{url: "/slow"},
 			wantErr:       true,
 			wantIs:        nil,
@@ -179,14 +167,14 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name:    "Body contains 'does not contain the path' -> NotFound",
-			fields:  fields{"", http.StatusOK, "repository exists but does not contain the path", 0, ""},
+			fields:  fields{http.StatusOK, "repository exists but does not contain the path", 0, ""},
 			args:    args{url: "/missing-path"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
 			name:    "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
-			fields:  fields{"", http.StatusOK, "NOT FOUND", 0, ""},
+			fields:  fields{http.StatusOK, "NOT FOUND", 0, ""},
 			args:    args{url: "/caps"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
@@ -194,9 +182,8 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		{
 			name: "Large body with 'not found' after 4KB is ignored -> no error",
 			fields: fields{
-				exclude: "",
-				status:  http.StatusOK,
-				body:    strings.Repeat("A", 5000) + " not found", // beyond the 4096 read limit
+				status: http.StatusOK,
+				body:   strings.Repeat("A", 5000) + " not found", // beyond the 4096 read limit
 			},
 			args:    args{url: "/long"},
 			wantErr: false,
@@ -221,7 +208,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(tt.fields.exclude)
+			proc := New()
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
