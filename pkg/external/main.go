@@ -17,12 +17,9 @@ import (
 type HttpLinkProcessor struct {
 	httpClient *http.Client
 	urlRegex   *regexp.Regexp
-	exclude    string
 }
 
-func New(exclude string) *HttpLinkProcessor {
-	exclude = strings.TrimPrefix(strings.TrimPrefix(exclude, "https://"), "http://")
-	exclude = strings.TrimPrefix(strings.TrimSuffix(exclude, "/"), ".")
+func New() *HttpLinkProcessor {
 	httpClient := &http.Client{
 		Timeout:       10 * time.Second,
 		CheckRedirect: checkRedirect,
@@ -32,7 +29,6 @@ func New(exclude string) *HttpLinkProcessor {
 	return &HttpLinkProcessor{
 		httpClient: httpClient,
 		urlRegex:   urlRegex,
-		exclude:    exclude,
 	}
 }
 
@@ -85,11 +81,6 @@ func (proc *HttpLinkProcessor) ExtractLinks(line string) []string {
 	parts := proc.urlRegex.FindAllString(line, -1)
 	urls := make([]string, 0, len(parts))
 
-	if proc.exclude == "" {
-		// nothing to exclude; return all matches quickly
-		return append(urls, parts...)
-	}
-
 	for _, raw := range parts {
 		u, err := url.Parse(raw)
 		if err != nil || u.Host == "" {
@@ -97,8 +88,8 @@ func (proc *HttpLinkProcessor) ExtractLinks(line string) []string {
 		}
 		host := strings.ToLower(u.Hostname()) // strips port, handles IPv6 brackets
 
-		// Exclude exact domain or any subdomain.
-		if host == proc.exclude || strings.HasSuffix(host, "."+proc.exclude) {
+		// Exclude GitHub domain or any subdomain.
+		if strings.Contains(host, "github") {
 			continue
 		}
 

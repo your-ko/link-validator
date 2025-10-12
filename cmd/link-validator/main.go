@@ -31,8 +31,9 @@ func main() {
 	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
 	excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
 	files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate. Useful for PR validation, for example"), ",")
-	pat := *flag.String("PAT", GetRequiredEnv("PAT"), "GitHub PAT. Used to get access to GitHub.")
-	corpGitHub := *flag.String("CORP_URL", GetEnv("CORP_URL", "https://github.com"), "Corporate GitHub URL.")
+	pat := *flag.String("PAT", GetEnv("PAT", ""), "GitHub PAT. Used to get access to GitHub.")
+	corpPat := *flag.String("CORP_PAT", GetEnv("CORP_PAT", ""), "Corporate GitHub PAT. Used to get access to the corporate GitHub.")
+	corpGitHub := *flag.String("CORP_URL", GetEnv("CORP_URL", ""), "Corporate GitHub URL.")
 
 	corpGitHub = strings.TrimSpace(strings.ToLower(corpGitHub))
 
@@ -53,6 +54,7 @@ func main() {
 		CorpGitHubUrl: corpGitHub,
 		Path:          lookUpPath,
 		PAT:           pat,
+		CorpPAT:       corpPat,
 		FileMasks:     fileMasks,
 		LookupPath:    lookUpPath,
 		ExcludePath:   excludePath,

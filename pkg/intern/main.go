@@ -22,56 +22,63 @@ import (
 
 type InternalLinkProcessor struct {
 	corpGitHubUrl string
+	corpClient    *github.Client
 	client        *github.Client
 	urlRegex      *regexp.Regexp
 }
 
-func New(corpGitHubUrl, pat string) *InternalLinkProcessor {
+func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
 		panic(fmt.Sprintf("invalid baseUrl: %q", corpGitHubUrl))
 	}
-	host := u.Hostname()
-
-	client, err := github.NewClient(nil).WithEnterpriseURLs(
-		host,
-		strings.ReplaceAll(host, "https://", "https://uploads."),
-	)
-	if err != nil {
-		panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
+	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
+	var corpClient *github.Client
+	if host != "" {
+		corpClient, err = github.NewClient(nil).WithEnterpriseURLs(
+			host,
+			strings.ReplaceAll(host, "https://", "https://uploads."),
+		)
+		if err != nil {
+			panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
+		}
+		corpClient = corpClient.WithAuthToken(corpPat)
 	}
-	client = client.WithAuthToken(pat)
 
-	// Escape dots for regex, build a subdomain-capable host: (?:[A-Za-z0-9-]+\.)*github\.mycorp\.com
-	escHost := regexp.QuoteMeta(host)
-	hostPattern := fmt.Sprintf(`(?:[A-Za-z0-9-]+\.)*%s`, escHost)
+	client := github.NewClient(nil)
+	if pat != "" {
+		client = client.WithAuthToken(pat)
+	}
 
 	// Keep  path structure (org/repo/(blob|tree|raw)/branch/optional path ... optional #fragment)
-	// Allow optional query/fragment tails in the last groups (your original already allowed #...).
-	pattern := fmt.Sprintf(
-		`https://%s/([^/\s"']+)/([^/\s"']+)/(blob|tree|raw)/([^/\s"']+)(?:/([^\#\s\)\]]*))?(#[^\s\)\]]+)?`,
-		hostPattern,
-	)
+	// Allow optional query/fragment tails in the last groups.
+	pattern := "https:\\/\\/((?:[A-Za-z0-9-]+\\.)*(?:github\\.com|github\\.mpi(?:-|\\.)internal\\.com))\\/([^/\\s\"']+)\\/([^/\\s\"']+)\\/(blob|tree|raw)\\/([^/\\s\"']+)(?:\\/([^\\#\\s\\)\\]]*))?(?:\\#([^\\s\\)\\]]+))?"
 
 	urlRegex := regexp.MustCompile(pattern)
 
 	return &InternalLinkProcessor{
-		corpGitHubUrl: host,
-		client:        client,
-		urlRegex:      urlRegex,
+		corpClient: corpClient,
+		client:     client,
+		urlRegex:   urlRegex,
 	}
 }
 
 func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
 	match := proc.urlRegex.FindStringSubmatch(url)
+	var client *github.Client
 	if len(match) == 0 {
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
 	}
-	owner, repo, _, branch, path, anchor := match[1], match[2], match[3], match[4], strings.TrimPrefix(match[5], "/"), strings.ReplaceAll(match[6], "#", "")
+	host, owner, repo, branch, path, anchor := match[1], match[2], match[3], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
+	if host != "github.com" {
+		client = proc.corpClient
+	} else {
+		client = proc.client
+	}
 
-	contents, _, _, err := proc.client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
+	contents, _, _, err := client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
 		Ref: branch,
 	})
 	if err != nil {
@@ -120,12 +127,7 @@ func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Hostname() == "" {
 			continue
 		}
-		h := strings.ToLower(u.Hostname())
-
-		// Keep only internal: exact host or any subdomain of it
-		if h == proc.corpGitHubUrl || strings.HasSuffix(h, "."+proc.corpGitHubUrl) {
-			urls = append(urls, raw)
-		}
+		urls = append(urls, raw)
 	}
 	return urls
 }
