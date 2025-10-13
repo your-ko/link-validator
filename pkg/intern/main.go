@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type InternalLinkProcessor struct {
@@ -79,15 +80,9 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 
 func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
-	//if proc.detectRepoRegext.MatchString(url) {
-	//	return proc.processNonRepoUrl(ctx, url, logger)
-	//} else {
-	return proc.processRepoUrl(ctx, url, logger)
-	//}
-}
-
-func (proc *InternalLinkProcessor) processRepoUrl(ctx context.Context, url string, logger *zap.Logger) error {
 	match := proc.repoRegex.FindStringSubmatch(url)
 	var client *github.Client
 	if len(match) == 0 {
@@ -135,10 +130,6 @@ func (proc *InternalLinkProcessor) processRepoUrl(ctx context.Context, url strin
 		// url with the anchor are correct
 		return nil
 	}
-}
-
-func (proc *InternalLinkProcessor) processNonRepoUrl(ctx context.Context, url string, logger *zap.Logger) error {
-	return fmt.Errorf("processing non-repo urls is not implemented yet")
 }
 
 func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {

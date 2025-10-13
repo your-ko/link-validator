@@ -13,7 +13,6 @@ import (
 	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 type LinkProcessor interface {
@@ -55,8 +54,6 @@ func New(config Config) LinkValidador {
 }
 
 func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
 	stats := Stats{}
 
 	for _, fileName := range filesList {
