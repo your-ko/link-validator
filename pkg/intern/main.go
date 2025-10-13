@@ -132,10 +132,6 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 	}
 }
 
-func (proc *InternalLinkProcessor) processNonRepoUrl(ctx context.Context, url string, logger *zap.Logger) error {
-	return fmt.Errorf("processing non-repo urls is not implemented yet")
-}
-
 func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
 	parts := proc.urlRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
