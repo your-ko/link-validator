@@ -80,11 +80,11 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
 
-	if proc.detectRepoRegext.MatchString(url) {
-		return proc.processNonRepoUrl(ctx, url, logger)
-	} else {
-		return proc.processRepoUrl(ctx, url, logger)
-	}
+	//if proc.detectRepoRegext.MatchString(url) {
+	//	return proc.processNonRepoUrl(ctx, url, logger)
+	//} else {
+	return proc.processRepoUrl(ctx, url, logger)
+	//}
 }
 
 func (proc *InternalLinkProcessor) processRepoUrl(ctx context.Context, url string, logger *zap.Logger) error {
