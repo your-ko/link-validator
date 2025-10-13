@@ -263,14 +263,16 @@ type githubContent struct {
 
 // mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *InternalLinkProcessor {
-	base, _ := neturl.Parse(ts.URL + "/")
-
 	p := New(corp, "", "")
-	c := github.NewClient(ts.Client())
-	c.BaseURL = base
-	c.UploadURL = base
-	p.client = c
-	p.corpClient = c
+
+	if ts != nil {
+		base, _ := neturl.Parse(ts.URL + "/")
+		c := github.NewClient(ts.Client())
+		c.BaseURL = base
+		c.UploadURL = base
+		p.client = c
+		p.corpClient = c
+	}
 	return p
 }
 
@@ -281,3 +283,46 @@ test
 ## header2
 test
 `
+
+func TestInternalLinkProcessor_RegexRepoUrlDetection(t *testing.T) {
+	type fields struct {
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name string
+		url  string
+		want bool
+	}{
+		{
+			name: "repo url blob",
+			url:  "https://github.com/your-ko/link-validator/blob/main/README.md",
+			want: true,
+		},
+		{
+			name: "repo url raw",
+			url:  "https://github.com/your-ko/link-validator/raw/main/README.md",
+			want: true,
+		},
+		{
+			name: "repo url tree",
+			url:  "https://github.com/your-ko/link-validator/tree/main/README.md",
+			want: true,
+		},
+		{
+			name: "repo url blame",
+			url:  "https://github.com/your-ko/link-validator/blame/main/README.md",
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := mockValidator(nil, "https://github.mycorp.com")
+			res := proc.detectRepoRegext.MatchString(tt.url)
+			if tt.want != res {
+				t.Errorf("processRepoUrl() got = %v, want %v", res, tt.want)
+			}
+		})
+	}
+}

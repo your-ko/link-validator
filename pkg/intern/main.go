@@ -20,11 +20,12 @@ import (
 )
 
 type InternalLinkProcessor struct {
-	corpGitHubUrl string
-	corpClient    *github.Client
-	client        *github.Client
-	urlRegex      *regexp.Regexp
-	repoRegex     *regexp.Regexp
+	corpGitHubUrl    string
+	corpClient       *github.Client
+	client           *github.Client
+	urlRegex         *regexp.Regexp
+	repoRegex        *regexp.Regexp
+	detectRepoRegext *regexp.Regexp
 }
 
 func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
@@ -57,7 +58,7 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 			`(?:\/` +
 			`([^\/\s"'()?#\]]+)\/` + // 3: org/user
 			`([^\/\s"'()?#\]]+)\/` + // 4: repo
-			`(blob|tree|raw)\/` + // 5: kind
+			`(blob|tree|raw|blame)\/` + // 5: kind
 			`([^\/\s"'()?#\]]+)` + // 6: ref (branch/tag/SHA)
 			`(?:\/([^\s"'()?#\]]+))?` + // 7: path (optional, may include /)
 			`)?` +
@@ -65,17 +66,28 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 	)
 
 	urlRegex := regexp.MustCompile("(?i)\\bhttps://(?:[A-Za-z0-9-]+\\.)*github(?:\\.[A-Za-z0-9-]+)+(?:/[^\\s\"'()<>\\[\\]{}]*)?")
+	detectRepoRegex := regexp.MustCompile(`(?i)^https?://[^?#]*/(blob|tree|raw|blame)/`)
 
 	return &InternalLinkProcessor{
-		corpClient: corpClient,
-		client:     client,
-		urlRegex:   urlRegex,
-		repoRegex:  repoRegex,
+		corpClient:       corpClient,
+		client:           client,
+		urlRegex:         urlRegex,
+		repoRegex:        repoRegex,
+		detectRepoRegext: detectRepoRegex,
 	}
 }
 
 func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
+
+	if proc.detectRepoRegext.MatchString(url) {
+		return proc.processNonRepoUrl(ctx, url, logger)
+	} else {
+		return proc.processRepoUrl(ctx, url, logger)
+	}
+}
+
+func (proc *InternalLinkProcessor) processRepoUrl(ctx context.Context, url string, logger *zap.Logger) error {
 	match := proc.repoRegex.FindStringSubmatch(url)
 	var client *github.Client
 	if len(match) == 0 {
@@ -123,6 +135,10 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 		// url with the anchor are correct
 		return nil
 	}
+}
+
+func (proc *InternalLinkProcessor) processNonRepoUrl(ctx context.Context, url string, logger *zap.Logger) error {
+	return fmt.Errorf("processing non-repo urls is not implemented yet")
 }
 
 func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
