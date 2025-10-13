@@ -21,12 +21,10 @@ import (
 )
 
 type InternalLinkProcessor struct {
-	corpGitHubUrl    string
-	corpClient       *github.Client
-	client           *github.Client
-	urlRegex         *regexp.Regexp
-	repoRegex        *regexp.Regexp
-	detectRepoRegext *regexp.Regexp
+	corpGitHubUrl string
+	corpClient    *github.Client
+	client        *github.Client
+	repoRegex     *regexp.Regexp
 }
 
 func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
@@ -54,27 +52,22 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 	}
 
 	repoRegex := regexp.MustCompile(
-		`https:\/\/` + //
-			`(github\.com|github\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)` + // 2: host = public or ANY enterprise (e.g., github.mycorp.com, github.example.co.uk)
-			`(?:\/` +
-			`([^\/\s"'()?#\]]+)\/` + // 3: org/user
-			`([^\/\s"'()?#\]]+)\/` + // 4: repo
-			`(blob|tree|raw|blame)\/` + // 5: kind
-			`([^\/\s"'()?#\]]+)` + // 6: ref (branch/tag/SHA)
-			`(?:\/([^\s"'()?#\]]+))?` + // 7: path (optional, may include /)
-			`)?` +
-			`(?:\#([^\s)\]]+))?`, // 8: fragment (no '#', optional)
+		`https:\/\/` +
+			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1: host (no subdomains)
+			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2: org
+			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 3: repo
+			`(blob|tree|raw|blame|releases|commit)\/` + // 4: kind
+			`(?:tag\/)?` + // allow "releases/tag/<ref>"; harmless for others
+			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref (branch/SHA/tag)
+			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: path (one segment, optional)
+			`(?:\#([^\s"'()<>\[\]{},?#]+))?` + // 7: fragment (optional)
+			``,
 	)
 
-	urlRegex := regexp.MustCompile("(?i)\\bhttps://(?:[A-Za-z0-9-]+\\.)*github(?:\\.[A-Za-z0-9-]+)+(?:/[^\\s\"'()<>\\[\\]{}]*)?")
-	detectRepoRegex := regexp.MustCompile(`(?i)^https?://[^?#]*/(blob|tree|raw|blame)/`)
-
 	return &InternalLinkProcessor{
-		corpClient:       corpClient,
-		client:           client,
-		urlRegex:         urlRegex,
-		repoRegex:        repoRegex,
-		detectRepoRegext: detectRepoRegex,
+		corpClient: corpClient,
+		client:     client,
+		repoRegex:  repoRegex,
 	}
 }
 
@@ -86,18 +79,29 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 	match := proc.repoRegex.FindStringSubmatch(url)
 	var client *github.Client
 	if len(match) == 0 {
-		return fmt.Errorf("invalid or unsupported GitHub URL: %s", url)
+		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
 	}
-	host, owner, repo, branch, path, anchor := match[1], match[2], match[3], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
-	if host != "github.com" {
+
+	host, owner, repo, typ, ref, path, _ := match[1], match[2], match[3], match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
+	if host == proc.corpGitHubUrl {
 		client = proc.corpClient
 	} else {
 		client = proc.client
 	}
 
-	contents, _, _, err := client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
-		Ref: branch,
-	})
+	var fileContent *github.RepositoryContent
+	var err error
+	switch typ {
+	case "blob", "tree", "raw", "blame":
+		fileContent, _, _, err = client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
+			Ref: ref,
+		})
+	case "commit":
+		_, _, err = client.Repositories.GetCommit(ctx, owner, repo, ref, nil)
+	case "releases":
+		_, _, err = client.Repositories.GetReleaseByTag(ctx, owner, repo, ref)
+	}
+
 	if err != nil {
 		var ghError *github.ErrorResponse
 		if errors.As(err, &ghError) {
@@ -108,32 +112,31 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 		// some other error
 		return err
 	}
-	if contents == nil {
+	if typ == "commit" || typ == "releases" {
+		return nil
+	}
+
+	if fileContent == nil {
 		// contents should not be nil, so something is not ok
-		return errs.NewNotFound(url)
+		return fmt.Errorf("content is nil while it is expected. url: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
 	}
-
-	if len(anchor) == 0 {
-		// link points to a file or dir, it is found
-		return nil
-	}
-
-	logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
-	content, err := contents.GetContent()
-	if err != nil {
-		return err
-	}
-	if !strings.Contains(content, anchor) {
-		logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
-		return errs.NewNotFound(url)
-	} else {
-		// url with the anchor are correct
-		return nil
-	}
+	return nil
+	//logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
+	//content, err := fileContent.GetContent()
+	//if err != nil {
+	//	return err
+	//}
+	//if !strings.Contains(content, anchor) {
+	//	logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
+	//	return errs.NewNotFound(url)
+	//} else {
+	//	// url with the anchor are correct
+	//	return nil
+	//}
 }
 
 func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.urlRegex.FindAllString(line, -1)
+	parts := proc.repoRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
