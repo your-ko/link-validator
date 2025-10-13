@@ -35,9 +35,10 @@ type LinkValidador struct {
 }
 
 type Config struct {
-	CorpGitHubUrl string
 	Path          string
 	PAT           string
+	CorpPAT       string
+	CorpGitHubUrl string
 	FileMasks     []string
 	ExcludePath   string
 	LookupPath    string
@@ -46,15 +47,15 @@ type Config struct {
 func New(config Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	if config.CorpGitHubUrl != "" {
-		processors = append(processors, intern.New(config.CorpGitHubUrl, config.PAT))
+		processors = append(processors, intern.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT))
 	}
 	processors = append(processors, local.New())
-	processors = append(processors, external.New(config.CorpGitHubUrl))
+	processors = append(processors, external.New())
 	return LinkValidador{processors}
 }
 
 func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
-	ctx, cancel := context.WithTimeout(ctx, 50*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	stats := Stats{}
 
@@ -88,6 +89,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 					} else {
 						stats.Errors++
 						logger.Warn("error validating link", zap.String("link", link), zap.Error(err))
+						continue
 					}
 					logger.Debug("link validation successful", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines))
 				}
@@ -140,7 +142,7 @@ func (v *LinkValidador) GetFiles(config Config) ([]string, error) {
 }
 
 func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
-	found := make(map[string]LinkProcessor, len(v.processors))
+	found := make(map[string]LinkProcessor)
 	for _, p := range v.processors {
 		links := p.ExtractLinks(line)
 		for _, link := range links {

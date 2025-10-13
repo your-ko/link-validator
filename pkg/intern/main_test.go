@@ -19,7 +19,7 @@ import (
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
 
-	p := New("https://github.mycorp.com", "") // PAT not needed for regex tests
+	p := New("https://github.mycorp.com", "", "") // PAT not needed for regex tests
 
 	type tc struct {
 		name string
@@ -29,7 +29,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 
 	tests := []tc{
 		{
-			name: "keeps internal blob/tree/raw; drops externals",
+			name: "keeps github blob/tree/raw; drops externals",
 			line: `see https://github.mycorp.com/org/repo/blob/main/README.md
 			       and https://google.com/x
 			       then https://github.mycorp.com/org/repo/tree/main/dir
@@ -42,7 +42,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name: "includes subdomain uploads.* as internal",
+			name: "includes subdomain uploads.* ",
 			line: `assets at https://uploads.github.mycorp.com/org/repo/raw/main/image.png
 			       and external https://gitlab.mycorp.com/a/b
 			       and internal https://github.mycorp.com/acme/proj/blob/main/notes.md`,
@@ -64,10 +64,28 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			name: "handles anchors and query strings",
 			line: `https://github.mycorp.com/team/proj/blob/main/file.md#L10-L20
 			       https://github.mycorp.com/team/proj/tree/main/docs?tab=readme
+			       https://github.com/team/proj/tree/main/docs?tab=readme
 			       https://example.com/u/v/raw/main/w.txt?download=1`,
 			want: []string{
 				"https://github.mycorp.com/team/proj/blob/main/file.md#L10-L20",
 				"https://github.mycorp.com/team/proj/tree/main/docs?tab=readme",
+				"https://github.com/team/proj/tree/main/docs?tab=readme",
+			},
+		},
+		{
+			name: "all captured links",
+			line: `https://api.github.mycorp.com/your-ko/link-validator/issues
+					https://github.mycorp.com/your-ko/link-validator/issues
+					https://github.com/your-ko/link-validator/issues
+					https://api.github.com/org/repo/blob/main/README.md
+					https://github.mycorp.com
+					https://github.com`,
+			want: []string{"https://api.github.mycorp.com/your-ko/link-validator/issues",
+				"https://github.mycorp.com/your-ko/link-validator/issues",
+				"https://github.com/your-ko/link-validator/issues",
+				"https://api.github.com/org/repo/blob/main/README.md",
+				"https://github.mycorp.com",
+				"https://github.com",
 			},
 		},
 	}
@@ -78,8 +96,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			t.Parallel()
 			got := p.ExtractLinks(tt.line)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Fatalf("ExtractLinks mismatch\nbase=%q\nline=%q\ngot = %#v\nwant= %#v",
-					p.corpGitHubUrl, tt.line, got, tt.want)
+				t.Fatalf("ExtractLinks mismatch\nline=%q\ngot = %#v\nwant= %#v", tt.line, got, tt.want)
 			}
 		})
 	}
@@ -87,7 +104,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 
 func TestInternalLinkProcessor_Process(t *testing.T) {
 	logger := zap.NewNop()
-	corp := "https://github.example.com" // enterprise host used for link parsing
+	corp := "https://github.mycorp.com"
 
 	type fields struct {
 		status int
@@ -244,15 +261,18 @@ type githubContent struct {
 	Content  string `json:"content"`  // base64-encoded file body
 }
 
-// mockValidator creates a validator instance with our enterprise host (used by regex),
-// then replace its client with one that points to the test server.
+// mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *InternalLinkProcessor {
-	p := New(corp, "")
-	c := github.NewClient(ts.Client())
-	base, _ := neturl.Parse(ts.URL + "/")
-	c.BaseURL = base
-	c.UploadURL = base
-	p.client = c
+	p := New(corp, "", "")
+
+	if ts != nil {
+		base, _ := neturl.Parse(ts.URL + "/")
+		c := github.NewClient(ts.Client())
+		c.BaseURL = base
+		c.UploadURL = base
+		p.client = c
+		p.corpClient = c
+	}
 	return p
 }
 
@@ -263,3 +283,46 @@ test
 ## header2
 test
 `
+
+func TestInternalLinkProcessor_RegexRepoUrlDetection(t *testing.T) {
+	type fields struct {
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name string
+		url  string
+		want bool
+	}{
+		{
+			name: "repo url blob",
+			url:  "https://github.com/your-ko/link-validator/blob/main/README.md",
+			want: true,
+		},
+		{
+			name: "repo url raw",
+			url:  "https://github.com/your-ko/link-validator/raw/main/README.md",
+			want: true,
+		},
+		{
+			name: "repo url tree",
+			url:  "https://github.com/your-ko/link-validator/tree/main/README.md",
+			want: true,
+		},
+		{
+			name: "repo url blame",
+			url:  "https://github.com/your-ko/link-validator/blame/main/README.md",
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := mockValidator(nil, "https://github.mycorp.com")
+			res := proc.detectRepoRegext.MatchString(tt.url)
+			if tt.want != res {
+				t.Errorf("processRepoUrl() got = %v, want %v", res, tt.want)
+			}
+		})
+	}
+}
