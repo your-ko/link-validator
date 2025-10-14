@@ -20,7 +20,6 @@ WORKDIR /src
 ENV CGO_ENABLED=0
 RUN GOOS=linux GOARCH=amd64 make build
 
-#FROM alpine:3.20
 FROM scratch
 
 ARG BUILD_DATE
@@ -29,8 +28,8 @@ ARG VERSION
 
 LABEL org.opencontainers.image.title="Link Validator" \
       org.opencontainers.image.description="A simple link validator for markdown and code repositories" \
-      org.opencontainers.image.url="https://github.com/your-org/link-validator" \
-      org.opencontainers.image.source="https://github.com/your-org/link-validator" \
+      org.opencontainers.image.url="https://github.com/your-ko/link-validator" \
+      org.opencontainers.image.source="https://github.com/your-ko/link-validator" \
       org.opencontainers.image.version="$VERSION" \
       org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.revision=$GIT_COMMIT \
@@ -38,9 +37,7 @@ LABEL org.opencontainers.image.title="Link Validator" \
 
 COPY --from=builder /etc/passwd_gouser /etc/passwd
 USER gouser
-#
+
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /src/bin/link-validator /app/link-validator
 ENTRYPOINT ["/app/link-validator"]
-#ENTRYPOINT ["/bin/sh"]
-#CMD []
