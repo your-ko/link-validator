@@ -17,6 +17,7 @@ import (
 type HttpLinkProcessor struct {
 	httpClient *http.Client
 	urlRegex   *regexp.Regexp
+	repoRegex  *regexp.Regexp
 }
 
 func New() *HttpLinkProcessor {
@@ -25,10 +26,24 @@ func New() *HttpLinkProcessor {
 		CheckRedirect: checkRedirect,
 	}
 	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
+	// repoRegex is identical to the intern.repoRegex, but it is used in inverse way
+	repoRegex := regexp.MustCompile(
+		`https:\/\/` +
+			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1: host (no subdomains)
+			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2: org
+			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 3: repo
+			`(blob|tree|raw|blame|releases|commit)\/` + // 4: kind
+			`(?:tag\/)?` + // allow "releases/tag/<ref>"; harmless for others
+			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref (branch/SHA/tag)
+			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: path (one segment, optional)
+			`(?:\#([^\s"'()<>\[\]{},?#]+))?` + // 7: fragment (optional)
+			``,
+	)
 
 	return &HttpLinkProcessor{
 		httpClient: httpClient,
 		urlRegex:   urlRegex,
+		repoRegex:  repoRegex,
 	}
 }
 
@@ -56,7 +71,7 @@ func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *za
 	}
 
 	// check just the first 4 KB of the body
-	bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 4096))
+	bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 10240))
 	if err != nil {
 		// we can't read body, something is off
 		return err
@@ -86,11 +101,8 @@ func (proc *HttpLinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Host == "" {
 			continue // skip malformed
 		}
-		host := strings.ToLower(u.Hostname()) // strips port, handles IPv6 brackets
-
-		// Exclude GitHub domain or any subdomain.
-		if strings.Contains(host, "github") {
-			continue
+		if proc.repoRegex.MatchString(raw) {
+			continue // skip github repo urls
 		}
 
 		urls = append(urls, raw)

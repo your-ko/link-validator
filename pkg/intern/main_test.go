@@ -72,8 +72,8 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				https://github.mycorp.com/your-ko/link-validator/main/docs
 				https://github.com/your-ko/link-validator/main/README.md
 				https://github.com/your-ko/link-validator/main/README.md
-				https://github.com/your-ko/link-validator/pulls,
-				https://github.com/your-ko/link-validator/issues/4,
+				https://github.com/your-ko/link-validator/pulls
+				https://github.com/your-ko/link-validator/issues/4
 				`,
 			want: nil,
 		},
