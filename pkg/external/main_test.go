@@ -25,51 +25,70 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 
 	tests := []tc{
 		{
-			name: "exclude exact host and its subdomains",
-			line: `see https://github.mycorp.com/org/repo
-			       and https://api.github.mycorp.com/x
-			       and https://example.com/page
-			       and https://gitlab.mycorp.com/y`,
-			// Expect to keep only non-excluded domains.
+			name: "drop github blob; keep externals",
+			line: `test https://github.mycorp.com/your-ko/link-validator/blob/main/README.md
+			       test https://google.com/x
+			       test https://github.com/your-ko/link-validator/blob/main/README.md`,
 			want: []string{
-				"https://example.com/page",
-				"https://gitlab.mycorp.com/y",
+				"https://google.com/x",
 			},
 		},
 		{
-			name: "exclude without scheme still filters",
-			line: `https://github.mycorp.com a https://api.github.mycorp.com b https://google.com?q=1`,
+			name: "capture subdomain uploads.* or api* ",
+			line: `test https://uploads.github.mycorp.com/org/repo/raw/main/image.png
+			       and external https://gitlab.mycorp.com/a/b
+			       and api https://api.github.mycorp.com/org/repo/tree/main/folder`,
 			want: []string{
-				"https://google.com?q=1",
+				"https://uploads.github.mycorp.com/org/repo/raw/main/image.png",
+				"https://gitlab.mycorp.com/a/b",
+				"https://api.github.mycorp.com/org/repo/tree/main/folder",
 			},
 		},
 		{
-			name: "exclude with leading dot works same",
-			line: `https://github.mycorp.com https://sub.github.mycorp.com https://other.com`,
+			name: "ignores non-matching schemes, captures another hosts",
+			line: `scheme http://github.mycorp.com/org/repo/blob/main/README.md
+			       non-github https://other.com/org/repo/blob/main/README.md`,
 			want: []string{
-				"https://other.com",
+				"https://other.com/org/repo/blob/main/README.md",
 			},
 		},
 		{
-			name: "http links are not matched by regex (https only)",
-			line: `http://github.mycorp.com https://github.mycorp.com https://ok.com`,
+			name: "handles anchors and query strings",
+			line: `https://github.mycorp.com/your-ko/link-validator/blob/main/file.md#L10-L20
+			       https://github.com/your-ko/link-validator/blob/main/file.md#L10-L20
+			       https://github.mycorp.com/your-ko/link-validator/tree/main/docs?tab=readme
+			       https://github.com/your-ko/link-validator/tree/main/docs?tab=readme
+			       https://example.com/u/v/raw/main/w.txt#anchor1
+			       https://example.com/u/v/raw/main/w.txt?download=1`,
 			want: []string{
-				// http://... is ignored by regex; https://github.mycorp.com excluded; only ok.com remains
-				"https://ok.com",
+				"https://example.com/u/v/raw/main/w.txt#anchor1",
+				"https://example.com/u/v/raw/main/w.txt?download=1",
 			},
 		},
 		{
-			name: "mixed unrelated https remain",
-			line: `https://one.com https://two.com https://github.mycorp.com https://github.com/your-ko/link-validator/README.md, https://three.com`,
+			name: "captures non-repo urls (without blob|tree|raw|blame|ref)",
+			line: `
+				https://github.com/your-ko/link-validator/main/docs
+				https://github.mycorp.com/your-ko/link-validator/main/docs
+				https://github.com/your-ko/link-validator/main/README.md
+				https://github.com/your-ko/link-validator/main/README.md
+				https://github.com/your-ko/link-validator/pulls
+				https://github.com/your-ko/link-validator/issues/4
+				`,
 			want: []string{
-				"https://one.com",
-				"https://two.com",
-				"https://three.com",
+				"https://github.com/your-ko/link-validator/main/docs",
+				"https://github.mycorp.com/your-ko/link-validator/main/docs",
+				"https://github.com/your-ko/link-validator/main/README.md",
+				"https://github.com/your-ko/link-validator/main/README.md",
+				"https://github.com/your-ko/link-validator/pulls",
+				"https://github.com/your-ko/link-validator/issues/4",
 			},
 		},
 		{
-			name: "test for GitHub links",
-			line: `qqq https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml) qqq`,
+			name: "ignores refs urls",
+			line: `
+				particular commit https://github.com/your-ko/link-validator/commit/a96366f66ffacd461de10a1dd561ab5a598e9167 text
+				particular commit https://github.mycorp.com/your-ko/link-validator/commit/a96366f66ffacd461de10a1dd561ab5a598e9167 text`,
 			want: []string{},
 		},
 	}
@@ -180,10 +199,10 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.NotFound,
 		},
 		{
-			name: "Large body with 'not found' after 4KB is ignored -> no error",
+			name: "Large body with 'not found' after 10KB is ignored -> no error",
 			fields: fields{
 				status: http.StatusOK,
-				body:   strings.Repeat("A", 5000) + " not found", // beyond the 4096 read limit
+				body:   strings.Repeat("A", 11000) + " not found", // beyond the 4096 read limit
 			},
 			args:    args{url: "/long"},
 			wantErr: false,
