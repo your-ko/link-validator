@@ -74,21 +74,22 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			for link, processor := range links {
 				err := processor.Process(ctx, link, logger)
 				linksFound++
-				if err != nil {
-					var notFound errs.NotFoundError
-					var empty errs.EmptyBodyError
-					if errors.As(err, &notFound) {
-						logger.Warn("link not found", zap.String("error", notFound.Error()), zap.String("filename", fileName), zap.Int("line", lines))
-						stats.NotFound++
-					} else if errors.As(err, &empty) {
-						logger.Warn("link not found", zap.String("error", empty.Error()), zap.String("filename", fileName), zap.Int("line", lines))
-						stats.NotFound++
-					} else {
-						stats.Errors++
-						logger.Warn("error validating link", zap.String("link", link), zap.Error(err))
-						continue
-					}
+				if err == nil {
 					logger.Debug("link validation successful", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines))
+					continue
+				}
+
+				var notFound errs.NotFoundError
+				var empty errs.EmptyBodyError
+				if errors.As(err, &notFound) {
+					logger.Warn("link not found", zap.String("error", notFound.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+					stats.NotFound++
+				} else if errors.As(err, &empty) {
+					logger.Warn("link not found", zap.String("error", empty.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+					stats.NotFound++
+				} else {
+					stats.Errors++
+					logger.Warn("error validating link", zap.String("link", link), zap.Error(err))
 				}
 			}
 			lines++
