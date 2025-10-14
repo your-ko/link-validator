@@ -1,4 +1,4 @@
-package intern
+package gh
 
 import (
 	"context"
@@ -262,7 +262,7 @@ type githubContent struct {
 }
 
 // mockValidator creates a validator instance with mock GitHub clients
-func mockValidator(ts *httptest.Server, corp string) *InternalLinkProcessor {
+func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
 	p := New(corp, "", "")
 
 	if ts != nil {

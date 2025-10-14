@@ -14,13 +14,13 @@ import (
 	"time"
 )
 
-type HttpLinkProcessor struct {
+type LinkProcessor struct {
 	httpClient *http.Client
 	urlRegex   *regexp.Regexp
 	repoRegex  *regexp.Regexp
 }
 
-func New() *HttpLinkProcessor {
+func New() *LinkProcessor {
 	httpClient := &http.Client{
 		Timeout:       10 * time.Second,
 		CheckRedirect: checkRedirect,
@@ -40,7 +40,7 @@ func New() *HttpLinkProcessor {
 			``,
 	)
 
-	return &HttpLinkProcessor{
+	return &LinkProcessor{
 		httpClient: httpClient,
 		urlRegex:   urlRegex,
 		repoRegex:  repoRegex,
@@ -51,7 +51,7 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating external url", zap.String("url", url))
 
 	req, err := http.NewRequest("GET", url, bytes.NewBuffer(nil))
@@ -92,7 +92,7 @@ func (proc *HttpLinkProcessor) Process(_ context.Context, url string, logger *za
 	}
 }
 
-func (proc *HttpLinkProcessor) ExtractLinks(line string) []string {
+func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	parts := proc.urlRegex.FindAllString(line, -1)
 	urls := make([]string, 0, len(parts))
 

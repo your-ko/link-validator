@@ -4,7 +4,7 @@
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
 // links to a particular branch or commits are supported as well.
 
-package intern
+package gh
 
 import (
 	"context"
@@ -20,14 +20,14 @@ import (
 	"time"
 )
 
-type InternalLinkProcessor struct {
+type LinkProcessor struct {
 	corpGitHubUrl string
 	corpClient    *github.Client
 	client        *github.Client
 	repoRegex     *regexp.Regexp
 }
 
-func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
+func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
@@ -64,14 +64,14 @@ func New(corpGitHubUrl, corpPat, pat string) *InternalLinkProcessor {
 			``,
 	)
 
-	return &InternalLinkProcessor{
+	return &LinkProcessor{
 		corpClient: corpClient,
 		client:     client,
 		repoRegex:  repoRegex,
 	}
 }
 
-func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -135,7 +135,7 @@ func (proc *InternalLinkProcessor) Process(ctx context.Context, url string, logg
 	//}
 }
 
-func (proc *InternalLinkProcessor) ExtractLinks(line string) []string {
+func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	parts := proc.repoRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
