@@ -1,4 +1,4 @@
-// Package 'internal' implements git repository links validation
+// Package 'gh' implements git repository blob|tree|raw|blame|releases|commit links validation
 // GitHub links are the links that point to files in other GitHub repositories within the same owner
 // (either it is public or enterprise GitHub)
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)

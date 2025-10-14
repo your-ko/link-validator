@@ -1,4 +1,5 @@
 // Package external implements http links validation, i.e., any link starting with http(s)
+// also covers gihub non-repository links, such as api.github.com or https://github.com/your-ko/link-validator/pull
 package external
 
 import (
