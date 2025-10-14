@@ -116,7 +116,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 		return nil
 	}
 
-	if fileContent == nil {
+	if fileContent == nil && typ != "tree" {
 		// contents should not be nil, so something is not ok
 		return fmt.Errorf("content is nil while it is expected. url: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
 	}
