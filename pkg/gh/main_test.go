@@ -88,6 +88,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			name: "ignores non-api calls",
 			line: `
 				https://raw.githubusercontent.com/your-ko/link-validator/refs/heads/main/README.md
+				https://uploads.github.mycorp.com/org/repo/raw/main/img.png
 				https://api.github.com/repos/your-ko/link-validator/contents/?ref=a96366f66ffacd461de10a1dd561ab5a598e9167
 				`,
 			want: nil,
