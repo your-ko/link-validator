@@ -16,9 +16,9 @@ import (
 )
 
 type LinkProcessor struct {
-	httpClient *http.Client
-	urlRegex   *regexp.Regexp
-	repoRegex  *regexp.Regexp
+	httpClient  *http.Client
+	urlRegex    *regexp.Regexp
+	githubRegex *regexp.Regexp
 }
 
 func New() *LinkProcessor {
@@ -27,24 +27,13 @@ func New() *LinkProcessor {
 		CheckRedirect: checkRedirect,
 	}
 	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
-	// repoRegex is identical to the intern.repoRegex, but it is used in inverse way
-	repoRegex := regexp.MustCompile(
-		`https:\/\/` +
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1: host (no subdomains)
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 3: repo
-			`(blob|tree|raw|blame|releases|commit)\/` + // 4: kind
-			`(?:tag\/)?` + // allow "releases/tag/<ref>"; harmless for others
-			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref (branch/SHA/tag)
-			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: path (one segment, optional)
-			`(?:\#([^\s"'()<>\[\]{},?#]+))?` + // 7: fragment (optional)
-			``,
-	)
+	// ghRegex is identical to the intern.repoRegex, but it is used in inverse way
+	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 	return &LinkProcessor{
-		httpClient: httpClient,
-		urlRegex:   urlRegex,
-		repoRegex:  repoRegex,
+		httpClient:  httpClient,
+		urlRegex:    urlRegex,
+		githubRegex: ghRegex,
 	}
 }
 
@@ -52,10 +41,13 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating external url", zap.String("url", url))
 
-	req, err := http.NewRequest("GET", url, bytes.NewBuffer(nil))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
 		return err
 	}
@@ -68,6 +60,7 @@ func (proc *LinkProcessor) Process(_ context.Context, url string, logger *zap.Lo
 	}
 	defer r.Body.Close()
 	if r.StatusCode < 200 || r.StatusCode >= 300 {
+		logger.Debug("", zap.Int("statusCode", r.StatusCode))
 		return errs.NewNotFound(url)
 	}
 
@@ -102,8 +95,8 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Host == "" {
 			continue // skip malformed
 		}
-		if proc.repoRegex.MatchString(raw) {
-			continue // skip github repo urls
+		if proc.githubRegex.MatchString(raw) {
+			continue // skip the majority of GitHub urls
 		}
 
 		urls = append(urls, raw)

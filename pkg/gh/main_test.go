@@ -66,7 +66,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name: "ignores non-repo urls (without blob|tree|raw|blame|ref)",
+			name: "captures non-repo urls (without blob|tree|raw|blame|ref)",
 			line: `
 				https://github.com/your-ko/link-validator/main/docs
 				https://github.mycorp.com/your-ko/link-validator/main/docs
@@ -74,6 +74,21 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				https://github.com/your-ko/link-validator/main/README.md
 				https://github.com/your-ko/link-validator/pulls
 				https://github.com/your-ko/link-validator/issues/4
+				`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/main/docs",
+				"https://github.mycorp.com/your-ko/link-validator/main/docs",
+				"https://github.com/your-ko/link-validator/main/README.md",
+				"https://github.com/your-ko/link-validator/main/README.md",
+				"https://github.com/your-ko/link-validator/pulls",
+				"https://github.com/your-ko/link-validator/issues/4",
+			},
+		},
+		{
+			name: "ignores non-api calls",
+			line: `
+				https://raw.githubusercontent.com/your-ko/link-validator/refs/heads/main/README.md
+				https://api.github.com/repos/your-ko/link-validator/contents/?ref=a96366f66ffacd461de10a1dd561ab5a598e9167
 				`,
 			want: nil,
 		},

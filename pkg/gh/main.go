@@ -25,6 +25,7 @@ type LinkProcessor struct {
 	corpClient    *github.Client
 	client        *github.Client
 	repoRegex     *regexp.Regexp
+	ghRegex       *regexp.Regexp
 }
 
 func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
@@ -63,11 +64,13 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 			`(?:\#([^\s"'()<>\[\]{},?#]+))?` + // 7: fragment (optional)
 			``,
 	)
+	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 	return &LinkProcessor{
 		corpClient: corpClient,
 		client:     client,
 		repoRegex:  repoRegex,
+		ghRegex:    ghRegex,
 	}
 }
 
@@ -136,7 +139,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.repoRegex.FindAllString(line, -1)
+	parts := proc.ghRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
