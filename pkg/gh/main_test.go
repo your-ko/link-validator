@@ -233,10 +233,11 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			name: "link to a pull requests",
 			args: args{link: "/your-ko/link-validator/pulls/your-ko"},
 			fields: fields{
-				status:         http.StatusOK,
-				path:           "/your-ko/link-validator/pulls/your-ko",
-				body:           "[{\"number\": 1}]",
-				base64encoding: false,
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/pulls/your-ko",
+				body:   "",
+				//body:           "[{\"number\": 1}]",
+				//base64encoding: false,
 			},
 		},
 		{

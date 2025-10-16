@@ -88,7 +88,7 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
-	ctx, cancel := context.WithTimeout(ctx, 1000*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1000*time.Second) // TODO
 	defer cancel()
 
 	match := proc.repoRegex.FindStringSubmatch(url)
@@ -112,7 +112,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 			Ref: ref,
 		})
 	case "commit":
-		_, _, err = client.Repositories.GetCommit(ctx, owner, repo, ref, nil)
+		_, _, err = client.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
 	case "releases":
 		_, _, err = client.Repositories.GetReleaseByTag(ctx, owner, repo, ref)
 	case "issues":
