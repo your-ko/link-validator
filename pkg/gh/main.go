@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -113,6 +114,18 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 		_, _, err = client.Repositories.GetCommit(ctx, owner, repo, ref, nil)
 	case "releases":
 		_, _, err = client.Repositories.GetReleaseByTag(ctx, owner, repo, ref)
+	case "issues":
+		issue, err := strconv.Atoi(ref)
+		if err != nil {
+			return err
+		}
+		_, _, err = client.Issues.Get(ctx, owner, repo, issue)
+	case "pull":
+		pr, err := strconv.Atoi(ref)
+		if err != nil {
+			return err
+		}
+		_, _, err = client.PullRequests.Get(ctx, owner, repo, pr)
 	}
 
 	if err != nil {
@@ -125,7 +138,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 		// some other error
 		return err
 	}
-	if typ == "commit" || typ == "releases" {
+	if typ != "blob" && typ != "raw" {
 		return nil
 	}
 

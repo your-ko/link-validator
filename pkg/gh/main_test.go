@@ -210,6 +210,24 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				body:   content,
 			},
 		},
+		{
+			name: "link to an issue",
+			args: args{link: "/your-ko/link-validator/issues/123"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/issues/123",
+				body:   content,
+			},
+		},
+		{
+			name: "link to a pull request",
+			args: args{link: "/your-ko/link-validator/pull/1"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/pull/1",
+				body:   content,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -490,7 +508,21 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "api repo url",
+			name: "repo url compare",
+			url:  "https://github.com/your-ko/link-validator/pull/1",
+			want: []string{
+				"https://github.com/your-ko/link-validator/pull/1",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"pull",
+				"1",
+				"",
+				"",
+			},
+		},
+		{
+			name: "api pull request url",
 			url:  "https://api.github.com/repos/your-nj/link-validator",
 			want: nil,
 		},
