@@ -144,27 +144,30 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			name: "file exists, no anchor",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
 			name: "file exists, anchor present in content",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md#header2"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
 			name: "file exists, anchor missing -> errs.NotFound",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md#no-such-anchor"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 			// anchors temporary don't work
 			//wantErr: true,
@@ -197,18 +200,20 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			// URL without path after branch; regex yields empty path → GetContents at repo root.
 			args: args{link: "/your-ko/link-validator/blob/main"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
 			name: "file exists, link to branch",
 			args: args{link: "/your-ko/link-validator/blob/branchname/README.md#about"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
