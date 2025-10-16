@@ -127,8 +127,11 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 			return err
 		}
 		_, _, err = client.PullRequests.Get(ctx, owner, repo, pr)
-	case "pulls":
-		_, _, err = client.PullRequests.List(ctx, owner, repo, &github.PullRequestListOptions{})
+	case "pulls", "commits", "discussions", "branches", "tags", "milestones", "labels", "projects", "actions":
+		// I assume that if repository exists, then the lists above also exist
+		_, _, err = client.Repositories.Get(ctx, owner, repo)
+	default:
+		err = fmt.Errorf("unsupported GitHub request, please report an issue")
 	}
 
 	if err != nil {
