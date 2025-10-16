@@ -203,8 +203,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name: "file exists, link to branch",
-			args: args{link: "/your-ko/link-validator/blob/branch/main/README.md#header2"},
-			args: args{link: "/your-ko/link-validator/blob/main/README.md#about"},
+			args: args{link: "/your-ko/link-validator/blob/branchname/README.md#about"},
 			fields: fields{
 				status: http.StatusOK,
 				path:   "/your-ko/link-validator/blob/main/README.md",
