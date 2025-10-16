@@ -33,7 +33,7 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
-		panic(fmt.Sprintf("invalid baseUrl: %q", corpGitHubUrl))
+		panic(fmt.Sprintf("invalid enterprise url: %q", corpGitHubUrl))
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
 	var corpClient *github.Client
@@ -78,16 +78,17 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 	return &LinkProcessor{
-		corpClient: corpClient,
-		client:     client,
-		repoRegex:  repoRegex,
-		ghRegex:    ghRegex,
+		corpGitHubUrl: u.Hostname(),
+		corpClient:    corpClient,
+		client:        client,
+		repoRegex:     repoRegex,
+		ghRegex:       ghRegex,
 	}
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 1000*time.Second)
 	defer cancel()
 
 	match := proc.repoRegex.FindStringSubmatch(url)
@@ -126,6 +127,8 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 			return err
 		}
 		_, _, err = client.PullRequests.Get(ctx, owner, repo, pr)
+	case "pulls":
+		_, _, err = client.PullRequests.List(ctx, owner, repo, &github.PullRequestListOptions{})
 	}
 
 	if err != nil {

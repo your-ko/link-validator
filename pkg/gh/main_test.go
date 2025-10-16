@@ -122,9 +122,10 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 	corp := "https://github.mycorp.com"
 
 	type fields struct {
-		status int
-		path   string
-		body   string
+		status         int
+		path           string
+		body           string
+		base64encoding bool
 	}
 	type args struct {
 		link string
@@ -228,6 +229,16 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				body:   content,
 			},
 		},
+		{
+			name: "link to a pull requests",
+			args: args{link: "/your-ko/link-validator/pulls/your-ko"},
+			fields: fields{
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/pulls/your-ko",
+				body:           "[{\"number\": 1}]",
+				base64encoding: false,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -239,11 +250,16 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				//}
 				res.WriteHeader(tt.fields.status)
 
-				_ = json.NewEncoder(res).Encode(&githubContent{
-					Type:     "file",
-					Encoding: "base64",
-					Content:  base64.StdEncoding.EncodeToString([]byte(tt.fields.body)),
-				})
+				if tt.fields.base64encoding {
+					_ = json.NewEncoder(res).Encode(&githubContent{
+						Type:     "file",
+						Encoding: "base64",
+						Content:  base64.StdEncoding.EncodeToString([]byte(tt.fields.body)),
+					})
+				} else {
+					res.Header().Set("Content-Type", "application/json")
+					_, _ = res.Write([]byte(tt.fields.body))
+				}
 			}))
 			t.Cleanup(testServer.Close)
 
@@ -508,7 +524,7 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "repo url compare",
+			name: "repo url PR",
 			url:  "https://github.com/your-ko/link-validator/pull/1",
 			want: []string{
 				"https://github.com/your-ko/link-validator/pull/1",
@@ -517,6 +533,20 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 				"link-validator",
 				"pull",
 				"1",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url pull requests",
+			url:  "https://github.com/your-ko/link-validator/pulls/your-ko",
+			want: []string{
+				"https://github.com/your-ko/link-validator/pulls/your-ko",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"pulls",
+				"your-ko",
 				"",
 				"",
 			},
