@@ -204,6 +204,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		{
 			name: "file exists, link to branch",
 			args: args{link: "/your-ko/link-validator/blob/branch/main/README.md#header2"},
+			args: args{link: "/your-ko/link-validator/blob/main/README.md#about"},
 			fields: fields{
 				status: http.StatusOK,
 				path:   "/your-ko/link-validator/blob/main/README.md",
@@ -300,7 +301,7 @@ test
 test
 `
 
-func TestInternalLinkProcessor_RegexRepoUrlProcess(t *testing.T) {
+func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 	tests := []struct {
 		name string
 		url  string
@@ -428,8 +429,8 @@ func TestInternalLinkProcessor_RegexRepoUrlProcess(t *testing.T) {
 				"your-ko",
 				"link-validator",
 				"releases",
-				"tag",
 				"0.9.0",
+				"",
 				"",
 			},
 		},

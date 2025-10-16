@@ -54,25 +54,26 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 
 	repoRegex := regexp.MustCompile(
 		`^https:\/\/` +
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1 host (no subdomains)
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2 org
-			`([^\/\s"'()<>\[\]{},?#]+)` + // 3 repo
+			// 1: host (no subdomains like api./uploads.)
+			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
+			// 2: org
+			`([^\/\s"'()<>\[\]{},?#]+)\/` +
+			// 3: repo
+			`([^\/\s"'()<>\[\]{},?#]+)` +
+			// allow repo root with or without trailing slash
+			`\/?` +
+			// optionally: 4 kind + 5 ref/first + 6 tail
 			`(?:\/` +
-			// 4 kind: content OR API-like sections (single capturing group)
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` +
-			// Optional "tag/" (primarily for releases; harmless if present elsewhere)
-			`(?:\/(?:tag\/)?)?` +
-			// 5 first segment after kind (ref for content; first tail segment for API)
-			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` +
-			// 6 remaining tail (may include '/'; stops before ? or #)
-			`(?:\/([^\s"'()<>\[\]{},?#]+))?` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
+			`(?:tag\/)?` + // lets "releases/tag/<tag>" work
+			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
+			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: one extra segment (optional)
 			`)?` +
-			// Optional query is allowed but ignored
-			`(?:\?[^\s#"'()<>\[\]{},]*)?` +
-			// 7 fragment (optional, without '#')
+			// 7: optional fragment
 			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
 			`$`,
 	)
+
 	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 	return &LinkProcessor{
