@@ -300,7 +300,7 @@ test
 test
 `
 
-func TestInternalLinkProcessor_RegexRepoUrlDetection(t *testing.T) {
+func TestInternalLinkProcessor_RegexRepoUrlProcess(t *testing.T) {
 	tests := []struct {
 		name string
 		url  string
@@ -428,7 +428,63 @@ func TestInternalLinkProcessor_RegexRepoUrlDetection(t *testing.T) {
 				"your-ko",
 				"link-validator",
 				"releases",
+				"tag",
 				"0.9.0",
+				"",
+			},
+		},
+		{
+			name: "repo url",
+			url:  "https://github.com/your-ko/link-validator/",
+			want: []string{
+				"https://github.com/your-ko/link-validator/",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"",
+				"",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url issues",
+			url:  "https://github.com/your-ko/link-validator/issues/123",
+			want: []string{
+				"https://github.com/your-ko/link-validator/issues/123",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"issues",
+				"123",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url workflow runs",
+			url:  "https://github.com/your-ko/link-validator/actions/runs/42",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/runs/42",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"runs",
+				"42",
+				"",
+			},
+		},
+		{
+			name: "repo url compare",
+			url:  "https://github.com/your-ko/link-validator/compare/main...dev",
+			want: []string{
+				"https://github.com/your-ko/link-validator/compare/main...dev",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"compare",
+				"main...dev",
 				"",
 				"",
 			},

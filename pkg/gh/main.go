@@ -53,16 +53,25 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 	}
 
 	repoRegex := regexp.MustCompile(
-		`https:\/\/` +
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1: host (no subdomains)
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 3: repo
-			`(blob|tree|raw|blame|releases|commit)\/` + // 4: kind
-			`(?:tag\/)?` + // allow "releases/tag/<ref>"; harmless for others
-			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref (branch/SHA/tag)
-			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: path (one segment, optional)
-			`(?:\#([^\s"'()<>\[\]{},?#]+))?` + // 7: fragment (optional)
-			``,
+		`^https:\/\/` +
+			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1 host (no subdomains)
+			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2 org
+			`([^\/\s"'()<>\[\]{},?#]+)` + // 3 repo
+			`(?:\/` +
+			// 4 kind: content OR API-like sections (single capturing group)
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` +
+			// Optional "tag/" (primarily for releases; harmless if present elsewhere)
+			`(?:\/(?:tag\/)?)?` +
+			// 5 first segment after kind (ref for content; first tail segment for API)
+			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` +
+			// 6 remaining tail (may include '/'; stops before ? or #)
+			`(?:\/([^\s"'()<>\[\]{},?#]+))?` +
+			`)?` +
+			// Optional query is allowed but ignored
+			`(?:\?[^\s#"'()<>\[\]{},]*)?` +
+			// 7 fragment (optional, without '#')
+			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
+			`$`,
 	)
 	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
