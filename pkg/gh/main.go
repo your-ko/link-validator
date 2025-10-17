@@ -12,7 +12,9 @@ import (
 	"github.com/google/go-github/v74/github"
 	"go.uber.org/zap"
 	"net/url"
+	"reflect"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -22,6 +24,17 @@ type ghHandler func(
 	c *github.Client,
 	owner, repo, ref, path string,
 ) error
+
+func (h ghHandler) String() string {
+	if h == nil {
+		return "<nil>"
+	}
+	pc := reflect.ValueOf(h).Pointer()
+	if fn := runtime.FuncForPC(pc); fn != nil {
+		return fn.Name() // e.g. "github.com/your-org/yourrepo/gh.handleContents"
+	}
+	return fmt.Sprintf("func@%#x", pc)
+}
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
 var handlers = map[string]ghHandler{
@@ -47,6 +60,7 @@ var handlers = map[string]ghHandler{
 	"milestones":  handleRepoExist,
 	"labels":      handleRepoExist,
 	"projects":    handleRepoExist,
+	"":            handleRepoExist,
 }
 
 type LinkProcessor struct {
@@ -112,7 +126,7 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcess
 		client:        client,
 		repoRegex:     repoRegex,
 		ghRegex:       ghRegex,
-		timeout:    timeout,
+		timeout:       timeout,
 	}
 }
 
@@ -138,6 +152,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 	if !ok {
 		return fmt.Errorf("unsupported GitHub request type %q; please open an issue", typ)
 	}
+	logger.Debug("using", zap.Any("handler", handler))
 
 	return mapGHError(url, handler(ctx, client, owner, repo, ref, path))
 }
