@@ -21,6 +21,38 @@ import (
 	"time"
 )
 
+type ghHandler func(
+	ctx context.Context,
+	c *github.Client,
+	owner, repo, ref, path string,
+) error
+
+// handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
+var handlers = map[string]ghHandler{
+	// File-ish routes — all use Contents API
+	"blob":  handleContents,
+	"tree":  handleContents,
+	"raw":   handleContents,
+	"blame": handleContents,
+
+	// Single-object routes
+	"commit":   handleCommit,
+	"issues":   handleIssue,
+	"pull":     handlePR,
+	"releases": handleReleases,
+
+	// “List / page” routes — we just validate the repo exists
+	"pulls":       handleRepoExist,
+	"commits":     handleRepoExist,
+	"discussions": handleRepoExist,
+	"branches":    handleRepoExist,
+	"tags":        handleRepoExist,
+	"milestones":  handleRepoExist,
+	"labels":      handleRepoExist,
+	"projects":    handleRepoExist,
+	"actions":     handleRepoExist,
+}
+
 type LinkProcessor struct {
 	corpGitHubUrl string
 	corpClient    *github.Client
@@ -86,6 +118,83 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 	}
 }
 
+func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _ string) error {
+	_, _, err := c.Repositories.Get(ctx, owner, repo)
+	return err
+}
+
+func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, path string) error {
+	_, _, _, err := c.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{Ref: ref})
+	return err
+}
+
+func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _ string) error {
+	_, _, err := c.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
+	return err
+}
+
+func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, path string) error {
+	// Normalize for easier branching
+	ref = strings.Trim(ref, "/")
+	path = strings.Trim(path, "/")
+	switch {
+	// /<owner>/<repo>/releases  (list page)
+	case ref == "" && path == "":
+		// again, we assume that if the repo exists, then at least empty list of releases exists as well
+		_, _, err := c.Repositories.Get(ctx, owner, repo)
+		return err
+	// /<owner>/<repo>/releases/tag/<tag>
+	case ref == "tag" && path != "":
+		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, path)
+		return err
+	// /<owner>/<repo>/releases/latest
+	case ref == "latest" && path == "":
+		_, _, err := c.Repositories.GetLatestRelease(ctx, owner, repo)
+		return err
+	// Optional: /<owner>/<repo>/releases/download/<tag>/<assetName>
+	case ref == "download" && path != "":
+		// Validate the tag part exists;
+		segs := strings.SplitN(path, "/", 2)
+		tag := segs[0]
+		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, tag)
+		return err
+	// Fallback: some instances use /releases/<tag> without "tag/" — handle that too.
+	case ref != "" && path == "":
+		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, ref)
+		return err
+	}
+	return fmt.Errorf("unsupported releases URL variant: ref=%q path=%q", ref, path)
+}
+
+func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _ string) error {
+	n, err := strconv.Atoi(ref)
+	if err != nil {
+		return fmt.Errorf("invalid issue number %q: %w", ref, err)
+	}
+	_, _, err = c.Issues.Get(ctx, owner, repo, n)
+	return err
+}
+
+func handlePR(ctx context.Context, c *github.Client, owner, repo, ref, _ string) error {
+	n, err := strconv.Atoi(ref)
+	if err != nil {
+		return fmt.Errorf("invalid PR number %q: %w", ref, err)
+	}
+	_, _, err = c.PullRequests.Get(ctx, owner, repo, n)
+	return err
+}
+
+func mapGHError(url string, err error) error {
+	if err == nil {
+		return nil
+	}
+	var ghErr *github.ErrorResponse
+	if errors.As(err, &ghErr) && ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusNotFound {
+		return errs.NewNotFound(url)
+	}
+	return err
+}
+
 func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
 	ctx, cancel := context.WithTimeout(ctx, 1000*time.Second) // TODO
@@ -104,67 +213,12 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 		client = proc.client
 	}
 
-	var fileContent *github.RepositoryContent
-	var err error
-	switch typ {
-	case "blob", "tree", "raw", "blame":
-		fileContent, _, _, err = client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
-			Ref: ref,
-		})
-	case "commit":
-		_, _, err = client.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
-	case "releases":
-		_, _, err = client.Repositories.GetReleaseByTag(ctx, owner, repo, ref)
-	case "issues":
-		issue, err := strconv.Atoi(ref)
-		if err != nil {
-			return err
-		}
-		_, _, err = client.Issues.Get(ctx, owner, repo, issue)
-	case "pull":
-		pr, err := strconv.Atoi(ref)
-		if err != nil {
-			return err
-		}
-		_, _, err = client.PullRequests.Get(ctx, owner, repo, pr)
-	case "pulls", "commits", "discussions", "branches", "tags", "milestones", "labels", "projects", "actions":
-		// I assume that if repository exists, then the lists above also exist
-		_, _, err = client.Repositories.Get(ctx, owner, repo)
-	default:
-		err = fmt.Errorf("unsupported GitHub request, please report an issue")
+	handler, ok := handlers[typ]
+	if !ok {
+		return fmt.Errorf("unsupported GitHub request type %q; please open an issue", typ)
 	}
 
-	if err != nil {
-		var ghError *github.ErrorResponse
-		if errors.As(err, &ghError) {
-			if ghError.Response.StatusCode == http.StatusNotFound {
-				return errs.NewNotFound(url)
-			}
-		}
-		// some other error
-		return err
-	}
-	if typ != "blob" && typ != "raw" {
-		return nil
-	}
-
-	if fileContent == nil && typ != "tree" {
-		// contents should not be nil, so something is not ok
-		return fmt.Errorf("content is nil while it is expected. url: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
-	}
-	return nil
-	//logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
-	//content, err := fileContent.GetContent()
-	//if err != nil {
-	//	return err
-	//}
-	//if !strings.Contains(content, anchor) {
-	//	logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
-	//	return errs.NewNotFound(url)
-	//} else {
-	//	// url with the anchor are correct
-	//	return nil
-	//}
+	return mapGHError(url, handler(ctx, client, owner, repo, ref, path))
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
