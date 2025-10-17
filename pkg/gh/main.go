@@ -116,7 +116,7 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
-	ctx, cancel := context.WithTimeout(ctx, 1000*time.Second) // TODO
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	match := proc.repoRegex.FindStringSubmatch(url)
