@@ -67,7 +67,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name: "ignores non-repo urls (without blob|tree|raw|blame|ref)",
+			name: "captures non-repo urls (without blob|tree|raw|blame|ref)",
 			line: `
 				https://github.com/your-ko/link-validator/main/docs
 				https://github.mycorp.com/your-ko/link-validator/main/docs
@@ -75,6 +75,22 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				https://github.com/your-ko/link-validator/main/README.md
 				https://github.com/your-ko/link-validator/pulls
 				https://github.com/your-ko/link-validator/issues/4
+				`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/main/docs",
+				"https://github.mycorp.com/your-ko/link-validator/main/docs",
+				"https://github.com/your-ko/link-validator/main/README.md",
+				"https://github.com/your-ko/link-validator/main/README.md",
+				"https://github.com/your-ko/link-validator/pulls",
+				"https://github.com/your-ko/link-validator/issues/4",
+			},
+		},
+		{
+			name: "ignores non-api calls",
+			line: `
+				https://raw.githubusercontent.com/your-ko/link-validator/refs/heads/main/README.md
+				https://uploads.github.mycorp.com/org/repo/raw/main/img.png
+				https://api.github.com/repos/your-ko/link-validator/contents/?ref=a96366f66ffacd461de10a1dd561ab5a598e9167
 				`,
 			want: nil,
 		},
@@ -107,9 +123,10 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 	corp := "https://github.mycorp.com"
 
 	type fields struct {
-		status int
-		path   string
-		body   string
+		status         int
+		path           string
+		body           string
+		base64encoding bool
 	}
 	type args struct {
 		link string
@@ -128,27 +145,30 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			name: "file exists, no anchor",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
 			name: "file exists, anchor present in content",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md#header2"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
 			name: "file exists, anchor missing -> errs.NotFound",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md#no-such-anchor"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 			// anchors temporary don't work
 			//wantErr: true,
@@ -181,18 +201,140 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			// URL without path after branch; regex yields empty path → GetContents at repo root.
 			args: args{link: "/your-ko/link-validator/blob/main"},
 			fields: fields{
-				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
 			},
 		},
 		{
 			name: "file exists, link to branch",
-			args: args{link: "/your-ko/link-validator/blob/branch/main/README.md#header2"},
+			args: args{link: "/your-ko/link-validator/blob/branchname/README.md#about"},
+			fields: fields{
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/blob/main/README.md",
+				body:           content,
+				base64encoding: true,
+			},
+		},
+		{
+			name: "link to an issue",
+			args: args{link: "/your-ko/link-validator/issues/123"},
 			fields: fields{
 				status: http.StatusOK,
-				path:   "/your-ko/link-validator/blob/main/README.md",
-				body:   content,
+				path:   "/your-ko/link-validator/issues/123",
+				body:   "{\"id\": 1}",
+			},
+		},
+		{
+			name: "link to a pull request",
+			args: args{link: "/your-ko/link-validator/pull/1"},
+			fields: fields{
+				status:         http.StatusOK,
+				path:           "/your-ko/link-validator/pull/1",
+				body:           content,
+				base64encoding: true,
+			},
+		},
+		{
+			name: "link to a pull requests",
+			args: args{link: "/your-ko/link-validator/pulls/your-ko"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/pulls/your-ko",
+				body:   "",
+				//body:           "[{\"number\": 1}]",
+				//base64encoding: false,
+			},
+		},
+		{
+			name: "link to a commits",
+			args: args{link: "/your-ko/link-validator/commits/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/commits/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a discussions",
+			args: args{link: "/your-ko/link-validator/discussions/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/discussions/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a branches",
+			args: args{link: "/your-ko/link-validator/branches/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/branches/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a branches",
+			args: args{link: "/your-ko/link-validator/tags/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/tags/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a milestones",
+			args: args{link: "/your-ko/link-validator/milestones/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/milestones/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a labels",
+			args: args{link: "/your-ko/link-validator/labels/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/labels/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a projects",
+			args: args{link: "/your-ko/link-validator/projects/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/projects/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a actions",
+			args: args{link: "/your-ko/link-validator/actions/test"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/actions/test",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a workflow badge",
+			args: args{link: "/your-ko/link-validator/actions/workflows/main.yaml/badge.svg"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a workflow",
+			args: args{link: "/your-ko/link-validator/actions/workflows/main.yaml"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/actions/workflows/main.yaml",
+				body:   "",
 			},
 		},
 	}
@@ -206,11 +348,16 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				//}
 				res.WriteHeader(tt.fields.status)
 
-				_ = json.NewEncoder(res).Encode(&githubContent{
-					Type:     "file",
-					Encoding: "base64",
-					Content:  base64.StdEncoding.EncodeToString([]byte(tt.fields.body)),
-				})
+				if tt.fields.base64encoding {
+					_ = json.NewEncoder(res).Encode(&githubContent{
+						Type:     "file",
+						Encoding: "base64",
+						Content:  base64.StdEncoding.EncodeToString([]byte(tt.fields.body)),
+					})
+				} else {
+					res.Header().Set("Content-Type", "application/json")
+					_, _ = res.Write([]byte(tt.fields.body))
+				}
 			}))
 			t.Cleanup(testServer.Close)
 
@@ -285,7 +432,7 @@ test
 test
 `
 
-func TestInternalLinkProcessor_RegexRepoUrlDetection(t *testing.T) {
+func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 	tests := []struct {
 		name string
 		url  string
@@ -419,7 +566,231 @@ func TestInternalLinkProcessor_RegexRepoUrlDetection(t *testing.T) {
 			},
 		},
 		{
-			name: "api repo url",
+			name: "repo url",
+			url:  "https://github.com/your-ko/link-validator/",
+			want: []string{
+				"https://github.com/your-ko/link-validator/",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"",
+				"",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url issues",
+			url:  "https://github.com/your-ko/link-validator/issues/123",
+			want: []string{
+				"https://github.com/your-ko/link-validator/issues/123",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"issues",
+				"123",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url workflow runs",
+			url:  "https://github.com/your-ko/link-validator/actions/runs/42",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/runs/42",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"runs",
+				"42",
+				"",
+			},
+		},
+		{
+			name: "repo url compare",
+			url:  "https://github.com/your-ko/link-validator/compare/main...dev",
+			want: []string{
+				"https://github.com/your-ko/link-validator/compare/main...dev",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"compare",
+				"main...dev",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url PR",
+			url:  "https://github.com/your-ko/link-validator/pull/1",
+			want: []string{
+				"https://github.com/your-ko/link-validator/pull/1",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"pull",
+				"1",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url pull requests",
+			url:  "https://github.com/your-ko/link-validator/pulls/your-ko",
+			want: []string{
+				"https://github.com/your-ko/link-validator/pulls/your-ko",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"pulls",
+				"your-ko",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url commits",
+			url:  "https://github.com/your-ko/link-validator/commits/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/commits/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"commits",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url discussions",
+			url:  "https://github.com/your-ko/link-validator/discussions/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/discussions/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"discussions",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url branches",
+			url:  "https://github.com/your-ko/link-validator/branches/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/branches/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"branches",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url tags",
+			url:  "https://github.com/your-ko/link-validator/tags/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/tags/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"tags",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url milestones",
+			url:  "https://github.com/your-ko/link-validator/milestones/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/milestones/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"milestones",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url labels",
+			url:  "https://github.com/your-ko/link-validator/labels/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/labels/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"labels",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url projects",
+			url:  "https://github.com/your-ko/link-validator/projects/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/projects/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"projects",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "repo url actions",
+			url:  "https://github.com/your-ko/link-validator/actions/test",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/test",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"test",
+				"",
+				"",
+			},
+		},
+		{
+			name: "workflow badge",
+			url:  "https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"workflows",
+				"main.yaml/badge.svg",
+				"",
+			},
+		},
+		{
+			name: "workflow",
+			url:  "https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"workflows",
+				"main.yaml",
+				"",
+			},
+		},
+		{
+			name: "api pull request url",
 			url:  "https://api.github.com/repos/your-nj/link-validator",
 			want: nil,
 		},

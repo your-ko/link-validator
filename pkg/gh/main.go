@@ -8,17 +8,46 @@ package gh
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/go-github/v74/github"
 	"go.uber.org/zap"
-	"link-validator/pkg/errs"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 )
+
+type ghHandler func(
+	ctx context.Context,
+	c *github.Client,
+	owner, repo, ref, path string,
+) error
+
+// handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
+var handlers = map[string]ghHandler{
+	// File-ish routes — all use Contents API
+	"blob":  handleContents,
+	"tree":  handleContents,
+	"raw":   handleContents,
+	"blame": handleContents,
+
+	// Single-object routes
+	"commit":   handleCommit,
+	"issues":   handleIssue,
+	"pull":     handlePR,
+	"releases": handleReleases,
+	"actions":  handleWorkflow,
+
+	// “List / page” routes — we just validate the repo exists
+	"pulls":       handleRepoExist,
+	"commits":     handleRepoExist,
+	"discussions": handleRepoExist,
+	"branches":    handleRepoExist,
+	"tags":        handleRepoExist,
+	"milestones":  handleRepoExist,
+	"labels":      handleRepoExist,
+	"projects":    handleRepoExist,
+}
 
 type LinkProcessor struct {
 	corpGitHubUrl string
@@ -26,13 +55,14 @@ type LinkProcessor struct {
 	client        *github.Client
 	repoRegex     *regexp.Regexp
 	timeout       time.Duration
+	ghRegex       *regexp.Regexp
 }
 
 func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcessor {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
-		panic(fmt.Sprintf("invalid baseUrl: %q", corpGitHubUrl))
+		panic(fmt.Sprintf("invalid enterprise url: %q", corpGitHubUrl))
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
 	var corpClient *github.Client
@@ -53,22 +83,35 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcess
 	}
 
 	repoRegex := regexp.MustCompile(
-		`https:\/\/` +
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` + // 1: host (no subdomains)
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)\/` + // 3: repo
-			`(blob|tree|raw|blame|releases|commit)\/` + // 4: kind
-			`(?:tag\/)?` + // allow "releases/tag/<ref>"; harmless for others
-			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref (branch/SHA/tag)
-			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: path (one segment, optional)
-			`(?:\#([^\s"'()<>\[\]{},?#]+))?` + // 7: fragment (optional)
-			``,
+		`^https:\/\/` +
+			// 1: host (no subdomains like api./uploads.)
+			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
+			// 2: org
+			`([^\/\s"'()<>\[\]{},?#]+)\/` +
+			// 3: repo
+			`([^\/\s"'()<>\[\]{},?#]+)` +
+			// allow repo root with or without trailing slash
+			`\/?` +
+			// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
+			`(?:\/` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
+			`(?:tag\/)?` + // lets "releases/tag/<tag>" work
+			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
+			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
+			`)?` +
+			// 7: optional fragment
+			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
+			`$`,
 	)
 
+	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+
 	return &LinkProcessor{
-		corpClient: corpClient,
-		client:     client,
-		repoRegex:  repoRegex,
+		corpGitHubUrl: u.Hostname(),
+		corpClient:    corpClient,
+		client:        client,
+		repoRegex:     repoRegex,
+		ghRegex:       ghRegex,
 		timeout:    timeout,
 	}
 }
@@ -91,54 +134,16 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 		client = proc.client
 	}
 
-	var fileContent *github.RepositoryContent
-	var err error
-	switch typ {
-	case "blob", "tree", "raw", "blame":
-		fileContent, _, _, err = client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{
-			Ref: ref,
-		})
-	case "commit":
-		_, _, err = client.Repositories.GetCommit(ctx, owner, repo, ref, nil)
-	case "releases":
-		_, _, err = client.Repositories.GetReleaseByTag(ctx, owner, repo, ref)
+	handler, ok := handlers[typ]
+	if !ok {
+		return fmt.Errorf("unsupported GitHub request type %q; please open an issue", typ)
 	}
 
-	if err != nil {
-		var ghError *github.ErrorResponse
-		if errors.As(err, &ghError) {
-			if ghError.Response.StatusCode == http.StatusNotFound {
-				return errs.NewNotFound(url)
-			}
-		}
-		// some other error
-		return err
-	}
-	if typ == "commit" || typ == "releases" {
-		return nil
-	}
-
-	if fileContent == nil && typ != "tree" {
-		// contents should not be nil, so something is not ok
-		return fmt.Errorf("content is nil while it is expected. url: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
-	}
-	return nil
-	//logger.Debug("Validating anchor in GitHub URL", zap.String("link", url), zap.String("anchor", anchor))
-	//content, err := fileContent.GetContent()
-	//if err != nil {
-	//	return err
-	//}
-	//if !strings.Contains(content, anchor) {
-	//	logger.Info("url exists but doesn't have an anchor", zap.String("link", url), zap.String("anchor", anchor))
-	//	return errs.NewNotFound(url)
-	//} else {
-	//	// url with the anchor are correct
-	//	return nil
-	//}
+	return mapGHError(url, handler(ctx, client, owner, repo, ref, path))
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.repoRegex.FindAllString(line, -1)
+	parts := proc.ghRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
