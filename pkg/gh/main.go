@@ -25,9 +25,10 @@ type LinkProcessor struct {
 	corpClient    *github.Client
 	client        *github.Client
 	repoRegex     *regexp.Regexp
+	timeout       time.Duration
 }
 
-func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
+func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcessor {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
@@ -68,12 +69,13 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 		corpClient: corpClient,
 		client:     client,
 		repoRegex:  repoRegex,
+		timeout:    timeout,
 	}
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, proc.timeout)
 	defer cancel()
 
 	match := proc.repoRegex.FindStringSubmatch(url)

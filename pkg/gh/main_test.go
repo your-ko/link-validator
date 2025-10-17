@@ -14,12 +14,13 @@ import (
 	neturl "net/url"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
 
-	p := New("https://github.mycorp.com", "", "") // PAT not needed for regex tests
+	p := New("https://github.mycorp.com", "", "", 0) // PAT not needed for regex tests
 
 	type tc struct {
 		name string
@@ -263,7 +264,7 @@ type githubContent struct {
 
 // mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p := New(corp, "", "")
+	p := New(corp, "", "", time.Second)
 
 	if ts != nil {
 		base, _ := neturl.Parse(ts.URL + "/")

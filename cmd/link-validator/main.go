@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"go.uber.org/zap"
 	"link-validator/internal/link-validator"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 	pat := *flag.String("PAT", GetEnv("PAT", ""), "GitHub PAT. Used to get access to GitHub.")
 	corpPat := *flag.String("CORP_PAT", GetEnv("CORP_PAT", ""), "Corporate GitHub PAT. Used to get access to the corporate GitHub.")
 	corpGitHub := *flag.String("CORP_URL", GetEnv("CORP_URL", ""), "Corporate GitHub URL.")
-
+	timeout := *flag.Duration("TIMEOUT", envDuration("TIMEOUT", 3*time.Second, logger), "HTTP request timeout")
 	corpGitHub = strings.TrimSpace(strings.ToLower(corpGitHub))
 
 	logger.Info("Starting Link Validator",
@@ -44,10 +44,11 @@ func main() {
 	)
 	logger.Debug("Running with parameters",
 		zap.Strings("FILE_MASKS", fileMasks),
-		zap.String("LOOKUP_PATH", lookUpPath),
-		zap.String("EXCLUDE_PATH", excludePath),
-		zap.Strings("FILE_LIST", files),
+		zap.String("LOOKUP_PATH", lookUpPath),   // not implemented yet
+		zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
+		zap.Strings("FILE_LIST", files),         // not implemented yet
 		zap.String("CORP_URL", corpGitHub),
+		zap.Duration("TIMEOUT", timeout),
 	)
 
 	config := link_validator.Config{
@@ -58,6 +59,7 @@ func main() {
 		FileMasks:     fileMasks,
 		LookupPath:    lookUpPath,
 		ExcludePath:   excludePath,
+		Timeout:       timeout,
 	}
 
 	validator := link_validator.New(config)
@@ -85,16 +87,18 @@ func main() {
 	}
 }
 
+func envDuration(key string, def time.Duration, logger *zap.Logger) time.Duration {
+	if str := os.Getenv(key); str != "" {
+		if dur, err := time.ParseDuration(str); err == nil {
+			return dur
+		}
+		logger.Error("invalid duration value", zap.String("key", key))
+	}
+	return def
+}
 func GetEnv(key, defaultValue string) string {
 	if val, ok := os.LookupEnv(key); ok {
 		return strings.ReplaceAll(val, " ", "")
 	}
 	return defaultValue
-}
-
-func GetRequiredEnv(key string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return strings.ReplaceAll(val, " ", "")
-	}
-	panic(fmt.Errorf("%s is not set", key))
 }
