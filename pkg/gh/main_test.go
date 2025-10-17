@@ -14,6 +14,7 @@ import (
 	neturl "net/url"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
@@ -263,7 +264,7 @@ type githubContent struct {
 
 // mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p := New(corp, "", "", 10)
+	p := New(corp, "", "", time.Second)
 
 	if ts != nil {
 		base, _ := neturl.Parse(ts.URL + "/")
