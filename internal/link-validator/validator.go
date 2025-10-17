@@ -13,6 +13,7 @@ import (
 	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type LinkProcessor interface {
@@ -41,15 +42,16 @@ type Config struct {
 	FileMasks     []string
 	ExcludePath   string
 	LookupPath    string
+	Timeout       time.Duration
 }
 
 func New(config Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	if config.CorpGitHubUrl != "" {
-		processors = append(processors, gh.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT))
+		processors = append(processors, gh.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout))
 	}
 	processors = append(processors, local.New())
-	processors = append(processors, external.New())
+	processors = append(processors, external.New(config.Timeout))
 	return LinkValidador{processors}
 }
 

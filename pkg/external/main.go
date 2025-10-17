@@ -21,9 +21,9 @@ type LinkProcessor struct {
 	repoRegex  *regexp.Regexp
 }
 
-func New() *LinkProcessor {
+func New(timeout time.Duration) *LinkProcessor {
 	httpClient := &http.Client{
-		Timeout:       10 * time.Second,
+		Timeout:       timeout,
 		CheckRedirect: checkRedirect,
 	}
 	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
