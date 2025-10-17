@@ -36,6 +36,7 @@ var handlers = map[string]ghHandler{
 	"issues":   handleIssue,
 	"pull":     handlePR,
 	"releases": handleReleases,
+	"actions":  handleWorkflow,
 
 	// “List / page” routes — we just validate the repo exists
 	"pulls":       handleRepoExist,
@@ -46,7 +47,6 @@ var handlers = map[string]ghHandler{
 	"milestones":  handleRepoExist,
 	"labels":      handleRepoExist,
 	"projects":    handleRepoExist,
-	"actions":     handleRepoExist,
 }
 
 type LinkProcessor struct {
@@ -91,12 +91,12 @@ func New(corpGitHubUrl, corpPat, pat string) *LinkProcessor {
 			`([^\/\s"'()<>\[\]{},?#]+)` +
 			// allow repo root with or without trailing slash
 			`\/?` +
-			// optionally: 4 kind + 5 ref/first + 6 tail
+			// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
 			`(?:\/` +
 			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
 			`(?:tag\/)?` + // lets "releases/tag/<tag>" work
 			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
-			`(?:\/([^\/\s"'()<>\[\]{},?#]+))?` + // 6: one extra segment (optional)
+			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
 			`)?` +
 			// 7: optional fragment
 			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +

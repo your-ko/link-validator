@@ -26,6 +26,55 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _ str
 	return err
 }
 
+// handleActionsWorkflows validates the two UI forms:
+//   - /actions/workflows/<file>
+//   - /actions/workflows/<file>/badge.svg
+//
+// regex captures (as in your current parser):
+//
+//	typ = "actions", ref = "workflows", path = "<file>" or "<file>/badge.svg"
+func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, path string) error {
+	ref = strings.ToLower(strings.Trim(ref, "/"))
+	path = strings.Trim(path, "/")
+
+	// We only specialize "actions/workflows/...".
+	if ref != "workflows" || path == "" {
+		// For other actions pages, just validate repo existence.
+		_, _, err := c.Repositories.Get(ctx, owner, repo)
+		return err
+	}
+
+	// /actions/workflows/<file>/badge.svg
+	if strings.HasSuffix(path, "/badge.svg") {
+		wfFile := strings.TrimSuffix(path, "/badge.svg")
+
+		wf, _, err := c.Actions.GetWorkflowByFileName(ctx, owner, repo, wfFile)
+		if err != nil {
+			return err
+		}
+
+		// hit the badge endpoint: GET /repos/{owner}/{repo}/actions/workflows/{id}/badge
+		// go-github doesn’t wrap this as a typed call, so use NewRequest/Do.
+		u := fmt.Sprintf("repos/%s/%s/actions/workflows/%d/badge", owner, repo, wf.GetID())
+		req, err := c.NewRequest(http.MethodGet, u, nil)
+		if err != nil {
+			return err
+		}
+
+		_, err = c.Do(ctx, req, nil) // we only validate status
+		return err
+	}
+
+	// /actions/workflows/<file>
+	_, _, err := c.Actions.GetWorkflowByFileName(ctx, owner, repo, path)
+	return err
+}
+
+// handleReleases handles
+// /<owner>/<repo>/releases
+// /<owner>/<repo>/releases/tag/<tag>
+// /<owner>/<repo>/releases/latest
+// etc
 func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, path string) error {
 	// Normalize for easier branching
 	ref = strings.Trim(ref, "/")

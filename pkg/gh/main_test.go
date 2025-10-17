@@ -318,6 +318,24 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				body:   "",
 			},
 		},
+		{
+			name: "link to a workflow badge",
+			args: args{link: "/your-ko/link-validator/actions/workflows/main.yaml/badge.svg"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+				body:   "",
+			},
+		},
+		{
+			name: "link to a workflow",
+			args: args{link: "/your-ko/link-validator/actions/workflows/main.yaml"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/actions/workflows/main.yaml",
+				body:   "",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -739,6 +757,34 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 				"actions",
 				"test",
 				"",
+				"",
+			},
+		},
+		{
+			name: "workflow badge",
+			url:  "https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"workflows",
+				"main.yaml/badge.svg",
+				"",
+			},
+		},
+		{
+			name: "workflow",
+			url:  "https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"actions",
+				"workflows",
+				"main.yaml",
 				"",
 			},
 		},
