@@ -227,7 +227,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(10)
+			proc := New(time.Second)
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
