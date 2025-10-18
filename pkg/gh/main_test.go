@@ -362,7 +362,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			t.Cleanup(testServer.Close)
 
 			proc := mockValidator(testServer, corp)
-			err := proc.Process(context.Background(), corp+tt.args.link, logger) // we add corpUrl here, but it doesn't matter in this test, because we test the path
+			err := proc.Process(context.Background(), corp+tt.args.link, "", logger) // we add corpUrl here, but it doesn't matter in this test, because we test the path
 
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error presence %v, want %v (err=%v)", err != nil, tt.wantErr, err)

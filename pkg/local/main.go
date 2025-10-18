@@ -8,6 +8,7 @@ package local
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
@@ -34,8 +35,10 @@ func New() *LinkProcessor {
 	}
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, link string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(ctx context.Context, link string, testFileName string, logger *zap.Logger) error {
 	logger.Debug("validating local url", zap.String("filename", link))
+	testFileNameSplit := strings.Split(testFileName, "/")
+	testPath := strings.Join(testFileNameSplit[:len(testFileNameSplit)-1], "/")
 	split := strings.Split(link, "#")
 
 	// validate link format
@@ -55,8 +58,12 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, logger *zap.L
 		//}
 	}
 	fileName := split[0]
+	if strings.HasPrefix(fileName, "./") {
+		fileName = strings.Replace(fileName, "./", "", 1)
+	}
 
-	info, err := os.Stat(fileName)
+	fileNameToTest := fmt.Sprintf("%s/%s", testPath, fileName)
+	info, err := os.Stat(fileNameToTest)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return errs.NewNotFound(fileName)

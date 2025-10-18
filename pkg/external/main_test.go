@@ -241,7 +241,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				proc.httpClient.Timeout = 50 * time.Millisecond
 			}
 
-			err := proc.Process(context.TODO(), testServer.URL+tt.args.url, logger)
+			err := proc.Process(context.TODO(), testServer.URL+tt.args.url, "", logger)
 			// If we expect short-circuit, ensure server wasn't hit.
 			if tt.expectNoRequest && hit {
 				t.Fatalf("expected no HTTP request to be made, but handler was hit")

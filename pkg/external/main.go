@@ -41,7 +41,7 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, logger *zap.Logger) error {
 	logger.Debug("Validating external url", zap.String("url", url))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
