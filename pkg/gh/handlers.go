@@ -7,9 +7,28 @@ import (
 	"github.com/google/go-github/v74/github"
 	"link-validator/pkg/errs"
 	"net/http"
+	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 )
+
+type ghHandler func(
+	ctx context.Context,
+	c *github.Client,
+	owner, repo, ref, path string,
+) error
+
+func (h ghHandler) String() string {
+	if h == nil {
+		return "<nil>"
+	}
+	pc := reflect.ValueOf(h).Pointer()
+	if fn := runtime.FuncForPC(pc); fn != nil {
+		return fn.Name() // e.g. "github.com/your-org/yourrepo/gh.handleContents"
+	}
+	return fmt.Sprintf("func@%#x", pc)
+}
 
 func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _ string) error {
 	_, _, err := c.Repositories.Get(ctx, owner, repo)

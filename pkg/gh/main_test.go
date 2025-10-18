@@ -812,8 +812,7 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proc := mockValidator(nil, "https://github.mycorp.com")
-			res := proc.repoRegex.FindStringSubmatch(tt.url)
+			res := repoRegex.FindStringSubmatch(tt.url)
 			if !reflect.DeepEqual(res, tt.want) {
 				t.Errorf("FindStringSubmatch()\n got = %s\nwant = %s", res, tt.want)
 			}
