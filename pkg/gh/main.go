@@ -11,30 +11,12 @@ import (
 	"fmt"
 	"github.com/google/go-github/v74/github"
 	"go.uber.org/zap"
+	"net/http"
 	"net/url"
-	"reflect"
 	"regexp"
-	"runtime"
 	"strings"
 	"time"
 )
-
-type ghHandler func(
-	ctx context.Context,
-	c *github.Client,
-	owner, repo, ref, path string,
-) error
-
-func (h ghHandler) String() string {
-	if h == nil {
-		return "<nil>"
-	}
-	pc := reflect.ValueOf(h).Pointer()
-	if fn := runtime.FuncForPC(pc); fn != nil {
-		return fn.Name() // e.g. "github.com/your-org/yourrepo/gh.handleContents"
-	}
-	return fmt.Sprintf("func@%#x", pc)
-}
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
 var handlers = map[string]ghHandler{
@@ -62,14 +44,34 @@ var handlers = map[string]ghHandler{
 	"projects":    handleRepoExist,
 	"":            handleRepoExist,
 }
+var repoRegex = regexp.MustCompile(
+	`^https:\/\/` +
+		// 1: host (no subdomains like api./uploads.)
+		`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
+		// 2: org
+		`([^\/\s"'()<>\[\]{},?#]+)\/` +
+		// 3: repo
+		`([^\/\s"'()<>\[\]{},?#]+)` +
+		// allow repo root with or without trailing slash
+		`\/?` +
+		// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
+		`(?:\/` +
+		`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
+		`(?:tag\/)?` + // lets "releases/tag/<tag>" work
+		`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
+		`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
+		`)?` +
+		// 7: optional fragment
+		`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
+		`$`,
+)
+
+var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 type LinkProcessor struct {
 	corpGitHubUrl string
 	corpClient    *github.Client
 	client        *github.Client
-	repoRegex     *regexp.Regexp
-	timeout       time.Duration
-	ghRegex       *regexp.Regexp
 }
 
 func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcessor {
@@ -81,7 +83,7 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcess
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
 	var corpClient *github.Client
 	if host != "" {
-		corpClient, err = github.NewClient(nil).WithEnterpriseURLs(
+		corpClient, err = github.NewClient(httpClient(timeout)).WithEnterpriseURLs(
 			host,
 			strings.ReplaceAll(host, "https://", "https://uploads."),
 		)
@@ -91,51 +93,26 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcess
 		corpClient = corpClient.WithAuthToken(corpPat)
 	}
 
-	client := github.NewClient(nil)
+	client := github.NewClient(httpClient(timeout))
 	if pat != "" {
 		client = client.WithAuthToken(pat)
 	}
-
-	repoRegex := regexp.MustCompile(
-		`^https:\/\/` +
-			// 1: host (no subdomains like api./uploads.)
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
-			// 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)\/` +
-			// 3: repo
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// allow repo root with or without trailing slash
-			`\/?` +
-			// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
-			`(?:\/` +
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
-			`(?:tag\/)?` + // lets "releases/tag/<tag>" work
-			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
-			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
-			`)?` +
-			// 7: optional fragment
-			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
-			`$`,
-	)
-
-	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 	return &LinkProcessor{
 		corpGitHubUrl: u.Hostname(),
 		corpClient:    corpClient,
 		client:        client,
-		repoRegex:     repoRegex,
-		ghRegex:       ghRegex,
-		timeout:       timeout,
 	}
+}
+
+func httpClient(timeout time.Duration) *http.Client {
+	return &http.Client{Timeout: timeout}
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
-	ctx, cancel := context.WithTimeout(ctx, proc.timeout)
-	defer cancel()
 
-	match := proc.repoRegex.FindStringSubmatch(url)
+	match := repoRegex.FindStringSubmatch(url)
 	var client *github.Client
 	if len(match) == 0 {
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
@@ -158,7 +135,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.ghRegex.FindAllString(line, -1)
+	parts := ghRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
