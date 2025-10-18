@@ -17,7 +17,7 @@ import (
 )
 
 type LinkProcessor interface {
-	Process(ctx context.Context, url string, logger *zap.Logger) error
+	Process(ctx context.Context, url string, name string, logger *zap.Logger) error
 
 	ExtractLinks(line string) []string
 }
@@ -74,7 +74,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			line := scanner.Text()
 			links := v.processLine(line)
 			for link, processor := range links {
-				err := processor.Process(ctx, link, logger)
+				err := processor.Process(ctx, link, fileName, logger)
 				linksFound++
 				if err == nil {
 					logger.Debug("link validation successful", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines))

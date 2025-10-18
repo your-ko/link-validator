@@ -109,7 +109,7 @@ func httpClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout}
 }
 
-func (proc *LinkProcessor) Process(ctx context.Context, url string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, logger *zap.Logger) error {
 	logger.Debug("Validating internal url", zap.String("url", url))
 
 	match := repoRegex.FindStringSubmatch(url)
