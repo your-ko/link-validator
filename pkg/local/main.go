@@ -35,7 +35,7 @@ func New() *LinkProcessor {
 	}
 }
 
-func (proc *LinkProcessor) Process(ctx context.Context, link string, testFileName string, logger *zap.Logger) error {
+func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string, logger *zap.Logger) error {
 	logger.Debug("validating local url", zap.String("filename", link))
 	testFileNameSplit := strings.Split(testFileName, "/")
 	testPath := strings.Join(testFileNameSplit[:len(testFileNameSplit)-1], "/")
