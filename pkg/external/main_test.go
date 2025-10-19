@@ -155,15 +155,15 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name:    "404 with body -> NotFound",
-			fields:  fields{404, "blah not found blah", 0, ""},
+			fields:  fields{http.StatusNotFound, "blah not found blah", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
-			name:    "301 redirect (no follow) -> NotFound",
-			fields:  fields{http.StatusMovedPermanently, "", 0, "/other"},
-			args:    args{url: "/redir"},
+			name:    "410 with body -> NotFound",
+			fields:  fields{http.StatusGone, "blah not found blah", 0, ""},
+			args:    args{url: "/path"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
@@ -175,11 +175,19 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.EmptyBody,
 		},
 		{
-			name:    "500 -> NotFound (generic fallback)",
-			fields:  fields{http.StatusInternalServerError, "oops", 0, ""},
-			args:    args{url: "/err"},
-			wantErr: true,
-			wantIs:  errs.NotFound,
+			name:   "500 -> we ignore",
+			fields: fields{http.StatusInternalServerError, "oops", 0, ""},
+			args:   args{url: "/err"},
+		},
+		{
+			name:   "429 -> we skip",
+			fields: fields{http.StatusTooManyRequests, "oops", 0, ""},
+			args:   args{url: "/err"},
+		},
+		{
+			name:   "401 -> we skip",
+			fields: fields{http.StatusUnauthorized, "oops", 0, ""},
+			args:   args{url: "/err"},
 		},
 		{
 			name:          "Network timeout -> non-sentinel error",
@@ -247,7 +255,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}
 
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("Process() err presence = %v, wantIs=%v (err=%v)", err != nil, tt.wantIs, err)
+				t.Fatalf("Process() expects error '%v', got %v", tt.wantIs, err)
 			}
 			if !tt.wantErr {
 				return
