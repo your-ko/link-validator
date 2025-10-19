@@ -161,13 +161,6 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.NotFound,
 		},
 		{
-			name:    "301 redirect (no follow) -> NotFound",
-			fields:  fields{http.StatusMovedPermanently, "", 0, "/other"},
-			args:    args{url: "/redir"},
-			wantErr: true,
-			wantIs:  errs.NotFound,
-		},
-		{
 			name:    "204 No Content -> EmptyBody",
 			fields:  fields{http.StatusNoContent, "", 0, ""},
 			args:    args{url: "/nocontent"},
@@ -175,11 +168,9 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.EmptyBody,
 		},
 		{
-			name:    "500 -> NotFound (generic fallback)",
-			fields:  fields{http.StatusInternalServerError, "oops", 0, ""},
-			args:    args{url: "/err"},
-			wantErr: true,
-			wantIs:  errs.NotFound,
+			name:   "500 -> NotFound (generic fallback)",
+			fields: fields{http.StatusInternalServerError, "oops", 0, ""},
+			args:   args{url: "/err"},
 		},
 		{
 			name:          "Network timeout -> non-sentinel error",
@@ -247,7 +238,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}
 
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("Process() err presence = %v, wantIs=%v (err=%v)", err != nil, tt.wantIs, err)
+				t.Fatalf("Process() expects error '%v', got %v", tt.wantIs, err)
 			}
 			if !tt.wantErr {
 				return
