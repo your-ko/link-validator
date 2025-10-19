@@ -5,6 +5,7 @@ package external
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"go.uber.org/zap"
 	"io"
 	"link-validator/pkg/errs"
@@ -21,10 +22,26 @@ type LinkProcessor struct {
 	githubRegex *regexp.Regexp
 }
 
-func New(timeout time.Duration) *LinkProcessor {
+func New(timeout time.Duration, logger *zap.Logger) *LinkProcessor {
 	httpClient := &http.Client{
-		Timeout:       timeout,
-		CheckRedirect: checkRedirect,
+		Timeout: timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 2 {
+				return fmt.Errorf("too many redirects")
+			}
+			// carry Authorization & UA across redirects (some GHES setups require it)
+			for _, k := range []string{"Authorization", "User-Agent"} {
+				if v := via[0].Header.Get(k); v != "" {
+					req.Header.Set(k, v)
+				}
+			}
+			// be permissive on the final hop
+			if req.Header.Get("Accept") == "" {
+				req.Header.Set("Accept", "*/*")
+			}
+			logger
+			return nil
+		},
 	}
 	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
 	// ghRegex is identical to the intern.repoRegex, but it is used in inverse way
@@ -35,10 +52,6 @@ func New(timeout time.Duration) *LinkProcessor {
 		urlRegex:    urlRegex,
 		githubRegex: ghRegex,
 	}
-}
-
-func checkRedirect(req *http.Request, via []*http.Request) error {
-	return http.ErrUseLastResponse
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, logger *zap.Logger) error {

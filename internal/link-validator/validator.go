@@ -45,13 +45,13 @@ type Config struct {
 	Timeout       time.Duration
 }
 
-func New(config Config) LinkValidador {
+func New(config Config, logger *zap.Logger) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	if config.CorpGitHubUrl != "" {
 		processors = append(processors, gh.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout))
 	}
 	processors = append(processors, local.New())
-	processors = append(processors, external.New(config.Timeout))
+	processors = append(processors, external.New(config.Timeout, logger))
 	return LinkValidador{processors}
 }
 
