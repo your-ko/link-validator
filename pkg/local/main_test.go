@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
 	"path/filepath"
@@ -15,7 +14,7 @@ import (
 func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 	t.Parallel()
 
-	proc := New()
+	proc := New(nil)
 
 	type tc struct {
 		name string
@@ -208,8 +207,6 @@ func TestLinkProcessor_Process(t *testing.T) {
 		},
 	}
 
-	logger := zap.NewNop()
-
 	mkDir := func(rel string) {
 		full := filepath.Join(tmp, rel)
 		if err := os.MkdirAll(full, 0o755); err != nil {
@@ -251,7 +248,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 			}
 			defer cleanUp(tt.fields)
 
-			err := proc.Process(context.Background(), fmt.Sprintf("%s/%s", tmp, tt.args.link), "", logger)
+			err := proc.Process(context.Background(), fmt.Sprintf("%s/%s", tmp, tt.args.link), "")
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Process(%q) error presence = %v, want %v (err = %v)",
 					tt.args.link, err != nil, tt.wantErr, err)

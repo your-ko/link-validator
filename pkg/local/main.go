@@ -18,9 +18,10 @@ import (
 
 type LinkProcessor struct {
 	fileRegex *regexp.Regexp
+	logger    *zap.Logger
 }
 
-func New() *LinkProcessor {
+func New(logger *zap.Logger) *LinkProcessor {
 	localTarget := `(?:` +
 		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
 		`|` +
@@ -32,11 +33,12 @@ func New() *LinkProcessor {
 
 	return &LinkProcessor{
 		fileRegex: regex,
+		logger:    logger,
 	}
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string, logger *zap.Logger) error {
-	logger.Debug("validating local url", zap.String("filename", link))
+func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string) error {
+	proc.logger.Debug("validating local url", zap.String("filename", link))
 	testFileNameSplit := strings.Split(testFileName, "/")
 	testPath := strings.Join(testFileNameSplit[:len(testFileNameSplit)-1], "/")
 	split := strings.Split(link, "#")

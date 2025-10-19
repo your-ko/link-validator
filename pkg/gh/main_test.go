@@ -20,7 +20,7 @@ import (
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
 
-	p := New("https://github.mycorp.com", "", "", 0) // PAT not needed for regex tests
+	p := New("https://github.mycorp.com", "", "", 0, zap.NewNop()) // PAT not needed for regex tests
 
 	type tc struct {
 		name string
@@ -119,7 +119,6 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 }
 
 func TestInternalLinkProcessor_Process(t *testing.T) {
-	logger := zap.NewNop()
 	corp := "https://github.mycorp.com"
 
 	type fields struct {
@@ -362,7 +361,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			t.Cleanup(testServer.Close)
 
 			proc := mockValidator(testServer, corp)
-			err := proc.Process(context.Background(), corp+tt.args.link, "", logger) // we add corpUrl here, but it doesn't matter in this test, because we test the path
+			err := proc.Process(context.Background(), corp+tt.args.link, "") // we add corpUrl here, but it doesn't matter in this test, because we test the path
 
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error presence %v, want %v (err=%v)", err != nil, tt.wantErr, err)
@@ -411,7 +410,7 @@ type githubContent struct {
 
 // mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p := New(corp, "", "", time.Second)
+	p := New(corp, "", "", time.Second, zap.NewNop())
 
 	if ts != nil {
 		base, _ := neturl.Parse(ts.URL + "/")

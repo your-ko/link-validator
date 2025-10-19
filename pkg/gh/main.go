@@ -74,13 +74,14 @@ type LinkProcessor struct {
 	corpGitHubUrl string
 	corpClient    *github.Client
 	client        *github.Client
+	logger        *zap.Logger
 }
 
-func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcessor {
+func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.Logger) *LinkProcessor {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
-		panic(fmt.Sprintf("invalid enterprise url: %q", corpGitHubUrl))
+		logger.Panic("invalid enterprise url", zap.String("url", corpGitHubUrl))
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
 	var corpClient *github.Client
@@ -90,7 +91,7 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcess
 			strings.ReplaceAll(host, "https://", "https://uploads."),
 		)
 		if err != nil {
-			panic(fmt.Sprintf("can't create GitHub Processor: %s", err))
+			logger.Panic("can't create GitHub Processor", zap.Error(err))
 		}
 		corpClient = corpClient.WithAuthToken(corpPat)
 	}
@@ -104,6 +105,7 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration) *LinkProcess
 		corpGitHubUrl: u.Hostname(),
 		corpClient:    corpClient,
 		client:        client,
+		logger:        logger,
 	}
 }
 
@@ -111,8 +113,8 @@ func httpClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout}
 }
 
-func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, logger *zap.Logger) error {
-	logger.Debug("Validating internal url", zap.String("url", url))
+func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
+	proc.logger.Debug("Validating internal url", zap.String("url", url))
 
 	match := repoRegex.FindStringSubmatch(url)
 	var client *github.Client
@@ -131,7 +133,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, lo
 	if !ok {
 		return fmt.Errorf("unsupported GitHub request type %q; please open an issue", typ)
 	}
-	logger.Debug("using", zap.Any("handler", handler))
+	proc.logger.Debug("using", zap.Any("handler", handler))
 
 	return mapGHError(url, handler(ctx, client, owner, repo, ref, path))
 }

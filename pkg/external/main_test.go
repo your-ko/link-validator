@@ -213,7 +213,6 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	logger, _ := zap.NewDevelopment()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// generate a test server so we can capture and inspect the request
@@ -232,7 +231,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(time.Second, nil)
+			proc := New(time.Second, zap.NewNop())
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
@@ -241,7 +240,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				proc.httpClient.Timeout = 50 * time.Millisecond
 			}
 
-			err := proc.Process(context.TODO(), testServer.URL+tt.args.url, "", logger)
+			err := proc.Process(context.TODO(), testServer.URL+tt.args.url, "")
 			// If we expect short-circuit, ensure server wasn't hit.
 			if tt.expectNoRequest && hit {
 				t.Fatalf("expected no HTTP request to be made, but handler was hit")
