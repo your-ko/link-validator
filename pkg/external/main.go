@@ -15,10 +15,13 @@ import (
 	"time"
 )
 
+var urlRegex = regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
+
+// ghRegex is identical to the gh.repoRegex, but it is used in inverse way
+var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+
 type LinkProcessor struct {
-	httpClient  *http.Client
-	urlRegex    *regexp.Regexp
-	githubRegex *regexp.Regexp
+	httpClient *http.Client
 }
 
 func New(timeout time.Duration) *LinkProcessor {
@@ -26,14 +29,9 @@ func New(timeout time.Duration) *LinkProcessor {
 		Timeout:       timeout,
 		CheckRedirect: checkRedirect,
 	}
-	urlRegex := regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
-	// ghRegex is identical to the intern.repoRegex, but it is used in inverse way
-	ghRegex := regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 	return &LinkProcessor{
-		httpClient:  httpClient,
-		urlRegex:    urlRegex,
-		githubRegex: ghRegex,
+		httpClient: httpClient,
 	}
 }
 
@@ -84,7 +82,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, lo
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := proc.urlRegex.FindAllString(line, -1)
+	parts := urlRegex.FindAllString(line, -1)
 	urls := make([]string, 0, len(parts))
 
 	for _, raw := range parts {
@@ -92,7 +90,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Host == "" {
 			continue // skip malformed
 		}
-		if proc.githubRegex.MatchString(raw) {
+		if ghRegex.MatchString(raw) {
 			continue // skip the majority of GitHub urls
 		}
 
