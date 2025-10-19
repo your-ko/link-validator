@@ -18,9 +18,10 @@ import (
 
 type LinkProcessor struct {
 	fileRegex *regexp.Regexp
+	logger    *zap.Logger
 }
 
-func New() *LinkProcessor {
+func New(logger *zap.Logger) *LinkProcessor {
 	localTarget := `(?:` +
 		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
 		`|` +
@@ -32,14 +33,22 @@ func New() *LinkProcessor {
 
 	return &LinkProcessor{
 		fileRegex: regex,
+		logger:    logger,
 	}
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string, logger *zap.Logger) error {
-	logger.Debug("validating local url", zap.String("filename", link))
+func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string) error {
+	proc.logger.Debug("validating local url", zap.String("filename", link))
 	testFileNameSplit := strings.Split(testFileName, "/")
 	testPath := strings.Join(testFileNameSplit[:len(testFileNameSplit)-1], "/")
+
 	split := strings.Split(link, "#")
+	fileName := split[0]
+	if strings.HasPrefix(fileName, "./") {
+		fileName = strings.Replace(fileName, "./", "", 1)
+	}
+
+	fileNameToTest := fmt.Sprintf("%s/%s", testPath, fileName)
 
 	// validate link format
 	//if len(split) > 2 {
@@ -49,7 +58,7 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName 
 	if len(split) > 1 {
 		if len(split[1]) == 0 {
 			// case [text](../link#) is incorrect
-			return errs.NewEmptyHeadingError(link)
+			return errs.NewEmptyHeadingError(fmt.Sprintf("%s#", fileNameToTest))
 		}
 		header = split[1]
 		//re := regexp.MustCompile(`^[a-z0-9]+$`) TODO: improve
@@ -57,22 +66,16 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName 
 		//	return errors.New("incorrect link. Contains upper case, which is not allowed")
 		//}
 	}
-	fileName := split[0]
-	if strings.HasPrefix(fileName, "./") {
-		fileName = strings.Replace(fileName, "./", "", 1)
-	}
-
-	fileNameToTest := fmt.Sprintf("%s/%s", testPath, fileName)
 	info, err := os.Stat(fileNameToTest)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return errs.NewNotFound(fileName)
+			return errs.NewNotFound(fileNameToTest)
 		}
 		return err
 	}
 	if info.IsDir() {
 		if header != "" {
-			return errs.NewHeadingLinkToDir(link)
+			return errs.NewHeadingLinkToDir(fmt.Sprintf("%s#%s", fileNameToTest, header))
 		}
 		return nil
 	}

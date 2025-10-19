@@ -22,9 +22,10 @@ var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[
 
 type LinkProcessor struct {
 	httpClient *http.Client
+	logger     *zap.Logger
 }
 
-func New(timeout time.Duration) *LinkProcessor {
+func New(timeout time.Duration, logger *zap.Logger) *LinkProcessor {
 	httpClient := &http.Client{
 		Timeout:       timeout,
 		CheckRedirect: checkRedirect,
@@ -32,6 +33,7 @@ func New(timeout time.Duration) *LinkProcessor {
 
 	return &LinkProcessor{
 		httpClient: httpClient,
+		logger:     logger,
 	}
 }
 
@@ -39,8 +41,8 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, logger *zap.Logger) error {
-	logger.Debug("Validating external url", zap.String("url", url))
+func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
+	proc.logger.Debug("Validating external url", zap.String("url", url))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
@@ -55,7 +57,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string, lo
 	}
 	defer r.Body.Close()
 	if r.StatusCode < 200 || r.StatusCode >= 300 {
-		logger.Debug("", zap.Int("statusCode", r.StatusCode))
+		proc.logger.Debug("", zap.Int("statusCode", r.StatusCode))
 		return errs.NewNotFound(url)
 	}
 

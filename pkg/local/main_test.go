@@ -15,7 +15,7 @@ import (
 func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 	t.Parallel()
 
-	proc := New()
+	proc := New(nil)
 
 	type tc struct {
 		name string
@@ -95,12 +95,13 @@ func TestLinkProcessor_Process(t *testing.T) {
 	tmp := t.TempDir()
 
 	type fields struct {
-		fileName      string
-		dirName       string
-		customContent string // if non-empty, write this content instead of default
+		fileNameTested string // file name being tested
+		fileName       string // test file where the test link points to
+		dirName        string // test dir where the test link points to
+		customContent  string // if non-empty, write this content instead of default into the test file
 	}
 	type args struct {
-		link string
+		link string // simulates a link found in a file
 	}
 	tests := []struct {
 		name    string
@@ -110,19 +111,24 @@ func TestLinkProcessor_Process(t *testing.T) {
 		wantIs  error
 	}{
 		{
-			name:   "existing file at root",
-			args:   args{link: "README.md"},
-			fields: fields{fileName: "README.md"},
+			name: "existing file at root",
+			args: args{link: "README.md"},
+			fields: fields{
+				fileNameTested: "README.md",
+				fileName:       "README.md",
+			},
 		},
 		{
-			name:   "existing file inside some dir",
-			args:   args{link: "test/README.md"},
-			fields: fields{fileName: "test/README.md"},
+			name: "existing file inside some dir",
+			args: args{link: "test/README.md"},
+			fields: fields{
+				fileNameTested: "README.md",
+				fileName:       "test/README.md"},
 		},
 		{
 			name:   "existing file inside some dir with a header",
 			args:   args{link: "test/README.md#header1"},
-			fields: fields{fileName: "test/README.md"},
+			fields: fields{fileNameTested: "README.md", fileName: "test/README.md"},
 		},
 		//{
 		//	name:    "existing file inside some dir with a non-existent header",
@@ -134,24 +140,24 @@ func TestLinkProcessor_Process(t *testing.T) {
 		{
 			name:   "existing dir in root",
 			args:   args{link: "test"},
-			fields: fields{dirName: "test"},
+			fields: fields{fileNameTested: "README.md", dirName: "test"},
 		},
 		{
 			name:   "existing dir in deeper",
 			args:   args{link: "test/test"},
-			fields: fields{dirName: "test/test"},
+			fields: fields{fileNameTested: "README.md", dirName: "test/test"},
 		},
 		{
 			name:    "non-existing dir",
 			args:    args{link: "test/test"},
-			fields:  fields{dirName: "test1"},
+			fields:  fields{fileNameTested: "README.md", dirName: "test1"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
 		{
 			name:    "non-existing file",
 			args:    args{link: "doesnt_exists.md"},
-			fields:  fields{fileName: "README.md"},
+			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
 		},
@@ -166,7 +172,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 		{
 			name:    "directory with header fragment -> incorrect link error",
 			args:    args{link: "dir#header"},
-			fields:  fields{dirName: "dir"},
+			fields:  fields{fileNameTested: "README.md", dirName: "dir"},
 			wantErr: true,
 			wantIs:  errs.HeadingLinkToDir,
 		},
@@ -202,13 +208,11 @@ func TestLinkProcessor_Process(t *testing.T) {
 		{
 			name:    "empty fragment (file.md#) treated as incorrect",
 			args:    args{link: "emptyfrag.md#"},
-			fields:  fields{fileName: "README.md"},
+			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
 			wantErr: true,
 			wantIs:  errs.EmptyHeading,
 		},
 	}
-
-	logger := zap.NewNop()
 
 	mkDir := func(rel string) {
 		full := filepath.Join(tmp, rel)
@@ -240,7 +244,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 		}
 	}
 
-	proc := &LinkProcessor{}
+	proc := New(zap.NewNop())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.fields.fileName != "" {
@@ -251,10 +255,9 @@ func TestLinkProcessor_Process(t *testing.T) {
 			}
 			defer cleanUp(tt.fields)
 
-			err := proc.Process(context.Background(), fmt.Sprintf("%s/%s", tmp, tt.args.link), "", logger)
+			err := proc.Process(context.Background(), tt.args.link, fmt.Sprintf("%s/%s", tmp, tt.fields.fileNameTested))
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("Process(%q) error presence = %v, want %v (err = %v)",
-					tt.args.link, err != nil, tt.wantErr, err)
+				t.Fatalf("Process(%q) expects error %v, got = '%v'", tt.args.link, tt.wantErr, err)
 			}
 			if !tt.wantErr {
 				return

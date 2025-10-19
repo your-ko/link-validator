@@ -17,7 +17,7 @@ import (
 )
 
 type LinkProcessor interface {
-	Process(ctx context.Context, url string, name string, logger *zap.Logger) error
+	Process(ctx context.Context, url string, name string) error
 
 	ExtractLinks(line string) []string
 }
@@ -45,13 +45,13 @@ type Config struct {
 	Timeout       time.Duration
 }
 
-func New(config Config) LinkValidador {
+func New(config Config, logger *zap.Logger) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	if config.CorpGitHubUrl != "" {
-		processors = append(processors, gh.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout))
+		processors = append(processors, gh.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger))
 	}
-	processors = append(processors, local.New())
-	processors = append(processors, external.New(config.Timeout))
+	processors = append(processors, local.New(logger))
+	processors = append(processors, external.New(config.Timeout, logger))
 	return LinkValidador{processors}
 }
 
@@ -74,7 +74,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			line := scanner.Text()
 			links := v.processLine(line)
 			for link, processor := range links {
-				err := processor.Process(ctx, link, fileName, logger)
+				err := processor.Process(ctx, link, fileName)
 				linksFound++
 				if err == nil {
 					logger.Debug("link validation successful", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines))

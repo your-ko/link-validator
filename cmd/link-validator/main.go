@@ -62,7 +62,7 @@ func main() {
 		Timeout:       timeout,
 	}
 
-	validator := link_validator.New(config)
+	validator := link_validator.New(config, logger)
 
 	filesList, err := validator.GetFiles(config)
 	if err != nil {

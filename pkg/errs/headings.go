@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var HeadingLinkToDir = errors.New("points to dir but contains a heading (./file.md#blah)")
+var HeadingLinkToDir = errors.New("points to dir but contains a heading (./dir#blah)")
 var EmptyHeading = errors.New("empty heading (./file.md#)")
 
 type HeadingLinkToDirError struct {
