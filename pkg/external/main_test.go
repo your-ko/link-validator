@@ -155,7 +155,14 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		},
 		{
 			name:    "404 with body -> NotFound",
-			fields:  fields{404, "blah not found blah", 0, ""},
+			fields:  fields{http.StatusNotFound, "blah not found blah", 0, ""},
+			args:    args{url: "/path"},
+			wantErr: true,
+			wantIs:  errs.NotFound,
+		},
+		{
+			name:    "410 with body -> NotFound",
+			fields:  fields{http.StatusGone, "blah not found blah", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
 			wantIs:  errs.NotFound,
@@ -168,8 +175,18 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.EmptyBody,
 		},
 		{
-			name:   "500 -> NotFound (generic fallback)",
+			name:   "500 -> we ignore",
 			fields: fields{http.StatusInternalServerError, "oops", 0, ""},
+			args:   args{url: "/err"},
+		},
+		{
+			name:   "429 -> we skip",
+			fields: fields{http.StatusTooManyRequests, "oops", 0, ""},
+			args:   args{url: "/err"},
+		},
+		{
+			name:   "401 -> we skip",
+			fields: fields{http.StatusUnauthorized, "oops", 0, ""},
 			args:   args{url: "/err"},
 		},
 		{
