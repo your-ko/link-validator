@@ -4,7 +4,7 @@ on:
   # TODO
   workflow_dispatch:
 env:
-  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.13.0
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.14.0
 jobs:
   link-validator:
     name: link-validator
