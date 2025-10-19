@@ -27,18 +27,28 @@ type LinkProcessor struct {
 
 func New(timeout time.Duration, logger *zap.Logger) *LinkProcessor {
 	httpClient := &http.Client{
-		Timeout:       timeout,
-		CheckRedirect: checkRedirect,
+		Timeout: timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			logger.Debug("redirecting", zap.String("to", req.URL.String()), zap.Int("hops", len(via)))
+			redirectLimit := 3
+			if len(via) > redirectLimit {
+				logger.Error("too many redirects", zap.Int("redirect limit", redirectLimit))
+			}
+			for k, vs := range via[0].Header {
+				if req.Header.Get(k) == "" {
+					for _, v := range vs {
+						req.Header.Add(k, v)
+					}
+				}
+			}
+			return nil
+		},
 	}
 
 	return &LinkProcessor{
 		httpClient: httpClient,
 		logger:     logger,
 	}
-}
-
-func checkRedirect(req *http.Request, via []*http.Request) error {
-	return http.ErrUseLastResponse
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
