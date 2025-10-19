@@ -44,29 +44,31 @@ var handlers = map[string]ghHandler{
 	"projects":    handleRepoExist,
 	"":            handleRepoExist,
 }
-var repoRegex = regexp.MustCompile(
-	`^https:\/\/` +
-		// 1: host (no subdomains like api./uploads.)
-		`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
-		// 2: org
-		`([^\/\s"'()<>\[\]{},?#]+)\/` +
-		// 3: repo
-		`([^\/\s"'()<>\[\]{},?#]+)` +
-		// allow repo root with or without trailing slash
-		`\/?` +
-		// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
-		`(?:\/` +
-		`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
-		`(?:tag\/)?` + // lets "releases/tag/<tag>" work
-		`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
-		`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
-		`)?` +
-		// 7: optional fragment
-		`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
-		`$`,
-)
 
-var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+var (
+	ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+	repoRegex = regexp.MustCompile(
+		`^https:\/\/` +
+			// 1: host (no subdomains like api./uploads.)
+			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
+			// 2: org
+			`([^\/\s"'()<>\[\]{},?#]+)\/` +
+			// 3: repo
+			`([^\/\s"'()<>\[\]{},?#]+)` +
+			// allow repo root with or without trailing slash
+			`\/?` +
+			// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
+			`(?:\/` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
+			`(?:tag\/)?` + // lets "releases/tag/<tag>" work
+			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
+			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
+			`)?` +
+			// 7: optional fragment
+			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
+			`$`,
+	)
+)
 
 type LinkProcessor struct {
 	corpGitHubUrl string
