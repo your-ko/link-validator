@@ -1,10 +1,10 @@
-// Package 'gh' implements git repository blob|tree|raw|blame|releases|commit links validation
+// Package 'github' implements git links validation, all links that can be requested vie GitHub API.
 // GitHub links are the links that point to files in other GitHub repositories within the same owner
 // (either it is public or enterprise GitHub)
 // Example: [README](https://github.com/your-ko/link-validator/blob/main/README.md)
 // links to a particular branch or commits are supported as well.
 
-package gh
+package github
 
 import (
 	"context"

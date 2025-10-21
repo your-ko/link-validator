@@ -8,8 +8,8 @@ import (
 	"go.uber.org/zap/zapcore"
 	"io/fs"
 	"link-validator/pkg/errs"
-	"link-validator/pkg/external"
-	"link-validator/pkg/gh"
+	"link-validator/pkg/github"
+	"link-validator/pkg/http"
 	"link-validator/pkg/local"
 	"os"
 	"path/filepath"
@@ -48,10 +48,10 @@ type Config struct {
 func New(config Config, logger *zap.Logger) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	if config.CorpGitHubUrl != "" {
-		processors = append(processors, gh.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger))
+		processors = append(processors, github.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger))
 	}
 	processors = append(processors, local.New(logger))
-	processors = append(processors, external.New(config.Timeout, logger))
+	processors = append(processors, http.New(config.Timeout, logger))
 	return LinkValidador{processors}
 }
 
