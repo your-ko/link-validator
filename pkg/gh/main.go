@@ -114,12 +114,12 @@ func httpClient(timeout time.Duration) *http.Client {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
-	proc.logger.Debug("Validating internal url", zap.String("url", url))
+	proc.logger.Debug("Validating github url", zap.String("url", url))
 
 	match := repoRegex.FindStringSubmatch(url)
 	var client *github.Client
 	if len(match) == 0 {
-		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it here https://github.com/your-ko/link-validator/issues", url)
+		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
 	}
 
 	host, owner, repo, typ, ref, path, _ := match[1], match[2], match[3], match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
@@ -131,7 +131,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 	handler, ok := handlers[typ]
 	if !ok {
-		return fmt.Errorf("unsupported GitHub request type %q; please open an issue", typ)
+		return fmt.Errorf("unsupported GitHub request type %q. If you think it is a bug, please report it", typ)
 	}
 	proc.logger.Debug("using", zap.Any("handler", handler))
 
