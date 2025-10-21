@@ -15,8 +15,8 @@ env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
 
 jobs:
-  PR:
-    name: PR
+  Main:
+    name: Main
     runs-on: ubuntu-22.04
     outputs:
       sha_short: ${{ steps.sha.outputs.sha_short }}
