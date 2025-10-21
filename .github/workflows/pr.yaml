@@ -43,6 +43,11 @@ jobs:
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
+      - name: Lint
+        shell: bash
+        run: |
+          go vet ./cmd/... ./internal/... ./pkg/...
+
       - name: Test
         shell: bash
         run: |
