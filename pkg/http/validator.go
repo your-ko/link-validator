@@ -1,6 +1,6 @@
-// Package external implements http links validation, i.e., any link starting with http(s)
-// also covers gihub non-repository links, such as api.github.com or https://github.com/your-ko/link-validator/pull
-package external
+// Package http implements https links validation, i.e., any link starting with http(s), which are not GitHub links.
+// also covers GitHub non-repository links, such as api.github.com
+package http
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 
 var urlRegex = regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
 
-// ghRegex is identical to the gh.repoRegex, but it is used in inverse way
+// ghRegex is identical to the github.repoRegex, but it is used in inverse way
 var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 type LinkProcessor struct {
