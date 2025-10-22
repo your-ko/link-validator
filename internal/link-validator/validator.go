@@ -48,7 +48,11 @@ type Config struct {
 func New(config Config, logger *zap.Logger) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	if config.CorpGitHubUrl != "" {
-		processors = append(processors, github.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger))
+		gh, err := github.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger)
+		if err != nil {
+			logger.Panic("can't instantiate GitHub link validator", zap.Error(err))
+		}
+		processors = append(processors, gh)
 	}
 	processors = append(processors, local_path.New(logger))
 	processors = append(processors, http.New(config.Timeout, logger))

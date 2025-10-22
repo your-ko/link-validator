@@ -77,11 +77,11 @@ type LinkProcessor struct {
 	logger        *zap.Logger
 }
 
-func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.Logger) *LinkProcessor {
+func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.Logger) (*LinkProcessor, error) {
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
-		logger.Panic("invalid enterprise url", zap.String("url", corpGitHubUrl))
+		return nil, fmt.Errorf("invalid enterprise url: '%s'", corpGitHubUrl)
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
 	var corpClient *github.Client
@@ -91,7 +91,7 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.
 			strings.ReplaceAll(host, "https://", "https://uploads."),
 		)
 		if err != nil {
-			logger.Panic("can't create GitHub Processor", zap.Error(err))
+			return nil, fmt.Errorf("can't create GitHub Processor: %s", err)
 		}
 		corpClient = corpClient.WithAuthToken(corpPat)
 	}
@@ -106,7 +106,7 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.
 		corpClient:    corpClient,
 		client:        client,
 		logger:        logger,
-	}
+	}, nil
 }
 
 func httpClient(timeout time.Duration) *http.Client {
