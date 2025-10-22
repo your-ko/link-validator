@@ -141,8 +141,8 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 	var entry handlerEntry
 	var ok bool
-	switch {
-	case typ == "":
+	switch typ {
+	case "":
 		switch {
 		case owner != "" && repo == "":
 			entry = handlerEntry{name: "org-exist", fn: handleOrgExist}
