@@ -16,13 +16,12 @@ jobs:
         id: lnk
         env:
           LOG_LEVEL: "debug"
-          FILE_MASKS: "*.md,*.yaml"
+          FILE_MASKS: "*.md"
           FILE_LIST: "*"
           LOOKUP_PATH: "."
           EXCLUDE_PATH: "/test"
           PAT: ${{ secrets.GITHUB_TOKEN }}
           CORP_PAT: ${{ secrets.GITHUB_TOKEN }}
-          CORP_URL: "https://github.com"
         shell: bash
         run: |
           docker run --rm \
