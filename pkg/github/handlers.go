@@ -51,11 +51,9 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _ str
 //
 // and I assume that if the workflow exists, then the badge exists too
 func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, _, path string) error {
+	path = strings.TrimSuffix(path, "/badge.svg")
 	path = strings.Trim(path, "/")
 
-	if strings.HasSuffix(path, "/badge.svg") {
-		path = strings.TrimSuffix(path, "/badge.svg")
-	}
 	_, _, err := c.Actions.GetWorkflowByFileName(ctx, owner, repo, path)
 	return err
 }
