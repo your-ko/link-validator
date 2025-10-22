@@ -69,7 +69,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			logger.Error("Error opening file", zap.String("file", fileName), zap.Error(err))
 			continue
 		}
-		defer f.Close()
+
 		lines := 0
 		linksFound := 0
 		scanner := bufio.NewScanner(f)
@@ -96,6 +96,13 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				}
 			}
 			lines++
+		}
+		if err := scanner.Err(); err != nil {
+			logger.Warn("scan failed", zap.String("file", fileName), zap.Error(err))
+		}
+		// Close file next iteration
+		if err := f.Close(); err != nil {
+			logger.Warn("close failed", zap.String("file", fileName), zap.Error(err))
 		}
 		stats.Lines = stats.Lines + lines
 		stats.Links = stats.Links + linksFound
