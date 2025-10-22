@@ -135,7 +135,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 		//	args:    args{link: "test/qqq.md#header2"},
 		//	fields:  fields{fileName: "test/qqq.md"},
 		//	wantErr: true,
-		//	wantIs:  errs.NotFound,
+		//	wantIs:  errs.ErrNotFound,
 		//},
 		{
 			name:   "existing dir in root",
@@ -152,14 +152,14 @@ func TestLinkProcessor_Process(t *testing.T) {
 			args:    args{link: "test/test"},
 			fields:  fields{fileNameTested: "README.md", dirName: "test1"},
 			wantErr: true,
-			wantIs:  errs.NotFound,
+			wantIs:  errs.ErrNotFound,
 		},
 		{
 			name:    "non-existing file",
 			args:    args{link: "doesnt_exists.md"},
 			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
 			wantErr: true,
-			wantIs:  errs.NotFound,
+			wantIs:  errs.ErrNotFound,
 		},
 
 		//{
@@ -174,7 +174,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 			args:    args{link: "dir#header"},
 			fields:  fields{fileNameTested: "README.md", dirName: "dir"},
 			wantErr: true,
-			wantIs:  errs.HeadingLinkToDir,
+			wantIs:  errs.ErrHeadingLinkToDir,
 		},
 		//{
 		//	name: "header line with multiple spaces after # should match",
@@ -185,7 +185,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 		//	},
 		//},
 		//{
-		//	name: "case-sensitive header mismatch -> NotFound",
+		//	name: "case-sensitive header mismatch -> ErrNotFound",
 		//	args: args{link: "case.md#header1"},
 		//	fields: fields{
 		//		//TODO look closer into case senvisive
@@ -193,24 +193,24 @@ func TestLinkProcessor_Process(t *testing.T) {
 		//		customContent: "# Header1\n", // capital H
 		//	},
 		//	wantErr: true,
-		//	wantIs:  errs.NotFound,
+		//	wantIs:  errs.ErrNotFound,
 		//},
 		//{
-		//	name: "percent-encoded fragment in link does not match raw text -> NotFound",
+		//	name: "percent-encoded fragment in link does not match raw text -> ErrNotFound",
 		//	args: args{link: "enc.md#header%201"},
 		//	fields: fields{
 		//		fileName:      "enc.md",
 		//		customContent: "# header 1\n",
 		//	},
 		//	wantErr: true,
-		//	wantIs:  errs.NotFound,
+		//	wantIs:  errs.ErrNotFound,
 		//},
 		{
 			name:    "empty fragment (file.md#) treated as incorrect",
 			args:    args{link: "emptyfrag.md#"},
 			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
 			wantErr: true,
-			wantIs:  errs.EmptyHeading,
+			wantIs:  errs.ErrEmptyHeading,
 		},
 	}
 
