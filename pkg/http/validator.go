@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var urlRegex = regexp.MustCompile(`https:\/\/[^\s"'()\[\]]+`)
+var urlRegex = regexp.MustCompile(`https://[^\s"'()\[\]]+`)
 
 // ghRegex is identical to the github.repoRegex, but it is used in inverse way
 var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
@@ -65,7 +65,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+
 	switch {
 	case resp.StatusCode == 401 || resp.StatusCode == 403:
 		// we can proceed without authentication, so we don't know whether the url is alive.
@@ -88,6 +88,11 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 			// we can't read body, something is off
 			return err
 		}
+		err = resp.Body.Close()
+		if err != nil {
+			proc.logger.Info("error closing body: ", zap.Error(err))
+		}
+
 		if len(bodyBytes) == 0 {
 			// body is empty, doesn't count as a healthy URL
 			return errs.NewEmptyBody(url)
