@@ -30,8 +30,18 @@ func (h ghHandler) String() string {
 	return fmt.Sprintf("func@%#x", pc)
 }
 
+type handlerEntry struct {
+	name string
+	fn   ghHandler
+}
+
 func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _ string) error {
 	_, _, err := c.Repositories.Get(ctx, owner, repo)
+	return err
+}
+
+func handleOrgExist(ctx context.Context, c *github.Client, owner, repo, _, _ string) error {
+	_, _, err := c.Organizations.Get(ctx, owner)
 	return err
 }
 
