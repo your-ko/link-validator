@@ -98,7 +98,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 		fileNameTested string // file name being tested
 		fileName       string // test file where the test link points to
 		dirName        string // test dir where the test link points to
-		customContent  string // if non-empty, write this content instead of default into the test file
+		//customContent  string // if non-empty, write this content instead of default into the test file
 	}
 	type args struct {
 		link string // simulates a link found in a file
