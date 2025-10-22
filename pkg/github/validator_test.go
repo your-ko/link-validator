@@ -134,7 +134,6 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		setup   func(w http.ResponseWriter, r *http.Request)
 		wantErr bool
 		wantIs  error // sentinel check via errors.Is; nil => no sentinel check
 	}
