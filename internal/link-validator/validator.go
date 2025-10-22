@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io/fs"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
@@ -101,7 +100,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		stats.Lines = stats.Lines + lines
 		stats.Links = stats.Links + linksFound
 
-		if zapcore.DebugLevel == logger.Level() {
+		if logger.Core().Enabled(zap.DebugLevel) {
 			logger.Debug("Processed: ", zap.Int("lines", lines), zap.Int("links", linksFound), zap.String("fileName", fileName))
 		} else {
 			logger.Info("Processed: ", zap.String("fileName", fileName))
