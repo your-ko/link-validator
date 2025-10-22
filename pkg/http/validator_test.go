@@ -140,11 +140,11 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "200 with no body -> EmptyBody",
+			name:    "200 with no body -> ErrEmptyBody",
 			fields:  fields{http.StatusOK, "", 0, ""},
 			args:    args{url: "/path"},
 			wantErr: true,
-			wantIs:  errs.EmptyBody,
+			wantIs:  errs.ErrEmptyBody,
 		},
 		{
 			name:    "200 with body containing 'not found' -> NotFound",
@@ -168,11 +168,11 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:  errs.NotFound,
 		},
 		{
-			name:    "204 No Content -> EmptyBody",
+			name:    "204 No Content -> ErrEmptyBody",
 			fields:  fields{http.StatusNoContent, "", 0, ""},
 			args:    args{url: "/nocontent"},
 			wantErr: true,
-			wantIs:  errs.EmptyBody,
+			wantIs:  errs.ErrEmptyBody,
 		},
 		{
 			name:   "500 -> we ignore",

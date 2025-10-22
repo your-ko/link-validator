@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var EmptyBody = errors.New("empty response body")
+var ErrEmptyBody = errors.New("empty response body")
 
 type EmptyBodyError struct {
 	link string
@@ -21,4 +21,4 @@ func (e EmptyBodyError) Error() string {
 	return fmt.Sprintf("empty response body. Incorrect link: '%s'", e.link)
 }
 
-func (e EmptyBodyError) Is(target error) bool { return target == EmptyBody }
+func (e EmptyBodyError) Is(target error) bool { return target == ErrEmptyBody }
