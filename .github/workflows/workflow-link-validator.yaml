@@ -1,10 +1,11 @@
 name: Link validation
 on:
-  workflow_call:
-  # TODO
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+
 env:
-  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.14.0
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.16.0
 jobs:
   link-validator:
     name: link-validator
@@ -12,6 +13,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.2
+
       - name: Run Link validation
         id: lnk
         env:
@@ -27,12 +29,7 @@ jobs:
           docker run --rm \
             -e LOG_LEVEL \
             -e FILE_MASKS \
-            -e LOOKUP_PATH \
-            -e EXCLUDE_PATH \
-            -e FILE_LIST \
             -e PAT \
-            -e CORP_PAT \
-            -e CORP_URL \
             -v "${{ github.workspace }}:/work" \
             -w /work \
             ${DOCKER_VALIDATOR}
