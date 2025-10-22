@@ -335,6 +335,15 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				body:   "",
 			},
 		},
+		{
+			name: "link to an org",
+			args: args{link: "/your-ko/link-validator"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator",
+				body:   "",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -784,6 +793,20 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 				"actions",
 				"workflows",
 				"main.yaml",
+				"",
+			},
+		},
+		{
+			name: "org",
+			url:  "https://github.com/your-ko/",
+			want: []string{
+				"https://github.com/your-ko/",
+				"github.com",
+				"your-ko",
+				"",
+				"",
+				"",
+				"",
 				"",
 			},
 		},

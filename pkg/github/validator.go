@@ -19,30 +19,29 @@ import (
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
-var handlers = map[string]ghHandler{
+var handlers = map[string]handlerEntry{
 	// File-ish routes — all use Contents API
-	"blob":  handleContents,
-	"tree":  handleContents,
-	"raw":   handleContents,
-	"blame": handleContents,
+	"blob":  {name: "contents", fn: handleContents},
+	"tree":  {name: "contents", fn: handleContents},
+	"raw":   {name: "contents", fn: handleContents},
+	"blame": {name: "contents", fn: handleContents},
 
 	// Single-object routes
-	"commit":   handleCommit,
-	"issues":   handleIssue,
-	"pull":     handlePR,
-	"releases": handleReleases,
-	"actions":  handleWorkflow,
+	"commit":   {name: "commit", fn: handleCommit},
+	"issues":   {name: "issues", fn: handleIssue},
+	"pull":     {name: "pull", fn: handlePR},
+	"releases": {name: "releases", fn: handleReleases},
+	"actions":  {name: "actions", fn: handleWorkflow},
 
 	// “List / page” routes — we just validate the repo exists
-	"pulls":       handleRepoExist,
-	"commits":     handleRepoExist,
-	"discussions": handleRepoExist,
-	"branches":    handleRepoExist,
-	"tags":        handleRepoExist,
-	"milestones":  handleRepoExist,
-	"labels":      handleRepoExist,
-	"projects":    handleRepoExist,
-	"":            handleRepoExist,
+	"pulls":       {name: "repo-exist", fn: handleRepoExist},
+	"commits":     {name: "repo-exist", fn: handleRepoExist},
+	"discussions": {name: "repo-exist", fn: handleRepoExist},
+	"branches":    {name: "repo-exist", fn: handleRepoExist},
+	"tags":        {name: "repo-exist", fn: handleRepoExist},
+	"milestones":  {name: "repo-exist", fn: handleRepoExist},
+	"labels":      {name: "repo-exist", fn: handleRepoExist},
+	"projects":    {name: "repo-exist", fn: handleRepoExist},
 }
 
 var (
@@ -52,18 +51,25 @@ var (
 			// 1: host (no subdomains like api./uploads.)
 			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
 			// 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)\/` +
+			`([^\/\s"'()<>\[\]{},?#]+)` +
+			// optional repo block and everything after it
+			`(?:\/` +
 			// 3: repo
 			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// allow repo root with or without trailing slash
-			`\/?` +
-			// optionally: 4 kind + 5 ref/first + 6 tail (now allows multiple segments)
+			// optional kind/ref[/tail...]
 			`(?:\/` +
+			// 4: kind
 			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
-			`(?:tag\/)?` + // lets "releases/tag/<tag>" work
-			`([^\/\s"'()<>\[\]{},?#]+)` + // 5: ref or first segment after kind
-			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` + // 6: tail (may include multiple / segments)
+			// allow "releases/tag/<ref>" (harmless for others)
+			`(?:tag\/)?` +
+			// 5: ref or first-after-kind
+			`([^\/\s"'()<>\[\]{},?#]+)` +
+			// 6: tail (may include multiple / segments)
+			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` +
 			`)?` +
+			`)?` +
+			// optional trailing slash (for org-only or repo root)
+			`\/?` +
 			// 7: optional fragment
 			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
 			`$`,
@@ -123,25 +129,37 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
 	match := repoRegex.FindStringSubmatch(url)
-	var client *github.Client
 	if len(match) == 0 {
 		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
 	}
 
-	host, owner, repo, typ, ref, path, _ := match[1], match[2], match[3], match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
+	host, owner, repo, typ, ref, path, _ := match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
+	client := proc.client
 	if host == proc.corpGitHubUrl {
 		client = proc.corpClient
-	} else {
-		client = proc.client
 	}
 
-	handler, ok := handlers[typ]
-	if !ok {
-		return fmt.Errorf("unsupported GitHub request type %q. If you think it is a bug, please report it", typ)
+	var entry handlerEntry
+	var ok bool
+	switch typ {
+	case "":
+		switch {
+		case owner != "" && repo == "":
+			entry = handlerEntry{name: "org-exist", fn: handleOrgExist}
+		case owner != "" && repo != "":
+			entry = handlerEntry{name: "repo-exist", fn: handleRepoExist}
+		default:
+			return fmt.Errorf("unsupported GitHub URL: %s", url)
+		}
+	default:
+		entry, ok = handlers[typ]
+		if !ok {
+			return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", typ)
+		}
 	}
-	proc.logger.Debug("using", zap.Any("handler", handler))
+	proc.logger.Debug("using", zap.String("handler", entry.name))
 
-	return mapGHError(url, handler(ctx, client, owner, repo, ref, path))
+	return mapGHError(url, entry.fn(ctx, client, owner, repo, ref, path))
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
