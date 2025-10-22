@@ -2,17 +2,19 @@ name: Link validation
 on:
   push:
     branches:
+      - master
       - main
 
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.18.0
+
 jobs:
   link-validator:
     name: link-validator
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
 
       - name: Run Link validation
         id: lnk
@@ -29,4 +31,4 @@ jobs:
             --env-file .env \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            ${DOCKER_VALIDATOR}
+            ${{env.DOCKER_VALIDATOR}}
