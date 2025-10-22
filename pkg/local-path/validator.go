@@ -1,9 +1,8 @@
-// Package 'local' implements local links validation
+// Package local-path implements local links validation
 // Local links are the links found in the given repository, which point to files in the same repository.
 // Example: [README](../../README.md)
-// http(s):// links are not processes
 
-package local
+package local_path
 
 import (
 	"context"

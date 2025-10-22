@@ -10,7 +10,7 @@ import (
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
 	"link-validator/pkg/http"
-	"link-validator/pkg/local"
+	"link-validator/pkg/local-path"
 	"os"
 	"path/filepath"
 	"time"
@@ -50,7 +50,7 @@ func New(config Config, logger *zap.Logger) LinkValidador {
 	if config.CorpGitHubUrl != "" {
 		processors = append(processors, github.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger))
 	}
-	processors = append(processors, local.New(logger))
+	processors = append(processors, local_path.New(logger))
 	processors = append(processors, http.New(config.Timeout, logger))
 	return LinkValidador{processors}
 }
