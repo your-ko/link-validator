@@ -134,7 +134,6 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		setup   func(w http.ResponseWriter, r *http.Request)
 		wantErr bool
 		wantIs  error // sentinel check via errors.Is; nil => no sentinel check
 	}
@@ -161,7 +160,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			},
 		},
 		{
-			name: "file exists, anchor missing -> errs.NotFound",
+			name: "file exists, anchor missing -> errs.ErrNotFound",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md#no-such-anchor"},
 			fields: fields{
 				status:         http.StatusOK,
@@ -171,10 +170,10 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			},
 			// anchors temporary don't work
 			//wantErr: true,
-			//wantIs:  errs.NotFound,
+			//wantIs:  errs.ErrNotFound,
 		},
 		{
-			name: "GitHub returns 404 -> errs.NotFound",
+			name: "GitHub returns 404 -> errs.ErrNotFound",
 			args: args{link: "/your-ko/link-validator/blob/main/README.md"},
 			fields: fields{
 				status: http.StatusNotFound,
@@ -183,7 +182,7 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			},
 
 			wantErr: true,
-			wantIs:  errs.NotFound,
+			wantIs:  errs.ErrNotFound,
 		},
 		{
 			name: "GitHub returns 500 -> non-sentinel error",
@@ -373,9 +372,9 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			if tt.wantIs != nil && !errors.Is(err, tt.wantIs) {
 				t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
 			}
-			// When wantIs is nil, ensure we did NOT map to errs.NotFound accidentally.
-			if tt.wantIs == nil && errors.Is(err, errs.NotFound) {
-				t.Fatalf("unexpected mapping to errs.NotFound: %v", err)
+			// When wantIs is nil, ensure we did NOT map to errs.ErrNotFound accidentally.
+			if tt.wantIs == nil && errors.Is(err, errs.ErrNotFound) {
+				t.Fatalf("unexpected mapping to errs.ErrNotFound: %v", err)
 			}
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Process() err presence = %v, wantErr=%v (err=%v)", err != nil, tt.wantErr, err)

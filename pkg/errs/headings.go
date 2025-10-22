@@ -5,8 +5,8 @@ import (
 	"fmt"
 )
 
-var HeadingLinkToDir = errors.New("points to dir but contains a heading (./dir#blah)")
-var EmptyHeading = errors.New("empty heading (./file.md#)")
+var ErrHeadingLinkToDir = errors.New("points to dir but contains a heading (./dir#blah)")
+var ErrEmptyHeading = errors.New("empty heading (./file.md#)")
 
 type HeadingLinkToDirError struct {
 	Link string
@@ -14,10 +14,10 @@ type HeadingLinkToDirError struct {
 
 func (e HeadingLinkToDirError) Error() string {
 	return fmt.Sprintf("%s. Incorrect link: '%s'",
-		HeadingLinkToDir.Error(), e.Link)
+		ErrHeadingLinkToDir.Error(), e.Link)
 }
 
-func (e HeadingLinkToDirError) Is(target error) bool { return target == HeadingLinkToDir }
+func (e HeadingLinkToDirError) Is(target error) bool { return target == ErrHeadingLinkToDir }
 
 func NewHeadingLinkToDir(link string) error {
 	return HeadingLinkToDirError{Link: link}
@@ -29,10 +29,10 @@ type EmptyHeadingError struct {
 
 func (e EmptyHeadingError) Error() string {
 	return fmt.Sprintf("%s. Incorrect link: '%s'",
-		EmptyHeading.Error(), e.link)
+		ErrEmptyHeading.Error(), e.link)
 }
 
-func (e EmptyHeadingError) Is(target error) bool { return target == EmptyHeading }
+func (e EmptyHeadingError) Is(target error) bool { return target == ErrEmptyHeading }
 
 func NewEmptyHeadingError(link string) error {
 	return EmptyHeadingError{link: link}

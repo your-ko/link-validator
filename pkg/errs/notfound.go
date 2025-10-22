@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var NotFound = errors.New("not found")
+var ErrNotFound = errors.New("not found")
 
 func NewNotFound(link string) NotFoundError {
 	return NotFoundError{
@@ -18,7 +18,7 @@ type NotFoundError struct {
 }
 
 func (e NotFoundError) Error() string {
-	return fmt.Sprintf("%s. Incorrect link: '%s'", NotFound.Error(), e.link)
+	return fmt.Sprintf("%s. Incorrect link: '%s'", ErrNotFound.Error(), e.link)
 }
 
-func (e NotFoundError) Is(target error) bool { return target == NotFound }
+func (e NotFoundError) Is(target error) bool { return target == ErrNotFound }
