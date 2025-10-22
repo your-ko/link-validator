@@ -20,7 +20,7 @@ import (
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
 
-	p := New("https://github.mycorp.com", "", "", 0, zap.NewNop()) // PAT not needed for regex tests
+	p, _ := New("https://github.mycorp.com", "", "", 0, zap.NewNop()) // PAT not needed for regex tests
 
 	type tc struct {
 		name string
@@ -409,7 +409,7 @@ type githubContent struct {
 
 // mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p := New(corp, "", "", time.Second, zap.NewNop())
+	p, _ := New(corp, "", "", time.Second, zap.NewNop())
 
 	if ts != nil {
 		base, _ := neturl.Parse(ts.URL + "/")
