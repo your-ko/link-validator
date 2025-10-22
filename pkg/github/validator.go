@@ -77,7 +77,18 @@ type LinkProcessor struct {
 	logger        *zap.Logger
 }
 
-func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.Logger) (*LinkProcessor, error) {
+func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration, logger *zap.Logger) (*LinkProcessor, error) {
+	client := github.NewClient(httpClient(timeout))
+	if publicPat != "" {
+		client = client.WithAuthToken(publicPat)
+	}
+	if corpGitHubUrl == "" {
+		return &LinkProcessor{
+			client: client,
+			logger: logger,
+		}, nil
+	}
+
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
 	u, err := url.Parse(corpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
@@ -94,11 +105,6 @@ func New(corpGitHubUrl, corpPat, pat string, timeout time.Duration, logger *zap.
 			return nil, fmt.Errorf("can't create GitHub Processor: %s", err)
 		}
 		corpClient = corpClient.WithAuthToken(corpPat)
-	}
-
-	client := github.NewClient(httpClient(timeout))
-	if pat != "" {
-		client = client.WithAuthToken(pat)
 	}
 
 	return &LinkProcessor{
