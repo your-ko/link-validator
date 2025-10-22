@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+var GitCommit string
+var Version string
+var BuildDate string
+
 func main() {
 	logger := link_validator.Init(link_validator.LogLevel())
 	defer func(logger *zap.Logger) {
@@ -38,9 +42,9 @@ func main() {
 	corpGitHub = strings.TrimSpace(strings.ToLower(corpGitHub))
 
 	logger.Info("Starting Link Validator",
-		zap.String("version", link_validator.Version.Version),
-		zap.String("build date", link_validator.Version.BuildDate),
-		zap.String("git commit", link_validator.Version.GitCommit),
+		zap.String("version", Version),
+		zap.String("build date", BuildDate),
+		zap.String("git commit", GitCommit),
 	)
 	logger.Debug("Running with parameters",
 		zap.Strings("FILE_MASKS", fileMasks),

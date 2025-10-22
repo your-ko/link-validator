@@ -1,5 +1,9 @@
 FROM golang:1.24.2-alpine3.20 AS builder
 
+ARG BUILD_DATE
+ARG GIT_COMMIT
+ARG VERSION
+
 ARG CA_CERT_VERSION=20241121-r1
 ARG MAKE_VERSION=4.4.1-r2
 ARG BB_VERSION=0.5-r3
@@ -18,7 +22,9 @@ COPY . /src
 WORKDIR /src
 
 ENV CGO_ENABLED=0
-RUN GOOS=linux GOARCH=amd64 make build
+RUN GOOS=linux GOARCH=amd64 go build -ldflags \
+    "-X main.GitCommit=$GIT_COMMIT -X main.BuildDate=$BUILD_DATE -X main.Version=$VERSION" \
+    -o bin/link-validator ./cmd/link-validator/main.go
 
 FROM scratch
 
