@@ -90,7 +90,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 					stats.NotFound++
 				} else {
 					stats.Errors++
-					logger.Warn("error validating link", zap.String("link", link), zap.Error(err))
+					logger.Warn("error validating link", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines), zap.Error(err))
 				}
 			}
 			lines++
