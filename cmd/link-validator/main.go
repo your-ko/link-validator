@@ -31,14 +31,17 @@ func main() {
 		}
 	}()
 
-	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
+	fileMasks := strings.Split(*flag.String("LV_FILE_MASKS", GetEnv("LV_FILE_MASKS", "*.md"), "File masks."), ",")
+	// not used atm
 	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
+	// not used atm
 	excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
+	// not used atm
 	files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate. Useful for PR validation, for example"), ",")
-	pat := *flag.String("PAT", GetEnv("PAT", ""), "GitHub PAT. Used to get access to GitHub.")
-	corpPat := *flag.String("CORP_PAT", GetEnv("CORP_PAT", ""), "Corporate GitHub PAT. Used to get access to the corporate GitHub.")
-	corpGitHub := *flag.String("CORP_URL", GetEnv("CORP_URL", ""), "Corporate GitHub URL.")
-	timeout := *flag.Duration("TIMEOUT", envDuration("TIMEOUT", 3*time.Second, logger), "HTTP request timeout")
+	pat := *flag.String("LV_PAT", GetEnv("LV_PAT", ""), "GitHub PAT. Used to get access to GitHub.")
+	corpPat := *flag.String("LV_CORP_PAT", GetEnv("LV_CORP_PAT", ""), "Corporate GitHub PAT. Used to get access to the corporate GitHub.")
+	corpGitHub := *flag.String("LV_CORP_URL", GetEnv("LV_CORP_URL", ""), "Corporate GitHub URL.")
+	timeout := *flag.Duration("LV_TIMEOUT", envDuration("LV_TIMEOUT", 3*time.Second, logger), "HTTP request timeout")
 	corpGitHub = strings.TrimSpace(strings.ToLower(corpGitHub))
 
 	logger.Info("Starting Link Validator",
