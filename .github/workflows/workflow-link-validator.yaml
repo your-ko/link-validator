@@ -26,7 +26,7 @@ jobs:
         run: |
           env | grep -E '^LV_' | sed 's/^LV_//' > .env
           docker run --rm \
-            --env-file .env
+            --env-file .env \
             -v "${{ github.workspace }}:/work" \
             -w /work \
             ${DOCKER_VALIDATOR}
