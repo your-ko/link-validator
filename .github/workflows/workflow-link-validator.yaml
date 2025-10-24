@@ -5,7 +5,7 @@ on:
       - main
 
 env:
-  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.16.0
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.18.0
 jobs:
   link-validator:
     name: link-validator
@@ -17,19 +17,16 @@ jobs:
       - name: Run Link validation
         id: lnk
         env:
-          LOG_LEVEL: "info"
-          FILE_MASKS: "*.md"
-          FILE_LIST: "*"
-          LOOKUP_PATH: "."
-          EXCLUDE_PATH: "/test"
-          PAT: ${{ secrets.GITHUB_TOKEN }}
-          CORP_PAT: ${{ secrets.GITHUB_TOKEN }}
+          LV_LOG_LEVEL: "info"
+          LV_FILE_MASKS: "*.md"
+          LV_PAT: ${{ secrets.GITHUB_TOKEN }}
+          LV_CORP_PAT: ${{ secrets.GITHUB_TOKEN }}
+          LV_CORP_URL: ""
         shell: bash
         run: |
+          env | grep -E '^LV_' | sed 's/^LV_//' > .env
           docker run --rm \
-            -e LOG_LEVEL \
-            -e FILE_MASKS \
-            -e PAT \
+            --env-file .env \
             -v "${{ github.workspace }}:/work" \
             -w /work \
             ${DOCKER_VALIDATOR}
