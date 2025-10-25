@@ -35,27 +35,45 @@ type handlerEntry struct {
 	fn   ghHandler
 }
 
+// handleRepoExist validates the repository existence.
+//
+// GitHub API docs: https://docs.github.com/rest/repos/repos#get-a-repository
+//
+//meta:operation GET /repos/{owner}/{repo}
 func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _ string) error {
 	_, _, err := c.Repositories.Get(ctx, owner, repo)
 	return err
 }
 
-func handleOrgExist(ctx context.Context, c *github.Client, owner, repo, _, _ string) error {
+// handleOrgExist  validates the org existence.
+//
+// GitHub API docs: https://docs.github.com/rest/orgs/orgs#get-an-organization
+//
+//meta:operation GET /orgs/{org}
+func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _ string) error {
 	_, _, err := c.Organizations.Get(ctx, owner)
 	return err
 }
 
+// handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
+//
+//meta:operation GET /repos/{owner}/{repo}/contents/{path}
 func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, path string) error {
 	_, _, _, err := c.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{Ref: ref})
 	return err
 }
 
+// handleCommit validates existence of the specified commit.
+//
+// GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
+//
+//meta:operation GET /repos/{owner}/{repo}/commits/{ref}
 func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _ string) error {
 	_, _, err := c.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
 	return err
 }
 
-// handleActionsWorkflows validates the two UI forms:
+// handleWorkflow validates the two UI forms:
 //   - /actions/workflows/<file>
 //   - /actions/workflows/<file>/badge.svg
 //
@@ -106,6 +124,11 @@ func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, pat
 	return fmt.Errorf("unsupported releases URL variant: ref=%q path=%q", ref, path)
 }
 
+// handleIssue validates existence of a single issue.
+//
+// GitHub API docs: https://docs.github.com/rest/issues/issues#get-an-issue
+//
+//meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
 func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
@@ -115,6 +138,11 @@ func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _ stri
 	return err
 }
 
+// handlePR validates existence of a single pull request.
+//
+// GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
+//
+//meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
 func handlePR(ctx context.Context, c *github.Client, owner, repo, ref, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
