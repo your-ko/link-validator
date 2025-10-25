@@ -31,6 +31,9 @@ on:
     branches: [ main, master ]
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.18.0 # pin a version
 
