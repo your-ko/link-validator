@@ -24,7 +24,7 @@ jobs:
           LV_CORP_URL: ""
         shell: bash
         run: |
-          env | grep -E '^LV_' | sed 's/^LV_//' > .env
+          env | grep -E '^LV_' > .env
           docker run --rm \
             --env-file .env \
             -v "${{ github.workspace }}:/work" \
