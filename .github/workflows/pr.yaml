@@ -64,20 +64,4 @@ jobs:
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR
           provenance: false
-          push: true
-
-      - name: Run Link validation
-        id: lnk
-        env:
-          LV_LOG_LEVEL: "debug"
-          LV_FILE_MASKS: "*.md"
-          PAT: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          env | grep -E '^LV_'  > .env
-          cat .env
-          docker run --rm \
-            --env-file .env \
-            -v "${{ github.workspace }}:/work" \
-            -w /work \
-            ${{env.DOCKER_IMAGE_NAME}}:PR
+          push: false
