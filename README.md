@@ -70,7 +70,7 @@ Default: *.md
 ### LV_PAT
 Public GitHub PAT. Optional parameter. Setting this helps to avoid request throttling. 
 
-### Enterprise GitHub
+### GHES
 If you plan to run the validator on your Enterprise GitHub, then you need to set these two parameters:
 #### LV_CORP_URL
 URL of your enterprise GitHub. Used to access the other repositories in the enterprise domain, using enterprise PAT. 
