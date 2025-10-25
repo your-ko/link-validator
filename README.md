@@ -47,14 +47,14 @@ jobs:
       - name: Run Link validation
         env:
           # Logging
-          LV_LOG_LEVEL: "info"              # debug|info|warn|error
+          LV_LOG_LEVEL: "info"
           # What to scan
-          LV_FILE_MASKS: "*.md"             # comma-separated globs supported
+          LV_FILE_MASKS: "*.md"
           # github.com auth (optional but recommended to reduce rate-limiting)
           LV_PAT: ${{ secrets.GITHUB_TOKEN }}
           # GitHub Enterprise (optional)
           LV_CORP_URL: ""                   # e.g. https://github.example.com
-          LV_CORP_PAT: ${{ secrets.GITHUB_TOKEN }}
+          LV_CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
         run: |
           env | grep -E '^LV_' > .env
           docker run --rm \
@@ -64,7 +64,7 @@ jobs:
             "${{ env.DOCKER_VALIDATOR }}"
 ```
 ## Versioning
-Link-validator uses semver
+Link-validator uses semver.
 
 ## Behavior in CI
 
@@ -74,17 +74,17 @@ Use LV_LOG_LEVEL=debug temporarily to investigate flakiness (rate‑limits, redi
 
 Tip: keep the image pinned to a tag (e.g., 0.18.0) rather than latest to avoid surprise changes.
 
-The used docker image size is approximately 10Mb
+The used docker image size is approximately 10Mb.
 
 ## Configuration
 
-| Env var         | Required | Description                                                                                                                                              | Default  |
-|-----------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
-| `LV_LOG_LEVEL`  | false    | Controls verbosity.                                                                                                                                      | 'info'   |
-| `LV_FILE_MASKS` | false    | Comma‑separated list of filemasks to scan (e.g., *.md).                                                                                                  | '[*.md]' |
-| `LV_PAT`        | false    | github.com token. Optional, but reduces throttling and enables checks against private repos you can access.                                              | ''       |
-| `LV_CORP_URL`   | false    | Base URL of GHES (e.g., https://github.mycorp.com). When set, links on this domain and its subdomains are resolved via the GitHub API using LV_CORP_PAT. | ''       |
-| `LV_CORP_PAT`   | false    | PAT for GHES with read access to the referenced repos. Mandatory if LV_CORP_URL is set                                                                   | ''       |
+| Env var         | Required | Description                                                                                                                                              | Default |
+|-----------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `LV_LOG_LEVEL`  | false    | Controls verbosity.                                                                                                                                      | 'info'  |
+| `LV_FILE_MASKS` | false    | Comma‑separated list of filemasks to scan (e.g., "*.md").                                                                                                | '*.md'  |
+| `LV_PAT`        | false    | github.com token. Optional, but reduces throttling and enables checks against private repos you can access.                                              | ''      |
+| `LV_CORP_URL`   | false    | Base URL of GHES (e.g., https://github.mycorp.com). When set, links on this domain and its subdomains are resolved via the GitHub API using LV_CORP_PAT. | ''      |
+| `LV_CORP_PAT`   | false    | PAT for GHES with read access to the referenced repos. Mandatory if LV_CORP_URL is set                                                                   | ''      |
 
 ### Token scopes
 
