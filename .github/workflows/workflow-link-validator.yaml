@@ -4,8 +4,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.18.0
+
 jobs:
   link-validator:
     name: link-validator
