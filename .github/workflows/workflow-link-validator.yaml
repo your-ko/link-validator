@@ -2,6 +2,7 @@ name: Link validation
 on:
   push:
     branches:
+      - master
       - main
 
 permissions:
@@ -16,7 +17,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
 
       - name: Link validation
         id: lnk
