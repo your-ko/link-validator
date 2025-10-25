@@ -33,11 +33,11 @@ func main() {
 
 	fileMasks := strings.Split(*flag.String("LV_FILE_MASKS", GetEnv("LV_FILE_MASKS", "*.md"), "File masks."), ",")
 	// not used atm
-	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
+	//lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
 	// not used atm
-	excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
+	//excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
 	// not used atm
-	files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate. Useful for PR validation, for example"), ",")
+	//files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate. Useful for PR validation, for example"), ",")
 	pat := *flag.String("LV_PAT", GetEnv("LV_PAT", ""), "GitHub PAT. Used to get access to GitHub.")
 	corpPat := *flag.String("LV_CORP_PAT", GetEnv("LV_CORP_PAT", ""), "Corporate GitHub PAT. Used to get access to the corporate GitHub.")
 	corpGitHub := *flag.String("LV_CORP_URL", GetEnv("LV_CORP_URL", ""), "Corporate GitHub URL.")
@@ -50,23 +50,24 @@ func main() {
 		zap.String("git commit", GitCommit),
 	)
 	logger.Debug("Running with parameters",
-		zap.Strings("FILE_MASKS", fileMasks),
-		zap.String("LOOKUP_PATH", lookUpPath),   // not implemented yet
-		zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
-		zap.Strings("FILE_LIST", files),         // not implemented yet
-		zap.String("CORP_URL", corpGitHub),
-		zap.Duration("TIMEOUT", timeout),
+		zap.String("LV_LOG_LEVEL", os.Getenv("LV_LOG_LEVEL")),
+		zap.Strings("LV_FILE_MASKS", fileMasks),
+		//zap.String("LOOKUP_PATH", lookUpPath),   // not implemented yet
+		//zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
+		//zap.Strings("FILE_LIST", files),         // not implemented yet
+		zap.String("LV_CORP_URL", corpGitHub),
+		zap.Duration("LV_TIMEOUT", timeout),
 	)
 
 	config := link_validator.Config{
 		CorpGitHubUrl: corpGitHub,
-		Path:          lookUpPath,
-		PAT:           pat,
-		CorpPAT:       corpPat,
-		FileMasks:     fileMasks,
-		LookupPath:    lookUpPath,
-		ExcludePath:   excludePath,
-		Timeout:       timeout,
+		//Path:          lookUpPath,
+		PAT:       pat,
+		CorpPAT:   corpPat,
+		FileMasks: fileMasks,
+		//LookupPath:    lookUpPath,
+		//ExcludePath:   excludePath,
+		Timeout: timeout,
 	}
 
 	validator := link_validator.New(config, logger)
