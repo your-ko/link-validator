@@ -65,4 +65,27 @@ jobs:
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR
           provenance: false
-          push: false
+          push: true
+
+      - name: Link validation
+        id: lnk
+        env:
+          LV_LOG_LEVEL: "debug"
+          LV_FILE_MASKS: "*.md"
+          LV_PAT: ${{ secrets.GITHUB_TOKEN }}
+          LV_CORP_PAT: ${{ secrets.GITHUB_TOKEN }}
+          LV_CORP_URL: ""
+        shell: bash
+        run: |
+          DOCKER_ENV_ARGS=""
+          for var in $(env | grep '^LV_' | cut -d'=' -f1); do
+            DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
+          done
+          
+          echo $DOCKER_ENV_ARGS
+          
+          docker run --rm \
+                 $DOCKER_ENV_ARGS \
+                 -v "${{ github.workspace }}:/work" \
+                 -w /work \
+                 ${{env.DOCKER_IMAGE_NAME}}:PR
