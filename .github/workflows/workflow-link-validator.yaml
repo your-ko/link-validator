@@ -5,6 +5,9 @@ on:
       - master
       - main
 
+permissions:
+  contents: read
+
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.18.0
 
@@ -16,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5.0.0
 
-      - name: Run Link validation
+      - name: Link validation
         id: lnk
         env:
           LV_LOG_LEVEL: "info"
@@ -26,9 +29,13 @@ jobs:
           LV_CORP_URL: ""
         shell: bash
         run: |
-          env | grep -E '^LV_' > .env
+          DOCKER_ENV_ARGS=""
+          for var in $(env | grep '^LV_' | cut -d'=' -f1); do
+            DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
+          done
+          
           docker run --rm \
-            --env-file .env \
-            -v "${{ github.workspace }}:/work" \
-            -w /work \
-            ${{env.DOCKER_VALIDATOR}}
+                 $DOCKER_ENV_ARGS \
+                 -v "${{ github.workspace }}:/work" \
+                 -w /work \
+                 ${{env.DOCKER_VALIDATOR}}
