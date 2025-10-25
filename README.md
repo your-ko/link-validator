@@ -53,7 +53,7 @@ jobs:
           # github.com auth (optional but recommended to reduce rate-limiting)
           LV_PAT: ${{ secrets.GITHUB_TOKEN }}
           # GitHub Enterprise (optional)
-          LV_CORP_URL: ""                   # e.g. https://github.example.com
+          LV_CORP_URL: ""
           LV_CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
         run: |
           env | grep -E '^LV_' > .env
@@ -83,7 +83,7 @@ The used docker image size is approximately 10Mb.
 | `LV_LOG_LEVEL`  | false    | Controls verbosity.                                                                                                                                      | 'info'  |
 | `LV_FILE_MASKS` | false    | Comma‑separated list of filemasks to scan (e.g., "*.md").                                                                                                | '*.md'  |
 | `LV_PAT`        | false    | github.com token. Optional, but reduces throttling and enables checks against private repos you can access.                                              | ''      |
-| `LV_CORP_URL`   | false    | Base URL of GHES (e.g., https://github.mycorp.com). When set, links on this domain and its subdomains are resolved via the GitHub API using LV_CORP_PAT. | ''      |
+| `LV_CORP_URL`   | false    | Base URL of GHES (e.g., https://[github].[mycorp].com). When set, links on this domain and its subdomains are resolved via the GitHub API using LV_CORP_PAT. | ''      |
 | `LV_CORP_PAT`   | false    | PAT for GHES with read access to the referenced repos. Mandatory if LV_CORP_URL is set                                                                   | ''      |
 
 ### Token scopes
@@ -106,7 +106,7 @@ This split keeps checks fast and accurate while avoiding false positives common 
 export LV_LOG_LEVEL=debug
 export LV_FILE_MASKS="*.md"
 export LV_PAT=ghp_...           # optional
-export LV_CORP_URL=             # optional, e.g., https://github.mycorp.com
+export LV_CORP_URL=             # optional, e.g., https://[github].[mycorp].com
 export LV_CORP_PAT=             # optional
 
 docker run --rm \
@@ -148,5 +148,5 @@ As repos grow, docs link across services and between repos. Over time, links rot
 This validator catches issues early, in the PR that introduces them.
 
 ## License
-The scripts and documentation in this project are released under the [MIT License](LICENSE)
+The scripts and documentation in this project are released under the [MIT License](./LICENSE)
 
