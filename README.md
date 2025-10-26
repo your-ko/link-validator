@@ -56,7 +56,11 @@ jobs:
           LV_CORP_URL: ""
           LV_CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
         run: |
-          env | grep -E '^LV_' > .env
+          DOCKER_ENV_ARGS=""
+          for var in $(env | grep '^LV_' | cut -d'=' -f1); do
+            DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
+          done
+
           docker run --rm \
             --env-file .env \
             -v "${{ github.workspace }}:/work" \
