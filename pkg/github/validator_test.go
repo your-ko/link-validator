@@ -241,8 +241,6 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				status: http.StatusOK,
 				path:   "/your-ko/link-validator/pulls/your-ko",
 				body:   "",
-				//body:           "[{\"number\": 1}]",
-				//base64encoding: false,
 			},
 		},
 		{
@@ -252,8 +250,6 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 				status: http.StatusOK,
 				path:   "/your-ko/link-validator/pulls/your-ko/releases",
 				body:   "",
-				//body:           "[{\"number\": 1}]",
-				//base64encoding: false,
 			},
 		},
 		{
