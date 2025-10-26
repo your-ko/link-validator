@@ -449,7 +449,9 @@ func TestLinkProcessor_validateTarget(t *testing.T) {
 			if tt.fields.dirName != "" {
 				mkDir(tt.fields.dirName)
 			}
-			defer cleanUp(tt.fields)
+			t.Cleanup(func() {
+				cleanUp(tt.fields)
+			})
 
 			err := proc.validateTarget(tt.args.targetPath, tt.args.header)
 			if (err != nil) != tt.wantErr {
