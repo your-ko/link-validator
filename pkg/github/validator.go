@@ -59,13 +59,16 @@ var (
 			// optional kind/ref[/tail...]
 			`(?:\/` +
 			// 4: kind
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` + `\/` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` +
+			// optional ref section - some URLs like /releases, /pulls, /issues don't require a ref
+			`(?:\/` +
 			// allow "releases/tag/<ref>" (harmless for others)
 			`(?:tag\/)?` +
 			// 5: ref or first-after-kind
 			`([^\/\s"'()<>\[\]{},?#]+)` +
 			// 6: tail (may include multiple / segments)
 			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` +
+			`)?` +
 			`)?` +
 			`)?` +
 			// optional trailing slash (for org-only or repo root)
