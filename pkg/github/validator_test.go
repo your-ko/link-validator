@@ -246,6 +246,17 @@ func TestInternalLinkProcessor_Process(t *testing.T) {
 			},
 		},
 		{
+			name: "link to releases",
+			args: args{link: "/your-ko/link-validator/releases"},
+			fields: fields{
+				status: http.StatusOK,
+				path:   "/your-ko/link-validator/pulls/your-ko/releases",
+				body:   "",
+				//body:           "[{\"number\": 1}]",
+				//base64encoding: false,
+			},
+		},
+		{
 			name: "link to a commits",
 			args: args{link: "/your-ko/link-validator/commits/test"},
 			fields: fields{
@@ -568,6 +579,21 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 				"link-validator",
 				"releases",
 				"0.9.0",
+				"",
+				"",
+			},
+		},
+		{
+			name: "releases",
+			url:  "https://github.com/your-ko/link-validator/releases",
+			//want: nil,
+			want: []string{
+				"https://github.com/your-ko/link-validator/releases",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"releases",
+				"",
 				"",
 				"",
 			},
