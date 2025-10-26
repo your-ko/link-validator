@@ -4,25 +4,23 @@
 
 # Link Validator
 
-Catch broken links in your repo **before** they bite you in an incident.  
-This tool scans Markdown files for:
-- **GitHub links** (to files, PRs, issues, releases, workflows, etc.)
-- **External HTTP(S) links**
-- **Local Markdown links** (e.g., `./README.md`, `../docs/intro.md`)
+Validates links in Markdown files by checking:
+- GitHub links (files, PRs, issues, releases, workflows, etc.)
+- External HTTP(S) URLs
+- Local file references (`./README.md`, `../docs/intro.md`)
 
-It works on **github.com** and **GitHub Enterprise (GHES)**.
+Supports both github.com and GitHub Enterprise Server (GHES).
 
 ## Features
-- ✅ Validates GitHub links (files, PRs, issues, releases, workflows)
-- ✅ Checks external HTTP(S) links
-- ✅ Verifies local Markdown file references
-- ✅ Supports GitHub Enterprise Server (GHES)
-- ✅ Rate limiting and authentication support
-- ✅ Docker support for easy CI integration
 
----
+- GitHub link validation via API calls
+- HTTP(S) link checking with redirect following
+- Local Markdown file path verification
+- GitHub Enterprise Server support
+- Authentication and rate limiting
+- Dockerized for CI integration
 
-## Quick start (GitHub Actions)
+## GitHub Actions Setup
 
 ```yaml
 name: Link validation
@@ -46,13 +44,9 @@ jobs:
 
       - name: Run Link validation
         env:
-          # Logging
           LV_LOG_LEVEL: "info"
-          # What to scan
           LV_FILE_MASKS: "*.md"
-          # github.com auth (optional but recommended to reduce rate-limiting)
           LV_PAT: ${{ secrets.GITHUB_TOKEN }}
-          # GitHub Enterprise (optional)
           LV_CORP_URL: ""
           LV_CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
         run: |
@@ -62,95 +56,86 @@ jobs:
           done
 
           docker run --rm \
-            --env-file .env \
+            $DOCKER_ENV_ARGS \
             -v "${{ github.workspace }}:/work" \
             -w /work \
             "${{ env.DOCKER_VALIDATOR }}"
 ```
-## Versioning
-Link-validator uses semver.
-
-## Behavior in CI
-
-The container exits non‑zero if broken links are found or a hard error occurs, so the job fails appropriately.
-
-Use LV_LOG_LEVEL=debug temporarily to investigate flakiness (rate‑limits, redirects, etc.).
-
-Tip: keep the image pinned to a tag (e.g., 0.18.0) rather than latest to avoid surprise changes.
-
-The used docker image size is approximately 10Mb.
 
 ## Configuration
 
-| Env var         | Required | Description                                                                                                                                              | Default |
-|-----------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| `LV_LOG_LEVEL`  | false    | Controls verbosity.                                                                                                                                      | 'info'  |
-| `LV_FILE_MASKS` | false    | Comma‑separated list of filemasks to scan (e.g., "*.md").                                                                                                | '*.md'  |
-| `LV_PAT`        | false    | github.com token. Optional, but reduces throttling and enables checks against private repos you can access.                                              | ''      |
-| `LV_CORP_URL`   | false    | Base URL of GHES (e.g., https://[github].[mycorp].com). When set, links on this domain and its subdomains are resolved via the GitHub API using LV_CORP_PAT. | ''      |
-| `LV_CORP_PAT`   | false    | PAT for GHES with read access to the referenced repos. Mandatory if LV_CORP_URL is set                                                                   | ''      |
+| Environment Variable | Required | Description                                   | Default |
+|----------------------|----------|-----------------------------------------------|---------|
+| `LV_LOG_LEVEL`       | No       | Controls verbosity (debug, info, warn, error) | `info`  |
+| `LV_FILE_MASKS`      | No       | Comma-separated file patterns to scan         | `*.md`  |
+| `LV_PAT`             | No       | GitHub.com personal access token              | `""`    |
+| `LV_CORP_URL`        | No       | GitHub Enterprise base URL                    | `""`    |
+| `LV_CORP_PAT`        | No       | GitHub Enterprise personal access token       | `""`    |
 
-### Token scopes
+### Authentication
 
-GitHub.com: GITHUB_TOKEN (default) works for most CI‑read needs; classic PATs can use public_repo / repo.
+**GitHub.com**: Use `GITHUB_TOKEN` in CI or a PAT with `public_repo`/`repo` scope. Authentication is optional but recommended to avoid rate limiting.
 
-GHES: a PAT with read access to repositories referenced by your docs.
+**GitHub Enterprise**: Requires `LV_CORP_URL` and `LV_CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
 
-## How it works
+## Implementation Details
+
 The validator uses three specialized processors:
 
-* GitHub processor – resolves GitHub UI links to API calls (files, PRs/issues, releases, workflows/badges, etc.) and validates existence.
-* HTTP(S) processor – checks non‑GitHub links. Follows redirects, treats 2xx as OK, distinguishes common cases (401/403 = private/gated, 404/410 = not found, 429 = rate limit, 5xx = transient server error).
-* Local‑path processor – parses Markdown links that reference local files (./a.md, ../b/c.md) and verifies they exist (and optional anchors if present).
+**GitHub processor**: Converts GitHub UI links to API endpoints and validates existence. Handles files, pull requests, issues, releases, workflow runs, and badge URLs.
 
-This split keeps checks fast and accurate while avoiding false positives common with generic link crawlers.
+**HTTP processor**: Performs HEAD/GET requests on external links. Follows redirects and interprets HTTP status codes:
+- 2xx: Success
+- 401/403: Private or authentication required
+- 404/410: Not found
+- 429: Rate limited
+- 5xx: Server error
 
-## Running locally
-```shell
-export LV_LOG_LEVEL=debug
-export LV_FILE_MASKS="*.md"
-export LV_PAT=ghp_...           # optional
-export LV_CORP_URL=             # optional, e.g., https://[github].[mycorp].com
-export LV_CORP_PAT=             # optional
-
-docker run --rm \
-  --env LV_LOG_LEVEL \
-  --env LV_FILE_MASKS \
-  --env LV_PAT \
-  --env LV_CORP_URL \
-  --env LV_CORP_PAT \
-  -v "$PWD:/work" -w /work \
-  ghcr.io/your-ko/link-validator:0.18.0
-```
+**Local processor**: Validates local file references and anchor links within Markdown files. Resolves relative paths correctly.
 
 ## Troubleshooting
-### I get redirected to /login for GHES links
-Use LV_CORP_URL and LV_CORP_PAT. 
-The validator talks to the GHES API (not the HTML UI), which requires a token for private content. 
-Also ensure your runner bypasses the corporate proxy for your GHES host (NO_PROXY=github.mycorp.com) and trusts your internal CA if applicable.
 
-### “Too many redirects” or 3xx loops
-This often indicates an auth or proxy issue. Run with LV_LOG_LEVEL=debug to see hop targets and fix the root cause (token, proxy, base URL).
+**Enterprise links redirect to login page**
+Configure `LV_CORP_URL` and `LV_CORP_PAT`. The validator uses GitHub's API which requires authentication for private repositories.
 
-### 429 (rate limited)
-Provide LV_PAT so requests are authenticated and receive higher limits.
+**Rate limiting (429 responses)**
+Provide `LV_PAT` to increase rate limits from 60/hour to 5000/hour.
 
-## Exit codes
+**Redirect loops or 3xx errors**
+Usually indicates authentication or proxy configuration issues. Enable debug logging with `LV_LOG_LEVEL=debug` to trace redirect chains.
 
-0 – success (no broken links)
->0 – failures detected or unrecoverable error
+## Exit Codes
 
-Use these to gate merges in CI.
+- `0`: All links validated successfully
+- `>0`: Broken links found or validation errors occurred
+
+## Docker Image
+
+Image size: ~10MB
+
+Recommend pinning to specific versions (e.g., `0.18.0`) rather than using `latest` for reproducible builds.
 
 ## Security
 Tokens are read from env vars only and used to call the GitHub API for validation.
 
-Prefer repository‑scoped tokens (GITHUB_TOKEN) in CI; restrict PAT scopes to the minimum necessary.
 
-## Why this tool?
-As repos grow, docs link across services and between repos. Over time, links rot—repos archived, files moved, or pages gated by new auth. 
-This validator catches issues early, in the PR that introduces them.
+## Why Use This?
+
+Documentation with broken links is frustrating for users and reflects poorly on your project. Common problems:
+
+- **Files get moved or renamed** - internal links break when you restructure docs
+- **External sites change URLs** - third-party links rot over time
+- **Private repos become inaccessible** - links work for maintainers but fail for contributors
+- **API endpoints get deprecated** - GitHub URLs change when features are moved or removed
+
+Running this in CI catches broken links during PR review instead of after merge. Much easier to fix a link when the author is still working on the change.
+
+Most generic link checkers either miss GitHub-specific URLs or generate false positives. This tool understands GitHub's URL patterns and uses the API for accurate validation.
+
+## Versioning
+
+Uses semantic versioning. Check [releases](https://github.com/your-ko/link-validator/releases) for changelog.
 
 ## License
-The scripts and documentation in this project are released under the [MIT License](./LICENSE)
 
+MIT License - see [LICENSE](./LICENSE)
