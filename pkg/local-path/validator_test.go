@@ -174,7 +174,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 			args:    args{link: "dir#header"},
 			fields:  fields{fileNameTested: "README.md", dirName: "dir"},
 			wantErr: true,
-			wantIs:  errs.ErrHeadingLinkToDir,
+			wantIs:  errs.ErrAnchorLinkToDir,
 		},
 		//{
 		//	name: "header line with multiple spaces after # should match",
@@ -210,7 +210,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 			args:    args{link: "emptyfrag.md#"},
 			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
 			wantErr: true,
-			wantIs:  errs.ErrEmptyHeading,
+			wantIs:  errs.ErrEmptyAnchor,
 		},
 	}
 
