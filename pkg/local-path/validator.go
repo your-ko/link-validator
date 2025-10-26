@@ -57,7 +57,7 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName 
 	if len(split) > 1 {
 		if len(split[1]) == 0 {
 			// case [text](../link#) is incorrect
-			return errs.NewEmptyHeadingError(fmt.Sprintf("%s#", fileNameToTest))
+			return errs.NewEmptyAnchorError(fmt.Sprintf("%s#", fileNameToTest))
 		}
 		header = split[1]
 		//re := regexp.MustCompile(`^[a-z0-9]+$`) TODO: improve
@@ -74,7 +74,7 @@ func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName 
 	}
 	if info.IsDir() {
 		if header != "" {
-			return errs.NewHeadingLinkToDir(fmt.Sprintf("%s#%s", fileNameToTest, header))
+			return errs.NewAnchorLinkToDir(fmt.Sprintf("%s#%s", fileNameToTest, header))
 		}
 		return nil
 	}
