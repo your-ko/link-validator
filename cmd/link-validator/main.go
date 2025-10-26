@@ -33,7 +33,7 @@ func main() {
 
 	fileMasks := strings.Split(*flag.String("LV_FILE_MASKS", GetEnv("LV_FILE_MASKS", "*.md"), "File masks."), ",")
 	// not used atm
-	//lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
+	lookUpPath := *flag.String("LV_LOOKUP_PATH", GetEnv("LV_LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
 	// not used atm
 	//excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
 	// not used atm
@@ -52,7 +52,7 @@ func main() {
 	logger.Debug("Running with parameters",
 		zap.String("LV_LOG_LEVEL", os.Getenv("LV_LOG_LEVEL")),
 		zap.Strings("LV_FILE_MASKS", fileMasks),
-		//zap.String("LOOKUP_PATH", lookUpPath),   // not implemented yet
+		zap.String("LV_LOOKUP_PATH", lookUpPath), // not implemented yet
 		//zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
 		//zap.Strings("FILE_LIST", files),         // not implemented yet
 		zap.String("LV_CORP_URL", corpGitHub),
@@ -62,10 +62,10 @@ func main() {
 	config := link_validator.Config{
 		CorpGitHubUrl: corpGitHub,
 		//Path:          lookUpPath,
-		PAT:       pat,
-		CorpPAT:   corpPat,
-		FileMasks: fileMasks,
-		//LookupPath:    lookUpPath,
+		PAT:        pat,
+		CorpPAT:    corpPat,
+		FileMasks:  fileMasks,
+		LookupPath: lookUpPath,
 		//ExcludePath:   excludePath,
 		Timeout: timeout,
 	}

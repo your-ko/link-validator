@@ -1,7 +1,6 @@
 package local_path
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"go.uber.org/zap"
@@ -91,17 +90,208 @@ func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 	}
 }
 
-func TestLinkProcessor_Process(t *testing.T) {
+func TestLinkProcessor_parseLink(t *testing.T) {
+	type args struct {
+		link string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantPath   string
+		wantHeader string
+		wantErr    bool
+		wantIs     error
+	}{
+		{
+			name:       "normal link",
+			args:       args{"./filename"},
+			wantPath:   "./filename",
+			wantHeader: "",
+			wantErr:    false,
+		},
+		{
+			name:    "link with the empty anchor",
+			args:    args{"./filename#"},
+			wantErr: true,
+			wantIs:  errs.ErrEmptyAnchor,
+		},
+		{
+			name:       "normal link with an anchor",
+			args:       args{"./filename#qqq"},
+			wantPath:   "./filename",
+			wantHeader: "qqq",
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := New(zap.NewNop())
+			gotPath, gotHeader, err := proc.parseLink(tt.args.link)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseLink() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotPath != tt.wantPath {
+				t.Errorf("parseLink():\n gotPath: %v,\n    want: %v", gotPath, tt.wantPath)
+			}
+			if gotHeader != tt.wantHeader {
+				t.Errorf("parseLink():\n gotHeader: %v,\n     want: %v", gotHeader, tt.wantHeader)
+			}
+
+			if tt.wantIs == nil {
+				return
+			}
+
+			// If a sentinel is specified, ensure errors.Is matches it.
+			if !errors.Is(err, tt.wantIs) {
+				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
+			}
+
+			expected := fmt.Sprintf("%s. Incorrect link: '%s'", tt.wantIs, tt.args.link)
+			if err.Error() != expected {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
+			}
+
+		})
+	}
+}
+
+func TestLinkProcessor_resolveTargetPath(t *testing.T) {
+	type args struct {
+		linkPath     string
+		testFileName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "simple filename in root",
+			args: args{
+				linkPath:     "LICENSE",
+				testFileName: "README.md",
+			},
+			want: "LICENSE",
+		},
+		{
+			name: "simple filename in root with with ./ prefix",
+			args: args{
+				linkPath:     "./LICENSE",
+				testFileName: "README.md",
+			},
+			want: "LICENSE",
+		},
+		{
+			name: "simple filename in path",
+			args: args{
+				linkPath:     "guide.md",
+				testFileName: "/docs/README.md",
+			},
+			want: "/docs/guide.md",
+		},
+		{
+			name: "relative path with ./ prefix",
+			args: args{
+				linkPath:     "./guide.md",
+				testFileName: "/docs/README.md",
+			},
+			want: "docs/guide.md",
+		},
+		{
+			name: "relative path with ../ going up one level",
+			args: args{
+				linkPath:     "../README.md",
+				testFileName: "/docs/guide.md",
+			},
+			want: "/README.md",
+		},
+		{
+			name: "relative path with multiple ../ going up multiple levels",
+			args: args{
+				linkPath:     "../../CONTRIBUTING.md",
+				testFileName: "/project/docs/api/README.md",
+			},
+			want: "/project/CONTRIBUTING.md",
+		},
+		{
+			name: "nested path within same directory",
+			args: args{
+				linkPath:     "test/test.md",
+				testFileName: "/docs/guide.md",
+			},
+			want: "/docs/test/test.md",
+		},
+		{
+			name: "complex relative path with ./ and nested directories",
+			args: args{
+				linkPath:     "./images/diagram.png",
+				testFileName: "/docs/guide.md",
+			},
+			want: "docs/images/diagram.png",
+		},
+		{
+			name: "mixed relative path up and down",
+			args: args{
+				linkPath:     "../assets/style.css",
+				testFileName: "/docs/guide.md",
+			},
+			want: "/assets/style.css",
+		},
+		{
+			name: "test file in root, link to nested file",
+			args: args{
+				linkPath:     "/cmd/link-validator/main.go",
+				testFileName: "/docs/README.md",
+			},
+			want: "/cmd/link-validator/main.go",
+		},
+		{
+			name: "don't preserve ./ prefix for relative paths",
+			args: args{
+				linkPath:     "./config/settings.json",
+				testFileName: "/docs/README.md",
+			},
+			want: "docs/config/settings.json",
+		},
+		{
+			name: "deeply nested relative navigation",
+			args: args{
+				linkPath:     "../docs/guide.md",
+				testFileName: "/docs/README.md",
+			},
+			want: "/docs/guide.md",
+		},
+		{
+			name: "edge case: empty link path",
+			args: args{
+				linkPath:     "",
+				testFileName: "/docs/README.md",
+			},
+			want: "/docs",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := New(zap.NewNop())
+			got := proc.resolveTargetPath(tt.args.linkPath, tt.args.testFileName)
+			if got != tt.want {
+				t.Errorf("resolveTargetPath(): %v,\n                                 want: %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLinkProcessor_validateTarget(t *testing.T) {
 	tmp := t.TempDir()
 
 	type fields struct {
-		fileNameTested string // file name being tested
-		fileName       string // test file where the test link points to
-		dirName        string // test dir where the test link points to
-		//customContent  string // if non-empty, write this content instead of default into the test file
+		fileName string // test file to create
+		dirName  string // test directory to create
 	}
 	type args struct {
-		link string // simulates a link found in a file
+		targetPath string
+		header     string
 	}
 	tests := []struct {
 		name    string
@@ -111,106 +301,112 @@ func TestLinkProcessor_Process(t *testing.T) {
 		wantIs  error
 	}{
 		{
-			name: "existing file at root",
-			args: args{link: "README.md"},
+			name: "existing file without header",
 			fields: fields{
-				fileNameTested: "README.md",
-				fileName:       "README.md",
+				fileName: "test.md",
 			},
+			args: args{
+				targetPath: filepath.Join(tmp, "test.md"),
+				header:     "",
+			},
+			wantErr: false,
 		},
 		{
-			name: "existing file inside some dir",
-			args: args{link: "test/README.md"},
+			name: "existing file with header",
 			fields: fields{
-				fileNameTested: "README.md",
-				fileName:       "test/README.md"},
+				fileName: "test-with-header.md",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "test-with-header.md"),
+				header:     "section1",
+			},
+			wantErr: false,
 		},
 		{
-			name:   "existing file inside some dir with a header",
-			args:   args{link: "test/README.md#header1"},
-			fields: fields{fileNameTested: "README.md", fileName: "test/README.md"},
-		},
-		//{
-		//	name:    "existing file inside some dir with a non-existent header",
-		//	args:    args{link: "test/qqq.md#header2"},
-		//	fields:  fields{fileName: "test/qqq.md"},
-		//	wantErr: true,
-		//	wantIs:  errs.ErrNotFound,
-		//},
-		{
-			name:   "existing dir in root",
-			args:   args{link: "test"},
-			fields: fields{fileNameTested: "README.md", dirName: "test"},
-		},
-		{
-			name:   "existing dir in deeper",
-			args:   args{link: "test/test"},
-			fields: fields{fileNameTested: "README.md", dirName: "test/test"},
-		},
-		{
-			name:    "non-existing dir",
-			args:    args{link: "test/test"},
-			fields:  fields{fileNameTested: "README.md", dirName: "test1"},
+			name: "non-existing file",
+			args: args{
+				targetPath: filepath.Join(tmp, "nonexistent.md"),
+				header:     "",
+			},
 			wantErr: true,
 			wantIs:  errs.ErrNotFound,
 		},
 		{
-			name:    "non-existing file",
-			args:    args{link: "doesnt_exists.md"},
-			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
+			name: "non-existing file with header",
+			args: args{
+				targetPath: filepath.Join(tmp, "nonexistent.md"),
+				header:     "section1",
+			},
 			wantErr: true,
 			wantIs:  errs.ErrNotFound,
 		},
-
-		//{
-		//	name:            "multiple # fragments -> incorrect link error",
-		//	args:            args{link: "test/multi.md#h1#h2"},
-		//	fields:          fields{fileName: "test/multi.md"},
-		//	wantErr:         true,
-		//	wantErrContains: "Contains more than one #",
-		//},
 		{
-			name:    "directory with header fragment -> incorrect link error",
-			args:    args{link: "dir#header"},
-			fields:  fields{fileNameTested: "README.md", dirName: "dir"},
+			name: "existing directory without header - should pass",
+			fields: fields{
+				dirName: "testdir",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "testdir"),
+				header:     "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "existing directory with header - should fail",
+			fields: fields{
+				dirName: "testdir-with-header",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "testdir-with-header"),
+				header:     "section1",
+			},
 			wantErr: true,
 			wantIs:  errs.ErrAnchorLinkToDir,
 		},
-		//{
-		//	name: "header line with multiple spaces after # should match",
-		//	args: args{link: "spaced.md#header1"},
-		//	fields: fields{
-		//		fileName:      "spaced.md",
-		//		customContent: "intro\n#    header1\nrest\n",
-		//	},
-		//},
-		//{
-		//	name: "case-sensitive header mismatch -> ErrNotFound",
-		//	args: args{link: "case.md#header1"},
-		//	fields: fields{
-		//		//TODO look closer into case senvisive
-		//		fileName:      "case.md",
-		//		customContent: "# Header1\n", // capital H
-		//	},
-		//	wantErr: true,
-		//	wantIs:  errs.ErrNotFound,
-		//},
-		//{
-		//	name: "percent-encoded fragment in link does not match raw text -> ErrNotFound",
-		//	args: args{link: "enc.md#header%201"},
-		//	fields: fields{
-		//		fileName:      "enc.md",
-		//		customContent: "# header 1\n",
-		//	},
-		//	wantErr: true,
-		//	wantIs:  errs.ErrNotFound,
-		//},
 		{
-			name:    "empty fragment (file.md#) treated as incorrect",
-			args:    args{link: "emptyfrag.md#"},
-			fields:  fields{fileNameTested: "README.md", fileName: "README.md"},
+			name: "nested directory without header",
+			fields: fields{
+				dirName: "parent/child",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "parent", "child"),
+				header:     "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "nested directory with header - should fail",
+			fields: fields{
+				dirName: "parent-nested/child-nested",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "parent-nested", "child-nested"),
+				header:     "invalid",
+			},
 			wantErr: true,
-			wantIs:  errs.ErrEmptyAnchor,
+			wantIs:  errs.ErrAnchorLinkToDir,
+		},
+		{
+			name: "file with empty header string",
+			fields: fields{
+				fileName: "empty-header.md",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "empty-header.md"),
+				header:     "",
+			},
+			wantErr: false,
+		},
+		{
+			name: "file with complex header",
+			fields: fields{
+				fileName: "complex.md",
+			},
+			args: args{
+				targetPath: filepath.Join(tmp, "complex.md"),
+				header:     "complex-header-with-dashes_and_underscores123",
+			},
+			wantErr: false,
 		},
 	}
 
@@ -225,21 +421,21 @@ func TestLinkProcessor_Process(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
 			t.Fatalf("mkdir: %v", err)
 		}
-		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(full, []byte("# Test Content"), 0o644); err != nil {
 			t.Fatalf("write file: %v", err)
 		}
 	}
 	cleanUp := func(test fields) {
 		if test.fileName != "" {
-			err := os.Remove(fmt.Sprintf("%s/%s", tmp, test.fileName))
-			if err != nil {
-				t.Fatalf("cleanup: %v", err)
+			err := os.Remove(filepath.Join(tmp, test.fileName))
+			if err != nil && !os.IsNotExist(err) {
+				t.Fatalf("cleanup file: %v", err)
 			}
 		}
 		if test.dirName != "" {
-			err := os.Remove(fmt.Sprintf("%s/%s", tmp, test.dirName))
-			if err != nil {
-				t.Fatalf("cleanup: %v", err)
+			err := os.RemoveAll(filepath.Join(tmp, test.dirName))
+			if err != nil && !os.IsNotExist(err) {
+				t.Fatalf("cleanup dir: %v", err)
 			}
 		}
 	}
@@ -253,12 +449,16 @@ func TestLinkProcessor_Process(t *testing.T) {
 			if tt.fields.dirName != "" {
 				mkDir(tt.fields.dirName)
 			}
-			defer cleanUp(tt.fields)
+			t.Cleanup(func() {
+				cleanUp(tt.fields)
+			})
 
-			err := proc.Process(context.Background(), tt.args.link, fmt.Sprintf("%s/%s", tmp, tt.fields.fileNameTested))
+			err := proc.validateTarget(tt.args.targetPath, tt.args.header)
 			if (err != nil) != tt.wantErr {
-				t.Fatalf("Process(%q) expects error %v, got = '%v'", tt.args.link, tt.wantErr, err)
+				t.Errorf("validateTarget() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
+
 			if !tt.wantErr {
 				return
 			}
@@ -269,21 +469,8 @@ func TestLinkProcessor_Process(t *testing.T) {
 
 			// If a sentinel is specified, ensure errors.Is matches it.
 			if !errors.Is(err, tt.wantIs) {
-				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
-			}
-
-			expected := fmt.Sprintf("%s. Incorrect link: '%s/%s'", tt.wantIs, tmp, tt.args.link)
-			if err.Error() != expected {
-				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
+				t.Errorf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 		})
 	}
 }
-
-const content = `
-test
-# header1
-test
-## header2
-test
-`

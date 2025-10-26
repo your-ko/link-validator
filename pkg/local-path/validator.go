@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -36,76 +37,6 @@ func New(logger *zap.Logger) *LinkProcessor {
 	}
 }
 
-func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string) error {
-	proc.logger.Debug("validating local url", zap.String("filename", link))
-	testFileNameSplit := strings.Split(testFileName, "/")
-	testPath := strings.Join(testFileNameSplit[:len(testFileNameSplit)-1], "/")
-
-	split := strings.Split(link, "#")
-	fileName := split[0]
-	if strings.HasPrefix(fileName, "./") {
-		fileName = strings.Replace(fileName, "./", "", 1)
-	}
-
-	fileNameToTest := fmt.Sprintf("%s/%s", testPath, fileName)
-
-	// validate link format
-	//if len(split) > 2 {
-	//	return errors.New("incorrect link. Contains more than one #")
-	//}
-	var header string
-	if len(split) > 1 {
-		if len(split[1]) == 0 {
-			// case [text](../link#) is incorrect
-			return errs.NewEmptyAnchorError(fmt.Sprintf("%s#", fileNameToTest))
-		}
-		header = split[1]
-		//re := regexp.MustCompile(`^[a-z0-9]+$`) TODO: improve
-		//if !re.MatchString(header) {
-		//	return errors.New("incorrect link. Contains upper case, which is not allowed")
-		//}
-	}
-	info, err := os.Stat(fileNameToTest)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return errs.NewNotFound(fileNameToTest)
-		}
-		return err
-	}
-	if info.IsDir() {
-		if header != "" {
-			return errs.NewAnchorLinkToDir(fmt.Sprintf("%s#%s", fileNameToTest, header))
-		}
-		return nil
-	}
-	return nil
-
-	// TODO: heading validation will be done later
-	//if header == "" {
-	//	// we found the file, so everything is good
-	//	return nil
-	//}
-	//
-	//// if the link contains #, then we need to look inside the file
-	//file, err := os.Open(fileName)
-	//if err != nil {
-	//	return err
-	//}
-	//defer file.Close()
-
-	//re := regexp.MustCompile(fmt.Sprintf(`^#\s+%s`, regexp.QuoteMeta(header)))
-	//scanner := bufio.NewScanner(file)
-	//for scanner.Scan() {
-	//	if re.MatchString(scanner.Text()) {
-	//		return nil
-	//	}
-	//}
-	//if err := scanner.Err(); err != nil {
-	//	return err
-	//}
-	//return errs.NewNotFound(link)
-}
-
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	matches := proc.fileRegex.FindAllStringSubmatch(line, -1)
 	if len(matches) == 0 {
@@ -119,4 +50,73 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		}
 	}
 	return urls
+}
+
+func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string) error {
+	proc.logger.Debug("validating local url", zap.String("filename", link))
+
+	// Parse link into file path and optional header
+	linkPath, header, err := proc.parseLink(link)
+	if err != nil {
+		return err
+	}
+
+	// Resolve the target file path relative to the test file
+	targetPath := proc.resolveTargetPath(linkPath, testFileName)
+
+	// Validate the target file exists and handle directory/header logic
+	return proc.validateTarget(targetPath, header)
+}
+
+// parseLink separates the file path from the optional anchor fragment
+func (proc *LinkProcessor) parseLink(link string) (path, anchor string, err error) {
+	parts := strings.SplitN(link, "#", 2)
+	path = parts[0]
+
+	if len(parts) > 1 {
+		if parts[1] == "" {
+			return "", "", errs.NewEmptyAnchorError(fmt.Sprintf("%s#", path))
+		}
+		anchor = parts[1]
+	}
+
+	return path, anchor, nil
+}
+
+func (proc *LinkProcessor) resolveTargetPath(linkPath, testFileName string) string {
+	// If linkPath is absolute, return as-is
+	if filepath.IsAbs(linkPath) {
+		return linkPath
+	}
+
+	testDir := filepath.Dir(testFileName)
+
+	// Clean the link path and resolve it relative to the test file directory
+	cleanPath := strings.TrimPrefix(linkPath, "./")
+	targetPath := filepath.Join(testDir, cleanPath)
+
+	// Preserve the ./ prefix in the result if it was originally present
+	if strings.HasPrefix(linkPath, "./") {
+		return filepath.Join(".", targetPath)
+	}
+
+	return targetPath
+}
+
+// validateTarget checks if the target exists and validates directory/header combinations
+func (proc *LinkProcessor) validateTarget(targetPath, header string) error {
+	info, err := os.Stat(targetPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return errs.NewNotFound(targetPath)
+		}
+		return err
+	}
+
+	// Directories with headers are invalid (can't link to a heading in a directory)
+	if info.IsDir() && header != "" {
+		return errs.NewAnchorLinkToDir(fmt.Sprintf("%s#%s", targetPath, header))
+	}
+
+	return nil
 }
