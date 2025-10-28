@@ -20,6 +20,20 @@ Supports both github.com and GitHub Enterprise Server (GHES).
 - Authentication and rate limiting
 - Dockerized for CI integration
 
+
+## Why Use This?
+
+Documentation with broken links is frustrating for users and reflects poorly on your project. Common problems:
+
+- **Files get moved or renamed** - internal links break when you restructure docs
+- **External sites change URLs** - third-party links rot over time
+- **Private repos become inaccessible** - links work for maintainers but fail for contributors
+- **API endpoints get deprecated** - GitHub URLs change when features are moved or removed
+
+Running this in CI catches broken links during PR review instead of after merge. Much easier to fix a link when the author is still working on the change.
+
+This tool understands GitHub's URL patterns and uses the API for accurate validation.
+
 ## GitHub Actions Setup
 
 Link-validator can be used either as a independent GitHub workflow (recommended way) or as a GitHub action.
@@ -30,7 +44,6 @@ Link-validator can be used either as a independent GitHub workflow (recommended 
       uses: your-ko/link-validator@v1.0.0
       with:
         log-level: 'info'
-        file-mask: '*.md'
         pat: ${{ secrets.GITHUB_TOKEN }}
 ```
 
@@ -144,19 +157,6 @@ Recommend pinning to specific versions (e.g., `0.18.0`) rather than using `lates
 ## Security
 Tokens are read from env vars only and used to call the GitHub API for validation.
 
-
-## Why Use This?
-
-Documentation with broken links is frustrating for users and reflects poorly on your project. Common problems:
-
-- **Files get moved or renamed** - internal links break when you restructure docs
-- **External sites change URLs** - third-party links rot over time
-- **Private repos become inaccessible** - links work for maintainers but fail for contributors
-- **API endpoints get deprecated** - GitHub URLs change when features are moved or removed
-
-Running this in CI catches broken links during PR review instead of after merge. Much easier to fix a link when the author is still working on the change.
-
-Most generic link checkers either miss GitHub-specific URLs or generate false positives. This tool understands GitHub's URL patterns and uses the API for accurate validation.
 
 ## Versioning
 
