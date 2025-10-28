@@ -30,7 +30,6 @@ Link-validator can be used either as a independent GitHub workflow (recommended 
       uses: your-ko/link-validator@v1.0.0
       with:
         log-level: 'info'
-        file-mask: '*.md'
         pat: ${{ secrets.GITHUB_TOKEN }}
 ```
 
