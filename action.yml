@@ -1,0 +1,23 @@
+name: 'Link validation'
+description: 'Validates URLs and local file references in Markdown files'
+inputs:
+  log-level:
+    description: 'Controls verbosity (debug, info, warn, error)'
+    default: "info"
+  file-mask:
+    description: "Comma-separated file patterns to scan. Only markdown is supported in the current version"
+    default: "*.md"
+  pat:
+    description: "GitHub.com personal access token. Optional. Used to avoid rate limiting"
+    default: ""
+  corp-url:
+    description: "GitHub Enterprise base URL, for example, https://github.mycorp.com"
+    default: ""
+  corp-pat:
+    description: >
+      GitHub Enterprise personal access token. 
+      The PAT needs read access to repositories referenced in your documentation.
+runs:
+  using: node24
+  main: dist/index.js
+  post: dist/index.js
