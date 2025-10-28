@@ -1,6 +1,6 @@
 [![Main](https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
 [![golangci-lint](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml)
-[![Link validation](https://github.com/your-ko/link-validator/actions/workflows/workflow-link-validator.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/workflow-link-validator.yaml)
+[![Link validation](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml)
 
 # Link Validator
 
@@ -22,6 +22,19 @@ Supports both github.com and GitHub Enterprise Server (GHES).
 
 ## GitHub Actions Setup
 
+Link-validator can be used either as a independent GitHub workflow (recommended way) or as a GitHub action.
+
+### GitHub action
+```yaml
+    - name: Validate links in documentation
+      uses: your-ko/link-validator@v1.0.0
+      with:
+        log-level: 'info'
+        file-mask: '*.md'
+        pat: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### GitHub workflow
 ```yaml
 name: Link validation
 on:
@@ -62,6 +75,19 @@ jobs:
             "${{ env.DOCKER_VALIDATOR }}"
 ```
 
+### Call GitHub workflow
+
+```yaml
+jobs:
+  link-validation:
+    uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@1.0.0
+    strategy:
+      fail-fast: false
+    with:
+      log-level: info
+```
+
+
 ## Configuration
 
 | Environment Variable | Required | Description                                                             | Default |
@@ -69,7 +95,7 @@ jobs:
 | `LV_LOG_LEVEL`       | No       | Controls verbosity (debug, info, warn, error)                           | `info`  |
 | `LV_FILE_MASKS`      | No       | Comma-separated file patterns to scan                                   | `*.md`  |
 | `LV_PAT`             | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting | `""`    |
-| `LV_CORP_URL`        | No       | GitHub Enterprise base URL, for example https://github.mycorp.com       | `""`    |
+| `LV_CORP_URL`        | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com] | `""`    |
 | `LV_CORP_PAT`        | No       | GitHub Enterprise personal access token                                 | `""`    |
 
 ### Authentication
