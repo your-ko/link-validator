@@ -17,7 +17,3 @@ inputs:
     description: >
       GitHub Enterprise personal access token. 
       The PAT needs read access to repositories referenced in your documentation.
-runs:
-  using: node24
-  main: dist/index.js
-  post: dist/index.js
