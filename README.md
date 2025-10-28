@@ -82,7 +82,7 @@ jobs:
 | `LV_LOG_LEVEL`       | No       | Controls verbosity (debug, info, warn, error)                           | `info`  |
 | `LV_FILE_MASKS`      | No       | Comma-separated file patterns to scan                                   | `*.md`  |
 | `LV_PAT`             | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting | `""`    |
-| `LV_CORP_URL`        | No       | GitHub Enterprise base URL, for example https://github.mycorp.com       | `""`    |
+| `LV_CORP_URL`        | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com] | `""`    |
 | `LV_CORP_PAT`        | No       | GitHub Enterprise personal access token                                 | `""`    |
 
 ### Authentication
