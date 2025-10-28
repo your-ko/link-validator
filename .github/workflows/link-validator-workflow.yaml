@@ -1,0 +1,61 @@
+name: Link validation
+on:
+  workflow_call:
+    inputs:
+      log-level:
+        description: 'Controls verbosity (debug, info, warn, error)'
+        default: "info"
+        type: string
+      file-mask:
+        description: "Comma-separated file patterns to scan. Only markdown is supported in the current version"
+        default: "*.md"
+        type: string
+      pat:
+        description: "GitHub.com personal access token. Optional. Used to avoid rate limiting"
+        default: ""
+        type: string
+      corp-url:
+        description: "GitHub Enterprise base URL, for example, https://github.mycorp.com"
+        default: ""
+        type: string
+      corp-pat:
+        description: >
+          GitHub Enterprise personal access token.
+          The PAT needs read access to repositories referenced in your documentation.
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
+
+jobs:
+  link-validator:
+    name: link-validator
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5.0.0
+
+      - name: Link validation
+        id: lnk
+        env:
+          LV_LOG_LEVEL: ${{ inputs.log-level }}
+          LV_FILE_MASKS: ${{ inputs.file-mask }}
+          LV_PAT: ${{ inputs.pat }}
+          LV_CORP_PAT: ${{ inputs.corp-pat }}
+          LV_CORP_URL: ${{ inputs.corp-url }}
+        shell: bash
+        run: |
+          DOCKER_ENV_ARGS=""
+          for var in $(env | grep '^LV_' | cut -d'=' -f1); do
+            DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
+          done
+          
+          docker run --rm \
+                 $DOCKER_ENV_ARGS \
+                 -v "${{ github.workspace }}:/work" \
+                 -w /work \
+                 ${{env.DOCKER_VALIDATOR}}:${{ github.ref_name }}
