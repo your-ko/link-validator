@@ -22,6 +22,19 @@ Supports both github.com and GitHub Enterprise Server (GHES).
 
 ## GitHub Actions Setup
 
+Link-validator can be used either as a independent GitHub workflow (recommended way) or as a GitHub action.
+
+### GitHub action
+```yaml
+    - name: Validate links in documentation
+      uses: your-ko/link-validator@v1.0.0
+      with:
+        log-level: 'info'
+        file-mask: '*.md'
+        pat: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### GitHub workflow
 ```yaml
 name: Link validation
 on:
