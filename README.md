@@ -41,7 +41,7 @@ Link-validator can be used either as a independent GitHub workflow (recommended 
 ### GitHub action
 ```yaml
     - name: Validate links in documentation
-      uses: your-ko/link-validator@v1.0.0
+      uses: your-ko/link-validator@1.0.0
       with:
         log-level: 'info'
         pat: ${{ secrets.GITHUB_TOKEN }}
