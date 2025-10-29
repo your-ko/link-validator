@@ -30,6 +30,7 @@ permissions:
 
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
+  DOCKER_VALIDATOR_VERSION: "0.21.0"
 
 jobs:
   link-validator:
@@ -58,4 +59,4 @@ jobs:
                  $DOCKER_ENV_ARGS \
                  -v "${{ github.workspace }}:/work" \
                  -w /work \
-                 ${{env.DOCKER_VALIDATOR}}:${{ github.ref_name }}
+                 ${{ env.DOCKER_VALIDATOR }}:${{ env.DOCKER_VALIDATOR_VERSION }}

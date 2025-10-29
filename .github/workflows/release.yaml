@@ -73,6 +73,10 @@ jobs:
         run: |
           yq '.runs.steps[0].env.DOCKER_VALIDATOR_VERSION = "${{ inputs.version }}"' -i action.yml
           echo "New value:" && yq '.runs.steps[0].env.DOCKER_VALIDATOR_VERSION' action.yml
+          yq '.env.DOCKER_VALIDATOR_VERSION = "${{ inputs.version }}"' -i .github/workflows/link-validator.yaml
+          echo "New value:" && yq '.env.DOCKER_VALIDATOR_VERSION' .github/workflows/link-validator.yaml
+          yq '.env.DOCKER_VALIDATOR_VERSION = "${{ inputs.version }}"' -i .github/workflows/link-validator-workflow.yaml
+          echo "New value:" && yq '.env.DOCKER_VALIDATOR_VERSION' .github/workflows/link-validator-workflow.yaml
 
       - name: Commit changes
         shell: bash
@@ -81,8 +85,9 @@ jobs:
         run: |
           set -e
           
-          git add internal/link-validator/version.go
-          git add .github/workflows/workflow-link-validator.yaml
+          git add action.yml
+          git add .github/workflows/link-validator.yaml
+          git add .github/workflows/link-validator-workflow.yaml
           git add go.mod
           git add go.sum
           if git diff --cached --quiet; then
