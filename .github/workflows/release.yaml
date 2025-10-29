@@ -53,12 +53,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set build metadata
-        id: meta
-        run: |
-          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
-          echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-
       - name: Test
         shell: bash
         run: |
@@ -98,6 +92,12 @@ jobs:
 
           git remote set-url origin "https://x-access-token:${TOKEN}@github.com/your-ko/link-validator.git"
           git push origin HEAD:main
+
+      - name: Set build metadata
+        id: meta
+        run: |
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
       - name: Build image
         uses: docker/build-push-action@v6.15.0
