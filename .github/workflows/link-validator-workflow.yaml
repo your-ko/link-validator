@@ -20,17 +20,15 @@ on:
         type: string
       corp-pat:
         description: >
-          GitHub Enterprise personal access token.
-          The PAT needs read access to repositories referenced in your documentation.
+          GitHub Enterprise personal access token. The PAT needs read access to repositories referenced in your documentation.
+
         default: ""
         type: string
-
 permissions:
   contents: read
-
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-
+  DOCKER_VALIDATOR_VERSION: "0.22.0"
 jobs:
   link-validator:
     name: link-validator
@@ -38,7 +36,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5.0.0
-
       - name: Link validation
         id: lnk
         env:
@@ -53,9 +50,9 @@ jobs:
           for var in $(env | grep '^LV_' | cut -d'=' -f1); do
             DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
           done
-          
+
           docker run --rm \
                  $DOCKER_ENV_ARGS \
                  -v "${{ github.workspace }}:/work" \
                  -w /work \
-                 ${{env.DOCKER_VALIDATOR}}:${{ github.ref_name }}
+                 ${{ env.DOCKER_VALIDATOR }}:${{ env.DOCKER_VALIDATOR_VERSION }}

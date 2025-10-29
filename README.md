@@ -40,7 +40,7 @@ Link-validator can be used either as a independent GitHub workflow (recommended 
 
 ### GitHub action
 ```yaml
-    - name: Validate links in documentation
+    - name: Link validation
       uses: your-ko/link-validator@1.0.0
       with:
         log-level: 'info'
@@ -94,8 +94,6 @@ jobs:
 jobs:
   link-validation:
     uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@1.0.0
-    strategy:
-      fail-fast: false
     with:
       log-level: info
 ```
