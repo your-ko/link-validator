@@ -18,8 +18,6 @@ inputs:
       GitHub Enterprise personal access token.
       The PAT needs read access to repositories referenced in your documentation.
     default: ""
-  version:
-    description: "Link-validator version to use"
 runs:
   using: 'composite'
   steps:
@@ -32,14 +30,15 @@ runs:
         LV_CORP_PAT: ${{ inputs.corp-pat }}
         LV_CORP_URL: ${{ inputs.corp-url }}
         DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
+        DOCKER_VALIDATOR_VERSION: 0.21.0
       run: |
         DOCKER_ENV_ARGS=""
         for var in $(env | grep '^LV_' | cut -d'=' -f1); do
           DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
         done
-
+        
         docker run --rm \
                $DOCKER_ENV_ARGS \
                -v "${{ github.workspace }}:/work" \
                -w /work \
-               ${{env.DOCKER_VALIDATOR}}:${{inputs.version}}
+               ${{ env.DOCKER_VALIDATOR }}:${{ github.ref_name }}
