@@ -70,11 +70,9 @@ jobs:
 
       - name: Set version
         shell: bash
-        env:
-          VERSION: ${{inputs.version}}
         run: |
-          yq -i '.env.DOCKER_VALIDATOR |= sub(":[^@]+$"; ":" + strenv(VERSION))' "$PIPELINE"
-          echo "New value:" && yq '.env.DOCKER_VALIDATOR' "$PIPELINE"
+          yq '.runs.steps[0].env.DOCKER_VALIDATOR_VERSION = "${{ inputs.version }}"' -i action.yml
+          echo "New value:" && yq '.runs.steps[0].env.DOCKER_VALIDATOR_VERSION' action.yml
 
       - name: Commit changes
         shell: bash
