@@ -94,8 +94,6 @@ jobs:
 jobs:
   link-validation:
     uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@1.0.0
-    strategy:
-      fail-fast: false
     with:
       log-level: info
 ```
