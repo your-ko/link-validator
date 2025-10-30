@@ -1,5 +1,8 @@
 name: 'Link validation'
 description: 'Validates URLs and local file references in Markdown files'
+branding:
+  icon: 'link'
+  color: 'blue'
 inputs:
   log-level:
     description: 'Controls verbosity (debug, info, warn, error)'
