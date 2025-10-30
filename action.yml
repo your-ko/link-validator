@@ -33,7 +33,7 @@ runs:
         LV_CORP_PAT: ${{ inputs.corp-pat }}
         LV_CORP_URL: ${{ inputs.corp-url }}
         DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-        DOCKER_VALIDATOR_VERSION: 1.0.0
+        DOCKER_VALIDATOR_VERSION: 1.0.1
       run: |
         DOCKER_ENV_ARGS=""
         for var in $(env | grep '^LV_' | cut -d'=' -f1); do
