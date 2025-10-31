@@ -46,6 +46,7 @@ var handlers = map[string]handlerEntry{
 
 var (
 	ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+	orgRegex  = regexp.MustCompile(`(?i)https://(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))/organizations/([^\/\s"'()<>\[\]{},?#]+)(?:/[^\s"'()<>\[\]{}?#]*)?(?:#[^\s"'()<>\[\]{}]+)?`)
 	repoRegex = regexp.MustCompile(
 		`^https:\/\/` +
 			// 1: host (no subdomains like api./uploads.)
@@ -131,12 +132,20 @@ func httpClient(timeout time.Duration) *http.Client {
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
+	var host, owner, repo, typ, ref, path string
+
 	match := repoRegex.FindStringSubmatch(url)
 	if len(match) == 0 {
-		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
+		// First check if it's an organizations URL
+		orgMatch := orgRegex.FindStringSubmatch(url)
+		if len(orgMatch) == 0 {
+			return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
+		}
+		host, owner = orgMatch[1], orgMatch[2]
+	} else {
+		host, owner, repo, typ, ref, path, _ = match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
 	}
 
-	host, owner, repo, typ, ref, path, _ := match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
 	client := proc.client
 	if host == proc.corpGitHubUrl {
 		client = proc.corpClient
