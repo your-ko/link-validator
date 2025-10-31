@@ -38,21 +38,14 @@ jobs:
         uses: actions/checkout@v5.0.0
       - name: Link validation
         id: lnk
-        env:
-          LV_LOG_LEVEL: ${{ inputs.log-level }}
-          LV_FILE_MASKS: ${{ inputs.file-mask }}
-          LV_PAT: ${{ inputs.pat }}
-          LV_CORP_PAT: ${{ inputs.corp-pat }}
-          LV_CORP_URL: ${{ inputs.corp-url }}
         shell: bash
         run: |
-          DOCKER_ENV_ARGS=""
-          for var in $(env | grep '^LV_' | cut -d'=' -f1); do
-            DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
-          done
-
           docker run --rm \
-                 $DOCKER_ENV_ARGS \
-                 -v "${{ github.workspace }}:/work" \
-                 -w /work \
-                 ${{ env.DOCKER_VALIDATOR }}:${{ env.DOCKER_VALIDATOR_VERSION }}
+            -e 'LOG_LEVEL=${{ inputs.log-level }}' \
+            -e 'FILE_MASKS=${{ inputs.file-mask }}' \
+            -e 'PAT=${{ inputs.pat }}' \
+            -e 'CORP_PAT=${{ inputs.corp-pat }}' \
+            -e 'CORP_URL=${{ inputs.corp-url }}' \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
