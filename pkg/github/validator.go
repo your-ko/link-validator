@@ -132,6 +132,9 @@ func httpClient(timeout time.Duration) *http.Client {
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
+	if isCorpUrl(url) && proc.corpGitHubUrl == "" {
+		return fmt.Errorf("the url '%s' is a corp url, but CORP_URL is not set", url)
+	}
 	var host, owner, repo, typ, ref, path string
 
 	match := repoRegex.FindStringSubmatch(url)
@@ -189,4 +192,8 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		urls = append(urls, raw)
 	}
 	return urls
+}
+
+func isCorpUrl(url string) bool {
+	return strings.Contains(url, "github.com")
 }

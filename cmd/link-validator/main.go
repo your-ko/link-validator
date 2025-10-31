@@ -49,6 +49,12 @@ func main() {
 		zap.String("build date", BuildDate),
 		zap.String("git commit", GitCommit),
 	)
+
+	if corpGitHub != "" && corpPat == "" {
+		logger.Warn("it seems you set CORP_URL but didn't provide CORP_PAT. Expect false negatives because the " +
+			"link won't be able to fetch corl github without pat")
+	}
+
 	logger.Debug("Running with parameters",
 		zap.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
 		zap.Strings("FILE_MASKS", fileMasks),
