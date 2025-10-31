@@ -842,7 +842,7 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "org",
+			name: "organizations",
 			url:  "https://github.com/organizations/your-ko/settings/apps/test",
 			want: []string{
 				"",
