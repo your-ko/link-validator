@@ -59,7 +59,7 @@ permissions:
   contents: read
 
 env:
-  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:0.18.0 # pin a version
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:1.0.0 # pin a version or use 'latest'
 
 jobs:
   link-validator:
