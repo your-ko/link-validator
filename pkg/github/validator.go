@@ -195,5 +195,5 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 }
 
 func isCorpUrl(url string) bool {
-	return strings.Contains(url, "github.com")
+	return !strings.Contains(url, "github.com")
 }
