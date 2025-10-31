@@ -844,16 +844,7 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 		{
 			name: "organizations",
 			url:  "https://github.com/organizations/your-ko/settings/apps/test",
-			want: []string{
-				"",
-				"",
-				"",
-				"",
-				"",
-				"",
-				"",
-				"",
-			},
+			want: nil,
 		},
 		{
 			name: "api pull request url",
