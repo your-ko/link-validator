@@ -70,14 +70,14 @@ jobs:
 
       - name: Run Link validation
         env:
-          LV_LOG_LEVEL: "info"
-          LV_FILE_MASKS: "*.md"
-          LV_PAT: ${{ secrets.GITHUB_TOKEN }}
-          LV_CORP_URL: ""
-          LV_CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
+          LOG_LEVEL: "info"
+          FILE_MASKS: "*.md"
+          PAT: ${{ secrets.GITHUB_TOKEN }}
+          CORP_URL: ""
+          CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
         run: |
           DOCKER_ENV_ARGS=""
-          for var in $(env | grep '^LV_' | cut -d'=' -f1); do
+          for var in $(env | grep '^' | cut -d'=' -f1); do
             DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
           done
 
@@ -103,17 +103,17 @@ jobs:
 
 | Environment Variable | Required | Description                                                             | Default |
 |----------------------|----------|-------------------------------------------------------------------------|---------|
-| `LV_LOG_LEVEL`       | No       | Controls verbosity (debug, info, warn, error)                           | `info`  |
-| `LV_FILE_MASKS`      | No       | Comma-separated file patterns to scan                                   | `*.md`  |
-| `LV_PAT`             | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting | `""`    |
-| `LV_CORP_URL`        | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com] | `""`    |
-| `LV_CORP_PAT`        | No       | GitHub Enterprise personal access token                                 | `""`    |
+| `LOG_LEVEL`          | No       | Controls verbosity (debug, info, warn, error)                           | `info`  |
+| `FILE_MASKS`         | No       | Comma-separated file patterns to scan                                   | `*.md`  |
+| `PAT`                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting | `""`    |
+| `CORP_URL`           | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com] | `""`    |
+| `CORP_PAT`           | No       | GitHub Enterprise personal access token                                 | `""`    |
 
 ### Authentication
 
 **GitHub.com**: Use `GITHUB_TOKEN` in CI or a PAT with `public_repo`/`repo` scope. Authentication is optional but recommended to avoid rate limiting.
 
-**GitHub Enterprise**: Requires `LV_CORP_URL` and `LV_CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
+**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
 
 ## Implementation Details
 
@@ -133,13 +133,13 @@ The validator uses three specialized processors:
 ## Troubleshooting
 
 **Enterprise links redirect to login page**
-Configure `LV_CORP_URL` and `LV_CORP_PAT`. The validator uses GitHub's API which requires authentication for private repositories.
+Configure `CORP_URL` and `CORP_PAT`. The validator uses GitHub's API which requires authentication for private repositories.
 
 **Rate limiting (429 responses)**
-Provide `LV_PAT` to increase rate limits from 60/hour to 5000/hour.
+Provide `PAT` to increase rate limits from 60/hour to 5000/hour.
 
 **Redirect loops or 3xx errors**
-Usually indicates authentication or proxy configuration issues. Enable debug logging with `LV_LOG_LEVEL=debug` to trace redirect chains.
+Usually indicates authentication or proxy configuration issues. Enable debug logging with `LOG_LEVEL=debug` to trace redirect chains.
 
 ## Exit Codes
 

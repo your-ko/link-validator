@@ -34,13 +34,13 @@ func Init(logLevel zapcore.Level) *zap.Logger {
 
 // LogLevel reads LOG_LEVEL and defaults to info.
 func LogLevel() zapcore.Level {
-	val := os.Getenv("LV_LOG_LEVEL")
+	val := os.Getenv("LOG_LEVEL")
 	if val == "" {
 		return zapcore.InfoLevel
 	}
 	var lvl zapcore.Level
 	if err := lvl.Set(strings.ToLower(val)); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid LV_LOG_LEVEL=%q, using info\n", val)
+		_, _ = fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL=%q, using info\n", val)
 		return zapcore.InfoLevel
 	}
 	return lvl
