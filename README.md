@@ -159,10 +159,43 @@ Image size: ~10MB
 
 Recommend pinning to specific versions (e.g., `0.18.0`) rather than using `latest` for reproducible builds.
 
-## Security
+## Security & Supply Chain
+
+### Authentication
 Tokens are read from env vars only and used to call the GitHub API for validation.
 
-PAT and Enterprise PAT should both handle the authentication. 
+PAT and Enterprise PAT should both handle the authentication.
+
+### Supply Chain Security
+All releases include signed container images with full attestations for supply chain transparency:
+
+- **Container signing**: Images signed with Cosign using keyless signing via GitHub OIDC
+- **Build attestations**: GitHub-native build provenance for complete supply chain transparency
+- **SBOM**: Software Bill of Materials in SPDX format for dependency tracking
+- **Provenance**: Build provenance records for reproducible builds
+
+#### Verification Commands
+
+**Verify container signature:**
+```bash
+# Replace VERSION with your desired version (e.g., 1.2.1)
+cosign verify "ghcr.io/your-ko/link-validator@sha256:[DIGEST]" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp "^https://github.com/your-ko/link-validator/\.github/workflows/.*"
+```
+
+**Verify GitHub attestations:**
+```bash
+gh attestation verify oci://ghcr.io/your-ko/link-validator@sha256:[DIGEST] \
+  --repo your-ko/link-validator \
+  --signer-workflow your-ko/link-validator/.github/workflows/release.yaml@refs/tags/[VERSION]
+```
+
+**Download supply chain artifacts:**
+Supply chain metadata is available for each release:
+- Software Bill of Materials: `https://github.com/your-ko/link-validator/releases/download/[VERSION]/sbom.spdx.json`
+- Build provenance: `https://github.com/your-ko/link-validator/releases/download/[VERSION]/provenance.intoto.jsonl`
+- Checksums: `https://github.com/your-ko/link-validator/releases/download/[VERSION]/SHASUMS256.txt` 
 
 
 ## Versioning

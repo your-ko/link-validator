@@ -8,10 +8,7 @@ on:
       - main
 
 permissions:
-#  contents: read
-  contents: write
-  packages: write # TODO: remove
-#  pull-requests: read # TODO: remove
+  contents: read
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -52,75 +49,28 @@ jobs:
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
 
-#      - name: Go Vet
-#        shell: bash
-#        run: |
-#          go vet ./cmd/... ./internal/... ./pkg/...
+      - name: Go Vet
+        shell: bash
+        run: |
+          go vet ./cmd/... ./internal/... ./pkg/...
 
-#      - name: Go Test
-#        shell: bash
-#        env:
-#          CGO_ENABLED: 1
-#        run: |
-#          go test -race ./cmd/... ./internal/... ./pkg/...
+      - name: Go Test
+        shell: bash
+        env:
+          CGO_ENABLED: 1
+        run: |
+          go test -race ./cmd/... ./internal/... ./pkg/...
 
-#      - name: Build Check image
-#        uses: docker/build-push-action@v6.15.0
-#        with:
-#          context: .
-#          file: Dockerfile
-#          build-args: |
-#            VERSION="PR"
-#            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
-#            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-#          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR
-#          provenance: false
-#          push: false
-
-      - name: Build image
-        id: build
+      - name: Build Check image
         uses: docker/build-push-action@v6.15.0
         with:
           context: .
           file: Dockerfile
           build-args: |
-            VERSION=PR
+            VERSION="PR"
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:PR
-          provenance: true
-          sbom: true
-          push: true
+          tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR
+          provenance: false
+          push: false
 
-#      - name: Sign Docker image with GitHub attestation
-#        uses: actions/attest-build-provenance@v3.0.0
-#        with:
-#          subject-name: ${{ env.DOCKER_IMAGE_NAME }}
-#          subject-digest: ${{ steps.build.outputs.digest }}
-
-      - name: Generate image digest and metadata
-        run: |
-          # Get the image digest
-          echo "IMAGE_DIGEST=${{ steps.build.outputs.digest }}" >> $GITHUB_ENV
-          
-          # Create a verification file with image details
-          cat > digest.txt << EOF
-          Image: ${{ env.DOCKER_IMAGE_NAME }}:PR
-          Digest: ${{ steps.build.outputs.digest }}
-          Build Date: ${{ steps.meta.outputs.BUILD_DATE }}
-          Git Commit: ${{ steps.meta.outputs.GIT_COMMIT }}
-          EOF
-
-      - name: debug
-        shell: bash
-        run: |
-          ls -l
-          cat digest.txt
-
-      - uses: ncipollo/release-action@v1.20.0
-        id: release
-        with:
-          tag: 5.5.5
-          generateReleaseNotes: true
-          artifacts: "digest.txt"
-          makeLatest: false
