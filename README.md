@@ -1,4 +1,4 @@
-[![Main](https://github.com/your-ko/link-valqqqidator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
+[![Main](https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
 [![golangci-lint](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml)
 [![Link validation](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml)
 
@@ -40,7 +40,8 @@ Link-validator can be used either as a independent GitHub workflow or as a GitHu
 
 ### GitHub action
 
-This can be added, for example, into the workflow that runs on PR. 
+This can be added, for example, into the workflow that runs on PR. In this case if there are broken links in the documentation,
+the step will fail (will be improved in the coming releases)
 
 ```yaml
     - name: Link validation
@@ -51,6 +52,9 @@ This can be added, for example, into the workflow that runs on PR.
 ```
 
 ### GitHub workflow
+This can be added as an independent workflow. Then the scan will be done for the whole repository on the push event, 
+so you can always see the status of the documentation. 
+
 ```yaml
 name: Link validation
 on:
@@ -59,7 +63,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: read  #  # Required to checkout code and read files
 
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:1.0.0 # pin a version or use 'latest'

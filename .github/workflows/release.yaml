@@ -11,6 +11,9 @@ on:
 permissions:
   packages: write
   contents: write
+  attestations: write
+  pull-requests: read
+
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -23,8 +26,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
-        with:
-          persist-credentials: false
 
       - name: SetUp
         run: |
@@ -53,10 +54,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Test
+      - name: Go Test
         shell: bash
+        env:
+          CGO_ENABLED: 1
         run: |
-          CGO_ENABLED=1 go test -race ./cmd/... ./internal/... ./pkg/...
+           go test -race ./cmd/... ./internal/... ./pkg/...
 
       - name: Go mod tidy
         run: |
@@ -109,7 +112,8 @@ jobs:
             BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ inputs.version }},${{ env.DOCKER_IMAGE_NAME }}:latest
-          provenance: false
+          provenance: true
+          sbom: true
           push: true
 
       - uses: ncipollo/release-action@v1.20.0

@@ -49,10 +49,12 @@ jobs:
         run: |
           go vet ./cmd/... ./internal/... ./pkg/...
 
-      - name: Test
+      - name: Go Test
         shell: bash
+        env:
+          CGO_ENABLED: 1
         run: |
-          CGO_ENABLED=1 go test -race ./cmd/... ./internal/... ./pkg/...
+          go test -race ./cmd/... ./internal/... ./pkg/...
 
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
