@@ -1,4 +1,4 @@
-[![Main](https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
+[![Main](https://github.com/your-ko/link-valqqqidator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
 [![golangci-lint](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml)
 [![Link validation](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml)
 
@@ -36,9 +36,12 @@ This tool understands GitHub's URL patterns and uses the API for accurate valida
 
 ## GitHub Actions Setup
 
-Link-validator can be used either as a independent GitHub workflow (recommended way) or as a GitHub action.
+Link-validator can be used either as a independent GitHub workflow or as a GitHub action.
 
 ### GitHub action
+
+This can be added, for example, into the workflow that runs on PR. 
+
 ```yaml
     - name: Link validation
       uses: your-ko/link-validator@1.0.0
@@ -154,6 +157,8 @@ Recommend pinning to specific versions (e.g., `0.18.0`) rather than using `lates
 
 ## Security
 Tokens are read from env vars only and used to call the GitHub API for validation.
+
+PAT and Enterprise PAT should both handle the authentication. 
 
 
 ## Versioning

@@ -19,7 +19,6 @@ inputs:
   corp-pat:
     description: >
       GitHub Enterprise personal access token.  The PAT needs read access to repositories referenced in your documentation.
-
     default: ""
 runs:
   using: 'composite'
