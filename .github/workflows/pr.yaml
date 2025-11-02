@@ -29,7 +29,7 @@ jobs:
           cache-dependency-path: './go.sum'
 
       - name: Link validation
-        uses: your-ko/link-validator@1.0.0
+        uses: your-ko/link-validator@1.2.1
         with:
           log-level: 'info'
           pat: ${{ secrets.GITHUB_TOKEN }}
