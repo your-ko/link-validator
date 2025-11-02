@@ -4,7 +4,20 @@ on:
     branches:
       - main
       - master
+    paths:
+      - cmd/**
+      - internal/**
+      - pkg/**
+      - ./go.mod
+      - ./go.sum
   pull_request:
+    paths:
+      - cmd/**
+      - internal/**
+      - pkg/**
+      - ./go.mod
+      - ./go.sum
+
 
 permissions:
   contents: read
