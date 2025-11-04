@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  packages: write # TODO
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -85,7 +84,7 @@ jobs:
             BUILD_DATE=${{ steps.timestamp.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ github.sha }}
           provenance: false
-          push: true
+          push: false
 
       - name: Link validation
         uses: your-ko/link-validator@1.3.0
