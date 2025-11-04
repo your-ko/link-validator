@@ -38,12 +38,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set build metadata
-        id: meta-old
-        run: |
-          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
-          echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
-
       - name: Go Vet
         shell: bash
         run: |
@@ -56,23 +50,40 @@ jobs:
         run: |
           go test -race ./cmd/... ./internal/... ./pkg/...
 
+      - name: Generate build timestamp
+        id: timestamp
+        run: echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
       - name: Docker meta
         uses: docker/metadata-action@v5.8.0
         id: meta
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=pr-{{branch}}-{{sha}}
+          labels: |
+            org.opencontainers.image.title=Link Validator
+            org.opencontainers.image.description=Validates GitHub links in documentation
+            org.opencontainers.image.url=https://github.com/your-ko/link-validator
+            org.opencontainers.image.source=https://github.com/your-ko/link-validator
+            org.opencontainers.image.vendor=your-ko
+            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.created=${{ steps.timestamp.outputs.BUILD_DATE }}
+            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
         with:
           context: .
           file: Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-#          build-args: |
-#            VERSION="PR"
-#            BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }}
-#            GIT_COMMIT=${{ steps.meta.outputs.GIT_COMMIT }}
-          tags: ${{ env.DOCKER_IMAGE_NAME }}:PR
+          build-args: |
+            VERSION=pr-${{ github.head_ref || github.ref_name }}
+            BUILD_DATE=${{ steps.timestamp.outputs.BUILD_DATE }}
+            GIT_COMMIT=${{ github.sha }}
           provenance: false
           push: true
 
