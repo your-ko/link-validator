@@ -181,7 +181,7 @@ Replace the version `1.3.0` below with the version you want to verify:
 **Verify container signature:**
 ```bash
 cosign verify "ghcr.io/your-ko/link-validator@sha256:[DIGEST]" \
-  --certificate-oidc-issuer [https://token.actions.githubusercontent.com] \
+  --certificate-oidc-issuer https://[token.actions.githubusercontent.com] \
   --certificate-identity-regexp "^https://[github.com]/[your-ko/link-validator]/\.github/workflows/.*"
 ```
 
