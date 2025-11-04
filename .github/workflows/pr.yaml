@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  packages: write # TODO
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
