@@ -28,7 +28,7 @@ permissions:
   contents: read
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-  DOCKER_VALIDATOR_VERSION: "1.2.1"
+  DOCKER_VALIDATOR_VERSION: "1.3.0"
 jobs:
   link-validator:
     name: link-validator

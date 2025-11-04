@@ -176,26 +176,28 @@ All releases include signed container images with full attestations for supply c
 
 #### Verification Commands
 
+Replace the version `1.3.0` below with the version you want to verify:
+And remove [] from the urls below:
+
 **Verify container signature:**
 ```bash
-# Replace VERSION with your desired version (e.g., 1.2.1)
 cosign verify "ghcr.io/your-ko/link-validator@sha256:[DIGEST]" \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  --certificate-identity-regexp "^https://github.com/your-ko/link-validator/\.github/workflows/.*"
+  --certificate-oidc-issuer https://[token.actions.githubusercontent.com] \
+  --certificate-identity-regexp "^https://[github.com]/[your-ko/link-validator]/\.github/workflows/.*"
 ```
 
 **Verify GitHub attestations:**
 ```bash
 gh attestation verify oci://ghcr.io/your-ko/link-validator@sha256:[DIGEST] \
   --repo your-ko/link-validator \
-  --signer-workflow your-ko/link-validator/.github/workflows/release.yaml@refs/tags/[VERSION]
+  --signer-workflow your-ko/link-validator/.github/workflows/release.yaml@refs/tags/1.3.0
 ```
 
 **Download supply chain artifacts:**
 Supply chain metadata is available for each release:
-- Software Bill of Materials: `https://github.com/your-ko/link-validator/releases/download/[VERSION]/sbom.spdx.json`
-- Build provenance: `https://github.com/your-ko/link-validator/releases/download/[VERSION]/provenance.intoto.jsonl`
-- Checksums: `https://github.com/your-ko/link-validator/releases/download/[VERSION]/SHASUMS256.txt` 
+- Software Bill of Materials: `https://github.com/your-ko/link-validator/releases/download/1.3.0/sbom.spdx.json`
+- Build provenance: `https://github.com/your-ko/link-validator/releases/download/1.3.0/provenance.intoto.jsonl`
+- Checksums: `https://github.com/your-ko/link-validator/releases/download/1.3.0/SHASUMS256.txt` 
 
 
 ## Versioning
