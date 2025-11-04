@@ -31,13 +31,6 @@ jobs:
           git config --local user.name  "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Login to GHCR
-        uses: docker/login-action@v3.4.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.PAT }}
-
       - name: Install yq
         run: |
           curl -sSL https://github.com/mikefarah/yq/releases/download/${{env.YQ_VERSION}}/yq_linux_amd64 -o yq
