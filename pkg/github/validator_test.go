@@ -828,6 +828,20 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 			},
 		},
 		{
+			name: "workflow",
+			url:  "https://github.com/your-ko/link-validator/settings/secrets/actions",
+			want: []string{
+				"https://github.com/your-ko/link-validator/settings/secrets/actions",
+				"github.com",
+				"your-ko",
+				"link-validator",
+				"settings",
+				"secrets",
+				"actions",
+				"",
+			},
+		},
+		{
 			name: "org",
 			url:  "https://github.com/your-ko/",
 			want: []string{
@@ -844,7 +858,16 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 		{
 			name: "organizations",
 			url:  "https://github.com/organizations/your-ko/settings/apps/test",
-			want: nil,
+			want: []string{
+				"https://github.com/organizations/your-ko/settings/apps/test",
+				"github.com",
+				"organizations",
+				"your-ko",
+				"settings",
+				"apps",
+				"test",
+				"",
+			},
 		},
 		{
 			name: "api pull request url",
