@@ -38,7 +38,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set build metadata
-        id: meta
+        id: meta-old
         run: |
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_OUTPUT
