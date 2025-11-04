@@ -260,7 +260,7 @@ jobs:
 
           **Container:** \`${{env.DOCKER_IMAGE_NAME}}:${TAG}\` ([GHCR package](${PKG_URL}))
           **Digest:** \`${{env.DOCKER_IMAGE_NAME}}@${{env.DIGEST}}\`
-          **Attestations:** [View attestations](https://github.com/${{env.GITHUB_REPOSITORY}}/attestations) • [Package attestations](${PKG_URL})
+          **Attestations:** [GitHub attestations](https://github.com/${{env.GITHUB_REPOSITORY}}/attestations?type=provenance&subject_name=${{env.DOCKER_IMAGE_NAME}}&subject_digest=${{env.DIGEST}}) • [Container attestations](https://github.com/${{env.GITHUB_REPOSITORY}}/pkgs/container/link-validator/${{env.DIGEST}})
           **Artifacts:** [SBOM](https://github.com/${{env.GITHUB_REPOSITORY}}/releases/download/${TAG}/sbom.spdx.json) • [Provenance](https://github.com/${{env.GITHUB_REPOSITORY}}/releases/download/${TAG}/provenance.intoto.jsonl) • [Checksums](https://github.com/${{env.GITHUB_REPOSITORY}}/releases/download/${TAG}/SHASUMS256.txt)
 
           EOF
