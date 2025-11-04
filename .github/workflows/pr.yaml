@@ -61,8 +61,8 @@ jobs:
           images: ${{ env.DOCKER_IMAGE_NAME }}
           tags: |
             type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=pr-{{branch}}-{{sha}}
+            type=sha,prefix=sha-
+            type=ref,event=branch,prefix=branch-
           labels: |
             org.opencontainers.image.title=Link Validator
             org.opencontainers.image.description=Validates GitHub links in documentation
