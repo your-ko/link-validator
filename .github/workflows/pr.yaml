@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -29,7 +28,7 @@ jobs:
           cache-dependency-path: './go.sum'
 
       - name: Link validation
-        uses: your-ko/link-validator@1.0.0
+        uses: your-ko/link-validator@1.2.1
         with:
           log-level: 'info'
           pat: ${{ secrets.GITHUB_TOKEN }}
@@ -55,10 +54,12 @@ jobs:
         run: |
           go vet ./cmd/... ./internal/... ./pkg/...
 
-      - name: Test
+      - name: Go Test
         shell: bash
+        env:
+          CGO_ENABLED: 1
         run: |
-          CGO_ENABLED=1 go test -race ./cmd/... ./internal/... ./pkg/...
+          go test -race ./cmd/... ./internal/... ./pkg/...
 
       - name: Build Check image
         uses: docker/build-push-action@v6.15.0
@@ -72,3 +73,4 @@ jobs:
           tags: ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.meta.outputs.GIT_COMMIT }},${{ env.DOCKER_IMAGE_NAME }}:PR
           provenance: false
           push: false
+
