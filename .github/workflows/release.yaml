@@ -81,6 +81,17 @@ jobs:
           yq '.env.DOCKER_VALIDATOR_VERSION = "${{ inputs.version }}"' -i .github/workflows/link-validator-workflow.yaml
           echo "New value:" && yq '.env.DOCKER_VALIDATOR_VERSION' .github/workflows/link-validator-workflow.yaml
 
+      - name: Debug PAT Authentication
+        env:
+          TOKEN: ${{ secrets.PAT }}
+        run: |
+          echo "Testing PAT authentication..."
+          echo "Token exists: $([ -n "$TOKEN" ] && echo "YES" || echo "NO")"
+          echo "Token length: ${#TOKEN}"
+          echo "Token prefix: ${TOKEN:0:4}..."
+          # Test API access
+          curl -s -H "Authorization: token $TOKEN" https://api.github.com/user | jq -r '.login // "AUTHENTICATION_FAILED"'
+
       - name: Commit changes
         shell: bash
         env:
