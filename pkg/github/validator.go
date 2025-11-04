@@ -33,7 +33,7 @@ var handlers = map[string]handlerEntry{
 	"releases": {name: "releases", fn: handleReleases},
 	"actions":  {name: "actions", fn: handleWorkflow},
 
-	// “List / page” routes — we just validate the repo exists
+	// Generic repository routes — we just validate the repo exists
 	"pulls":       {name: "repo-exist", fn: handleRepoExist},
 	"commits":     {name: "repo-exist", fn: handleRepoExist},
 	"discussions": {name: "repo-exist", fn: handleRepoExist},
@@ -42,11 +42,11 @@ var handlers = map[string]handlerEntry{
 	"milestones":  {name: "repo-exist", fn: handleRepoExist},
 	"labels":      {name: "repo-exist", fn: handleRepoExist},
 	"projects":    {name: "repo-exist", fn: handleRepoExist},
+	"settings":    {name: "repo-exist", fn: handleRepoExist},
 }
 
 var (
 	ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
-	orgRegex  = regexp.MustCompile(`(?i)https://(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))/organizations/([^\/\s"'()<>\[\]{},?#]+)(?:/[^\s"'()<>\[\]{}?#]*)?(?:#[^\s"'()<>\[\]{}]+)?`)
 	repoRegex = regexp.MustCompile(
 		`^https:\/\/` +
 			// 1: host (no subdomains like api./uploads.)
@@ -60,7 +60,7 @@ var (
 			// optional kind/ref[/tail...]
 			`(?:\/` +
 			// 4: kind
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions)` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings)` +
 			// optional ref section - some URLs like /releases, /pulls, /issues don't require a ref
 			`(?:\/` +
 			// allow "releases/tag/<ref>" (harmless for others)
@@ -139,15 +139,9 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 	match := repoRegex.FindStringSubmatch(url)
 	if len(match) == 0 {
-		// First check if it's an organizations URL
-		orgMatch := orgRegex.FindStringSubmatch(url)
-		if len(orgMatch) == 0 {
-			return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
-		}
-		host, owner = orgMatch[1], orgMatch[2]
-	} else {
-		host, owner, repo, typ, ref, path, _ = match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
+		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
 	}
+	host, owner, repo, typ, ref, path, _ = match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
 
 	client := proc.client
 	if host == proc.corpGitHubUrl {
@@ -156,10 +150,10 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 	var entry handlerEntry
 	var ok bool
-	switch typ {
-	case "":
+	switch {
+	case typ == "" || owner == "organizations":
 		switch {
-		case owner != "" && repo == "":
+		case (owner != "" && repo == "") || owner == "organizations":
 			entry = handlerEntry{name: "org-exist", fn: handleOrgExist}
 		case owner != "" && repo != "":
 			entry = handlerEntry{name: "repo-exist", fn: handleRepoExist}

@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
-	"link-validator/pkg/http"
 	"link-validator/pkg/local-path"
 	"os"
 	"path/filepath"
@@ -52,7 +51,7 @@ func New(config Config, logger *zap.Logger) LinkValidador {
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New(logger))
-	processors = append(processors, http.New(config.Timeout, logger))
+	//processors = append(processors, http.New(config.Timeout, logger))
 	return LinkValidador{processors}
 }
 
