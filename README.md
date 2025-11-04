@@ -177,6 +177,7 @@ All releases include signed container images with full attestations for supply c
 #### Verification Commands
 
 Replace the version `1.3.0` below with the version you want to verify:
+And remove [] from the urls below:
 
 **Verify container signature:**
 ```bash
