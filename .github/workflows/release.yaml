@@ -14,7 +14,6 @@ permissions:
   attestations: write       # Required for Docker image attestation
   id-token: write           # OIDC for cosign keyless + attestations
 
-
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
   GITHUB_REPOSITORY: your-ko/link-validator
@@ -93,7 +92,7 @@ jobs:
             git commit -m "Releasing: Set version to ${{ inputs.version }}. Go mod tidy"
           fi
 
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/your-ko/link-validator.git"
+          git remote set-url origin "https://${TOKEN}@github.com/your-ko/link-validator.git"
           git push origin HEAD:main
 
       - name: Set build metadata
