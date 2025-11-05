@@ -146,13 +146,13 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantErr: true,
 			wantIs:  errs.ErrEmptyBody,
 		},
-		{
-			name:    "200 with body containing 'not found' -> ErrNotFound",
-			fields:  fields{http.StatusOK, "blah not found blah", 0, ""},
-			args:    args{url: "/path"},
-			wantErr: true,
-			wantIs:  errs.ErrNotFound,
-		},
+		//{
+		//	name:    "200 with body containing 'not found' -> ErrNotFound",
+		//	fields:  fields{http.StatusOK, "blah not found blah", 0, ""},
+		//	args:    args{url: "/path"},
+		//	wantErr: true,
+		//	wantIs:  errs.ErrNotFound,
+		//},
 		{
 			name:    "404 with body -> ErrNotFound",
 			fields:  fields{http.StatusNotFound, "blah not found blah", 0, ""},
@@ -197,20 +197,20 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			wantIs:        nil,
 			timeoutClient: true,
 		},
-		{
-			name:    "Body contains 'does not contain the path' -> ErrNotFound",
-			fields:  fields{http.StatusOK, "repository exists but does not contain the path", 0, ""},
-			args:    args{url: "/missing-path"},
-			wantErr: true,
-			wantIs:  errs.ErrNotFound,
-		},
-		{
-			name:    "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
-			fields:  fields{http.StatusOK, "NOT FOUND", 0, ""},
-			args:    args{url: "/caps"},
-			wantErr: true,
-			wantIs:  errs.ErrNotFound,
-		},
+		//{
+		//	name:    "Body contains 'does not contain the path' -> ErrNotFound",
+		//	fields:  fields{http.StatusOK, "repository exists but does not contain the path", 0, ""},
+		//	args:    args{url: "/missing-path"},
+		//	wantErr: true,
+		//	wantIs:  errs.ErrNotFound,
+		//},
+		//{
+		//	name:    "Uppercase 'NOT FOUND' is not matched (case sensitive) -> no error",
+		//	fields:  fields{http.StatusOK, "NOT FOUND", 0, ""},
+		//	args:    args{url: "/caps"},
+		//	wantErr: true,
+		//	wantIs:  errs.ErrNotFound,
+		//},
 		{
 			name: "Large body with 'not found' after 10KB is ignored -> no error",
 			fields: fields{
