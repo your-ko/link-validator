@@ -32,6 +32,7 @@ func main() {
 	}()
 
 	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
+	ignoredDomains := strings.Split(*flag.String("IGNORED_DOMAINS", GetEnv("IGNORED_DOMAINS", ""), "Domains list to ignore during validation."), ",")
 	// not used atm
 	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
 	// not used atm
@@ -58,6 +59,7 @@ func main() {
 	logger.Debug("Running with parameters",
 		zap.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
 		zap.Strings("FILE_MASKS", fileMasks),
+		zap.Strings("IGNORED_DOMAINS", ignoredDomains),
 		zap.String("LOOKUP_PATH", lookUpPath), // not implemented yet
 		//zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
 		//zap.Strings("FILE_LIST", files),         // not implemented yet
@@ -68,10 +70,11 @@ func main() {
 	config := link_validator.Config{
 		CorpGitHubUrl: corpGitHub,
 		//Path:          lookUpPath,
-		PAT:        pat,
-		CorpPAT:    corpPat,
-		FileMasks:  fileMasks,
-		LookupPath: lookUpPath,
+		PAT:            pat,
+		CorpPAT:        corpPat,
+		FileMasks:      fileMasks,
+		IgnoredDomains: ignoredDomains,
+		LookupPath:     lookUpPath,
 		//ExcludePath:   excludePath,
 		Timeout: timeout,
 	}

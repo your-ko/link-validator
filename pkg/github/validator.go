@@ -133,7 +133,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
 	if isCorpUrl(url) && proc.corpGitHubUrl == "" {
-		return fmt.Errorf("the url '%s' is a corp url, but CORP_URL is not set", url)
+		return fmt.Errorf("the url '%s' looks like a corp url, but CORP_URL is not set", url)
 	}
 	var host, owner, repo, typ, ref, path string
 
