@@ -55,6 +55,9 @@ func main() {
 		logger.Warn("it seems you set CORP_URL but didn't provide CORP_PAT. Expect false negatives because the " +
 			"link won't be able to fetch corl github without pat")
 	}
+	for i, s := range ignoredDomains {
+		ignoredDomains[i] = strings.ToLower(s)
+	}
 
 	logger.Debug("Running with parameters",
 		zap.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),

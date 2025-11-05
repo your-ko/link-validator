@@ -53,7 +53,7 @@ func New(config Config, logger *zap.Logger) LinkValidador {
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New(logger))
-	processors = append(processors, http.New(config.Timeout, logger))
+	processors = append(processors, http.New(config.Timeout, config.IgnoredDomains, logger))
 	return LinkValidador{processors}
 }
 
