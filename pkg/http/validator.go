@@ -99,10 +99,8 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		}
 
 		body := strings.ToLower(string(bodyBytes))
-		if strings.Contains(body, "404") ||
-			strings.Contains(body, "does not contain the path") ||
-			strings.Contains(body, "not found") {
-
+		if strings.Contains(body, "page not found") {
+			// TODO: this needs to be improved
 			return errs.NewNotFound(url)
 		} else {
 			return nil
