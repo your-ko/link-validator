@@ -50,8 +50,8 @@ func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _ st
 // GitHub API docs: https://docs.github.com/rest/orgs/orgs#get-an-organization
 //
 //meta:operation GET /orgs/{org}
-func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _ string) error {
-	_, _, err := c.Organizations.Get(ctx, owner)
+func handleOrgExist(ctx context.Context, c *github.Client, _, org, _, _ string) error {
+	_, _, err := c.Organizations.Get(ctx, org)
 	return err
 }
 
