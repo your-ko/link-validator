@@ -73,7 +73,7 @@ jobs:
       - name: Commit changes
         shell: bash
         env:
-          TOKEN: ${{ secrets.PAT }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
