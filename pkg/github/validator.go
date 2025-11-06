@@ -43,6 +43,7 @@ var handlers = map[string]handlerEntry{
 	"labels":      {name: "repo-exist", fn: handleRepoExist},
 	"projects":    {name: "repo-exist", fn: handleRepoExist},
 	"settings":    {name: "repo-exist", fn: handleRepoExist},
+	"security":    {name: "repo-exist", fn: handleRepoExist},
 }
 
 var (
@@ -60,7 +61,7 @@ var (
 			// optional kind/ref[/tail...]
 			`(?:\/` +
 			// 4: kind
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings)` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings|security)` +
 			// optional ref section - some URLs like /releases, /pulls, /issues don't require a ref
 			`(?:\/` +
 			// allow "releases/tag/<ref>" (harmless for others)
