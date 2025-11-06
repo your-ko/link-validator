@@ -277,3 +277,53 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 		})
 	}
 }
+
+func TestLinkProcessor_urlShouldBeIgnored(t *testing.T) {
+	type fields struct {
+		ignoredDomains []string
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "no ignored domains",
+			fields: fields{},
+			args:   args{url: "https://github.com"},
+			want:   false,
+		},
+		{
+			name:   "no ignored domains",
+			fields: fields{ignoredDomains: []string{"https://github.com"}},
+			args:   args{url: "https://github.com"},
+			want:   true,
+		},
+		{
+			name:   "ignored https://github.com",
+			fields: fields{ignoredDomains: []string{"https://github.com"}},
+			args:   args{url: "https://github.com"},
+			want:   true,
+		},
+		{
+			name:   "ignored github",
+			fields: fields{ignoredDomains: []string{"github"}},
+			args:   args{url: "https://github.com"},
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := &LinkProcessor{
+				ignoredDomains: tt.fields.ignoredDomains,
+			}
+			if got := proc.urlShouldBeIgnored(tt.args.url); got != tt.want {
+				t.Errorf("urlShouldBeIgnored() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
