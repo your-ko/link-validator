@@ -164,41 +164,59 @@ jobs:
           sbom-path: sbom.spdx.json
           push-to-registry: true
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v4.0.0
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v5.0.0
+        with:
+          name: sbom
+          path: sbom.spdx.json
 
-      - name: Download provenance attestation
+  prepare-attestations-for-release:
+    runs-on: ubuntu-22.04
+    needs: [build, attest]
+    steps:
+      - name: Download provenance attestation with retry
         env:
           DIGEST: ${{ needs.build.outputs.digest }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          echo "📥 Downloading provenance attestation created by build action..."
+          echo "📥 Downloading provenance attestation..."
           echo "  Image: ${{env.DOCKER_IMAGE_NAME}}@${{env.DIGEST}}"
 
-          # Wait for attestations to propagate
-          echo "⏱️ Waiting for attestations to propagate..."
-          sleep 30
+          # Retry logic with exponential backoff
+          max_attempts=6
+          attempt=1
+          delay=10
 
-          # Download attestation from GitHub Attestations service
-          if gh attestation download "oci://${{env.DOCKER_IMAGE_NAME}}@${{env.DIGEST}}" \
-             --repo "${{env.GITHUB_REPOSITORY}}" > provenance.intoto.jsonl; then
-            echo "✅ Downloaded provenance attestation"
-            echo "📏 File size: $(wc -c < provenance.intoto.jsonl) bytes"
-            echo "📄 Line count: $(wc -l < provenance.intoto.jsonl) lines"
-          else
-            echo "❌ Failed to download attestation, creating placeholder"
-            echo '{"_type":"https://in-toto.io/Statement/v0.1","predicateType":"https://slsa.dev/provenance/v0.2","subject":[{"name":"'${{env.DOCKER_IMAGE_NAME}}'","digest":{"sha256":"'${DIGEST#sha256:}'"}}],"predicate":{"builder":{"id":"https://github.com/'${{env.GITHUB_REPOSITORY}}'/.github/workflows/release.yaml@'${{github.ref}}'"}}}' > provenance.intoto.jsonl
-          fi
+          while [ $attempt -le $max_attempts ]; do
+            echo "🔄 Attempt $attempt of $max_attempts..."
 
-      - name: Upload artifacts for release
+            if gh attestation download "oci://${{env.DOCKER_IMAGE_NAME}}@${{env.DIGEST}}" \
+               --repo "${{env.GITHUB_REPOSITORY}}" > provenance.intoto.jsonl; then
+              echo "✅ Downloaded provenance attestation on attempt $attempt"
+              echo "📏 File size: $(wc -c < provenance.intoto.jsonl) bytes"
+              echo "📄 Line count: $(wc -l < provenance.intoto.jsonl) lines"
+              break
+            fi
+
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ Failed after $max_attempts attempts, creating placeholder"
+              echo '{"_type":"https://in-toto.io/Statement/v0.1","predicateType":"https://slsa.dev/provenance/v0.2","subject":[{"name":"'${{env.DOCKER_IMAGE_NAME}}'","digest":{"sha256":"'${DIGEST#sha256:}'"}}],"predicate":{"builder":{"id":"https://github.com/'${{env.GITHUB_REPOSITORY}}'/.github/workflows/release.yaml@'${{github.ref}}'"}}}' > provenance.intoto.jsonl
+              break
+            fi
+
+            echo "⏳ Waiting ${delay}s before retry..."
+            sleep $delay
+            delay=$((delay * 2))  # Exponential backoff: 10s, 20s, 40s, 80s, 160s
+            attempt=$((attempt + 1))
+          done
+
+      - name: Upload provenance artifact
         uses: actions/upload-artifact@v5.0.0
         with:
-          name: supply-chain
-          path: |
-            sbom.spdx.json
-            provenance.intoto.jsonl
+          name: provenance
+          path: provenance.intoto.jsonl
 
   sign:
     runs-on: ubuntu-22.04
@@ -231,14 +249,20 @@ jobs:
 
   release:
     runs-on: ubuntu-22.04
-    needs: [ build, attest, sign ]
+    needs: [ build, prepare-attestations-for-release, sign ]
     steps:
       - uses: actions/checkout@v4.2.2
 
-      - name: Download supply-chain artifacts
+      - name: Download SBOM artifact
         uses: actions/download-artifact@v6.0.0
         with:
-          name: supply-chain
+          name: sbom
+          path: .
+
+      - name: Download provenance artifact
+        uses: actions/download-artifact@v6.0.0
+        with:
+          name: provenance
           path: .
 
       - name: Create/Update GitHub Release
