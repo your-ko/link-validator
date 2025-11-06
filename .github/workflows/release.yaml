@@ -170,7 +170,7 @@ jobs:
           name: sbom
           path: sbom.spdx.json
 
-  download-attestations:
+  prepare-attestations-for-release:
     runs-on: ubuntu-22.04
     needs: [build, attest]
     steps:
@@ -249,7 +249,7 @@ jobs:
 
   release:
     runs-on: ubuntu-22.04
-    needs: [ build, download-attestations, sign ]
+    needs: [ build, prepare-attestations-for-release, sign ]
     steps:
       - uses: actions/checkout@v4.2.2
 
