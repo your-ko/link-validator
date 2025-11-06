@@ -82,6 +82,7 @@ jobs:
           PAT: ${{ secrets.GITHUB_TOKEN }}
           CORP_URL: ""
           CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
+          IGNORED_DOMAINS: "jira,internal.io"
         run: |
           DOCKER_ENV_ARGS=""
           for var in $(env | grep '^' | cut -d'=' -f1); do
@@ -108,14 +109,14 @@ jobs:
 
 ## Configuration
 
-| Environment Variable | Required | Description                                                                                                                                                                                                                                                                   | Default |
-|----------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| `LOG_LEVEL`          | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                                                                                                 | `info`  |
-| `FILE_MASKS`         | No       | Comma-separated file patterns to scan                                                                                                                                                                                                                                         | `*.md`  |
-| `PAT`                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                                                                                       | `""`    |
-| `CORP_URL`           | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                                                                                                                                                       | `""`    |
-| `CORP_PAT`           | No       | GitHub Enterprise personal access token                                                                                                                                                                                                                                       | `""`    |
-| `IGNORED_DOMAINS`    | No       | Comma separated list of domains or their part that should be ignored. <br/>Useful when you have some resources that require additional authentication which you can use in GutHub runners. Or if some url simply not accessible from GitHub runners due to network limitation | `[]`    |
+| Environment Variable | Required | Description                                                                                                                                                                                                                                                                                       | Default |
+|----------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `LOG_LEVEL`          | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                                                                                                                     | `info`  |
+| `FILE_MASKS`         | No       | Comma-separated file patterns to scan                                                                                                                                                                                                                                                             | `*.md`  |
+| `PAT`                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                                                                                                           | `""`    |
+| `CORP_URL`           | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                                                                                                                                                                           | `""`    |
+| `CORP_PAT`           | No       | GitHub Enterprise personal access token                                                                                                                                                                                                                                                           | `""`    |
+| `IGNORED_DOMAINS`    | No       | Comma separated list of domains or their parts that should be ignored during validation. <br/>Useful when you have some resources that require additional authentication which you can use in GutHub runners. Or if some url simply not accessible from GitHub runners due to network limitation. | `[]`    |
 
 ### Authentication
 
