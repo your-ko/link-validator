@@ -8,7 +8,7 @@ permissions:
   contents: read
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-  DOCKER_VALIDATOR_VERSION: "1.3.0"
+  DOCKER_VALIDATOR_VERSION: "1.5.0"
 jobs:
   link-validator:
     name: link-validator
@@ -23,6 +23,7 @@ jobs:
           docker run --rm \
             -e 'LOG_LEVEL=info' \
             -e 'FILE_MASKS=*.md' \
+            -e 'IGNORED_DOMAINS=token.actions.githubusercontent.com' \
             -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
