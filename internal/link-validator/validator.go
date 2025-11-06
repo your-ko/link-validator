@@ -34,14 +34,15 @@ type LinkValidador struct {
 }
 
 type Config struct {
-	Path          string
-	PAT           string
-	CorpPAT       string
-	CorpGitHubUrl string
-	FileMasks     []string
-	ExcludePath   string
-	LookupPath    string
-	Timeout       time.Duration
+	Path           string
+	PAT            string
+	CorpPAT        string
+	CorpGitHubUrl  string
+	FileMasks      []string
+	ExcludePath    string
+	LookupPath     string
+	Timeout        time.Duration
+	IgnoredDomains []string
 }
 
 func New(config Config, logger *zap.Logger) LinkValidador {
@@ -52,7 +53,7 @@ func New(config Config, logger *zap.Logger) LinkValidador {
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New(logger))
-	processors = append(processors, http.New(config.Timeout, logger))
+	processors = append(processors, http.New(config.Timeout, config.IgnoredDomains, logger))
 	return LinkValidador{processors}
 }
 

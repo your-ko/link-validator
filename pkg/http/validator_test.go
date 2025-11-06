@@ -103,7 +103,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			proc := New(10, nil)
+			proc := New(10, nil, nil)
 			got := proc.ExtractLinks(tt.line)
 
 			if !reflect.DeepEqual(got, tt.want) {
@@ -239,7 +239,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(time.Second, zap.NewNop())
+			proc := New(time.Second, nil, zap.NewNop())
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
@@ -273,6 +273,56 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, testServer.URL, tt.args.url)
 			if err.Error() != expected {
 				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
+			}
+		})
+	}
+}
+
+func TestLinkProcessor_urlShouldBeIgnored(t *testing.T) {
+	type fields struct {
+		ignoredDomains []string
+	}
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "no ignored domains",
+			fields: fields{},
+			args:   args{url: "https://github.com"},
+			want:   false,
+		},
+		{
+			name:   "no ignored domains",
+			fields: fields{ignoredDomains: []string{"https://github.com"}},
+			args:   args{url: "https://github.com"},
+			want:   true,
+		},
+		{
+			name:   "ignored https://github.com",
+			fields: fields{ignoredDomains: []string{"https://github.com"}},
+			args:   args{url: "https://github.com"},
+			want:   true,
+		},
+		{
+			name:   "ignored github",
+			fields: fields{ignoredDomains: []string{"github"}},
+			args:   args{url: "https://github.com"},
+			want:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := &LinkProcessor{
+				ignoredDomains: tt.fields.ignoredDomains,
+			}
+			if got := proc.urlShouldBeIgnored(tt.args.url); got != tt.want {
+				t.Errorf("urlShouldBeIgnored() = %v, want %v", got, tt.want)
 			}
 		})
 	}

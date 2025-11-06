@@ -21,11 +21,12 @@ var urlRegex = regexp.MustCompile(`https://[^\s"'()\[\]]+`)
 var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
 
 type LinkProcessor struct {
-	httpClient *http.Client
-	logger     *zap.Logger
+	httpClient     *http.Client
+	logger         *zap.Logger
+	ignoredDomains []string
 }
 
-func New(timeout time.Duration, logger *zap.Logger) *LinkProcessor {
+func New(timeout time.Duration, ignoredDomains []string, logger *zap.Logger) *LinkProcessor {
 	httpClient := &http.Client{
 		Timeout: timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -46,13 +47,19 @@ func New(timeout time.Duration, logger *zap.Logger) *LinkProcessor {
 	}
 
 	return &LinkProcessor{
-		httpClient: httpClient,
-		logger:     logger,
+		httpClient:     httpClient,
+		ignoredDomains: ignoredDomains,
+		logger:         logger,
 	}
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	proc.logger.Debug("Validating external url", zap.String("url", url))
+
+	if proc.urlShouldBeIgnored(url) {
+		proc.logger.Debug("url should be ignored", zap.String("url", url))
+		return nil
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
@@ -127,4 +134,13 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		urls = append(urls, raw)
 	}
 	return urls
+}
+
+func (proc *LinkProcessor) urlShouldBeIgnored(url string) bool {
+	for _, d := range proc.ignoredDomains {
+		if strings.Contains(url, d) {
+			return true
+		}
+	}
+	return false
 }

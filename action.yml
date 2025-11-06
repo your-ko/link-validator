@@ -1,5 +1,6 @@
 name: 'Link validation'
 description: 'Validates URLs and local file references in Markdown files'
+author: your-ko
 branding:
   icon: 'link'
   color: 'blue'
@@ -19,6 +20,9 @@ inputs:
   corp-pat:
     description: "GitHub Enterprise personal access token.  The PAT needs read access to repositories referenced in your documentation."
     default: ""
+  ignored-domains:
+    description: "Comma separated list of domains or their parts that should be ignored during validation."
+    default: ""
 runs:
   using: 'composite'
   steps:
@@ -34,6 +38,7 @@ runs:
           -e 'PAT=${{ inputs.pat }}' \
           -e 'CORP_PAT=${{ inputs.corp-pat }}' \
           -e CORP_URL=${{ inputs.corp-url }} \
+          -e IGNORED_DOMAINS=${{ inputs.ignored-domains }} \
           -v "${{ github.workspace }}:/work" \
           -w /work \
           ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
