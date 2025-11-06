@@ -161,45 +161,9 @@ Image size: ~10MB
 
 Recommend pinning to specific versions (e.g., `0.18.0`) rather than using `latest` for reproducible builds.
 
-## Security & Supply Chain
+## Security
 
-### Authentication
-Tokens are read from env vars only and used to call the GitHub API for validation.
-
-PAT and Enterprise PAT should both handle the authentication.
-
-### Supply Chain Security
-All releases include signed container images with full attestations for supply chain transparency:
-
-- **Container signing**: Images signed with Cosign using keyless signing via GitHub OIDC
-- **Build attestations**: GitHub-native build provenance for complete supply chain transparency
-- **SBOM**: Software Bill of Materials in SPDX format for dependency tracking
-- **Provenance**: Build provenance records for reproducible builds
-
-#### Verification Commands
-
-Replace the version `1.3.0` below with the version you want to verify:
-And remove [] from the urls below:
-
-**Verify container signature:**
-```bash
-cosign verify "ghcr.io/your-ko/link-validator@sha256:[DIGEST]" \
-  --certificate-oidc-issuer https://[token.actions.githubusercontent.com] \
-  --certificate-identity-regexp "^https://[github.com]/[your-ko/link-validator]/\.github/workflows/.*"
-```
-
-**Verify GitHub attestations:**
-```bash
-gh attestation verify oci://ghcr.io/your-ko/link-validator@sha256:[DIGEST] \
-  --repo your-ko/link-validator \
-  --signer-workflow your-ko/link-validator/.github/workflows/release.yaml@refs/tags/1.3.0
-```
-
-**Download supply chain artifacts:**
-Supply chain metadata is available for each release:
-- Software Bill of Materials: `https://github.com/your-ko/link-validator/releases/download/1.3.0/sbom.spdx.json`
-- Build provenance: `https://github.com/your-ko/link-validator/releases/download/1.3.0/provenance.intoto.jsonl`
-- Checksums: `https://github.com/your-ko/link-validator/releases/download/1.3.0/SHASUMS256.txt` 
+For security considerations, vulnerability reporting, supply chain security details, and verification instructions, see [SECURITY.md](./SECURITY.md). 
 
 
 ## Versioning
