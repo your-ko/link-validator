@@ -79,7 +79,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			if strings.HasPrefix(line, "```") {
 				codeSnippet = !codeSnippet
 			}
-			if codeSnippet == true {
+			if codeSnippet {
 				lines++
 				continue
 			}
