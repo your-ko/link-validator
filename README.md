@@ -139,6 +139,10 @@ The validator uses three specialized processors:
 
 **Local processor**: Validates local file references and anchor links within Markdown files. Resolves relative paths correctly.
 
+```markdown
+Content of code snippets is ignored because it might contains non-parseable or non-reachable links.
+```
+
 ## Troubleshooting
 
 **Enterprise links redirect to login page**

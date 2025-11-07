@@ -12,6 +12,7 @@ import (
 	"link-validator/pkg/local-path"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -72,8 +73,16 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 		lines := 0
 		linksFound := 0
 		scanner := bufio.NewScanner(f)
+		codeSnippet := false
 		for scanner.Scan() {
 			line := scanner.Text()
+			if strings.HasPrefix(line, "```") {
+				codeSnippet = !codeSnippet
+			}
+			if codeSnippet {
+				lines++
+				continue
+			}
 			links := v.processLine(line)
 			for link, processor := range links {
 				err := processor.Process(ctx, link, fileName)
