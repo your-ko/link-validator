@@ -87,8 +87,7 @@ jobs:
           push: false
 
       - name: Link validation
-        uses: your-ko/link-validator@1.5.0
+        uses: your-ko/link-validator@1.6.0
         with:
           log-level: 'info'
-          ignored-domains: 'token.actions.githubusercontent.com'
           pat: ${{ secrets.GITHUB_TOKEN }}
