@@ -51,6 +51,9 @@ func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _ st
 //
 //meta:operation GET /orgs/{org}
 func handleOrgExist(ctx context.Context, c *github.Client, _, org, _, _ string) error {
+	if org == "" {
+		return nil
+	}
 	_, _, err := c.Organizations.Get(ctx, org)
 	return err
 }
