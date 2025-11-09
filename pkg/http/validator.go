@@ -15,10 +15,10 @@ import (
 	"time"
 )
 
-var urlRegex = regexp.MustCompile(`https://[^\s"'()\[\]]+`)
+var urlRegex = regexp.MustCompile(`https://\S+`)
 
 // ghRegex is identical to the github.repoRegex, but it is used in inverse way
-var ghRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+var ghRegex = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+`)
 
 type LinkProcessor struct {
 	httpClient     *http.Client

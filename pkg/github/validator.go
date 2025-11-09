@@ -9,45 +9,64 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/v74/github"
-	"go.uber.org/zap"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/google/go-github/v74/github"
+	"go.uber.org/zap"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
 var handlers = map[string]handlerEntry{
-	// File-ish routes — all use Contents API
-	"blob":  {name: "contents", fn: handleContents},
-	"tree":  {name: "contents", fn: handleContents},
-	"raw":   {name: "contents", fn: handleContents},
-	"blame": {name: "contents", fn: handleContents},
+	"nope": {name: "nope", fn: handleNothing},
+
+	"blob":    {name: "contents", fn: handleContents},
+	"tree":    {name: "contents", fn: handleContents},
+	"raw":     {name: "contents", fn: handleContents},
+	"blame":   {name: "contents", fn: handleContents},
+	"compare": {name: "compareCommits", fn: handleCompareCommits},
 
 	// Single-object routes
-	"commit":   {name: "commit", fn: handleCommit},
-	"issues":   {name: "issues", fn: handleIssue},
-	"pull":     {name: "pull", fn: handlePR},
-	"releases": {name: "releases", fn: handleReleases},
-	"actions":  {name: "actions", fn: handleWorkflow},
+	"commit":       {name: "commit", fn: handleCommit},
+	"pull":         {name: "pull", fn: handlePull},
+	"milestone":    {name: "milestone", fn: handleMilestone},
+	"project":      {name: "repo-exist", fn: handleRepoExist},
+	"advisories":   {name: "advisories", fn: handleSecurityAdvisories},
+	"commits":      {name: "repo-exist", fn: handleCommit},
+	"actions":      {name: "actions", fn: handleWorkflow},
+	"user":         {name: "user", fn: handleUser},
+	"attestations": {name: "attestations", fn: handleAttestation},
 
-	// Generic repository routes — we just validate the repo exists
+	// not processed
+	"issues":   {name: "issues", fn: handleIssue},
+	"releases": {name: "releases", fn: handleReleases},
+	"wiki":     {name: "wiki", fn: handleWiki},
+	"pkgs":     {name: "pkgs", fn: handlePackages},
+	"label":    {name: "labels", fn: handleLabel},
+
+	// Generic lists  — we just validate the repo exists
 	"pulls":       {name: "repo-exist", fn: handleRepoExist},
-	"commits":     {name: "repo-exist", fn: handleRepoExist},
-	"discussions": {name: "repo-exist", fn: handleRepoExist},
-	"branches":    {name: "repo-exist", fn: handleRepoExist},
-	"tags":        {name: "repo-exist", fn: handleRepoExist},
-	"milestones":  {name: "repo-exist", fn: handleRepoExist},
 	"labels":      {name: "repo-exist", fn: handleRepoExist},
-	"projects":    {name: "repo-exist", fn: handleRepoExist},
+	"tags":        {name: "repo-exist", fn: handleRepoExist},
+	"branches":    {name: "repo-exist", fn: handleRepoExist},
 	"settings":    {name: "repo-exist", fn: handleRepoExist},
+	"milestones":  {name: "repo-exist", fn: handleRepoExist},
+	"discussions": {name: "repo-exist", fn: handleRepoExist},
+	"projects":    {name: "repo-exist", fn: handleRepoExist},
 	"security":    {name: "repo-exist", fn: handleRepoExist},
+	"packages":    {name: "repo-exist", fn: handleRepoExist},
+
+	// corp
+	"orgs": {name: "org-exist", fn: handleOrgExist},
 }
 
 var (
-	ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+	enterpriseRegex = regexp.MustCompile("github\\.[a-z0-9-]+\\.[a-z0-9.-]+")
+	//ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
+	ghRegex   = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+(?:/\S*)?`)
 	repoRegex = regexp.MustCompile(
 		`^https:\/\/` +
 			// 1: host (no subdomains like api./uploads.)
@@ -61,7 +80,7 @@ var (
 			// optional kind/ref[/tail...]
 			`(?:\/` +
 			// 4: kind
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings|security)` +
+			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings|security|wiki|packages)` +
 			// optional ref section - some URLs like /releases, /pulls, /issues don't require a ref
 			`(?:\/` +
 			// allow "releases/tag/<ref>" (harmless for others)
@@ -130,46 +149,180 @@ func httpClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout}
 }
 
+type ghURL struct {
+	enterprise bool
+	host       string
+	owner      string
+	repo       string
+	typ        string
+	ref        string
+	path       string
+	anchor     string
+}
+
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
-	if isCorpUrl(url) && proc.corpGitHubUrl == "" {
+	gh, err := parseUrl(strings.ToLower(url))
+	if err != nil {
+		return err
+	}
+
+	if gh.enterprise && proc.corpGitHubUrl == "" {
 		return fmt.Errorf("the url '%s' looks like a corp url, but CORP_URL is not set", url)
 	}
-	var host, owner, repo, typ, ref, path string
-
-	match := repoRegex.FindStringSubmatch(url)
-	if len(match) == 0 {
-		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
-	}
-	host, owner, repo, typ, ref, path, _ = match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
-
 	client := proc.client
-	if host == proc.corpGitHubUrl {
+	if gh.host == proc.corpGitHubUrl {
 		client = proc.corpClient
 	}
 
 	var entry handlerEntry
 	var ok bool
-	switch {
-	case typ == "" || owner == "organizations":
-		switch {
-		case (owner != "" && repo == "") || owner == "organizations":
-			entry = handlerEntry{name: "org-exist", fn: handleOrgExist}
-		case owner != "" && repo != "":
+	switch gh.typ {
+	case "labels":
+		if gh.ref == "" {
 			entry = handlerEntry{name: "repo-exist", fn: handleRepoExist}
-		default:
-			return fmt.Errorf("unsupported GitHub URL: %s", url)
+		} else {
+			entry = handlerEntry{name: "label-exist", fn: handleLabel}
 		}
 	default:
-		entry, ok = handlers[typ]
+		entry, ok = handlers[gh.typ]
 		if !ok {
-			return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", typ)
+			return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
 		}
 	}
 	proc.logger.Debug("using", zap.String("handler", entry.name))
 
-	return mapGHError(url, entry.fn(ctx, client, owner, repo, ref, path))
+	return mapGHError(url, entry.fn(ctx, client, gh.owner, gh.repo, gh.ref, gh.path, gh.anchor))
+}
+
+func parseUrl(link string) (*ghURL, error) {
+	u, err := url.Parse(strings.TrimSuffix(link, ".git"))
+	if err != nil {
+		return nil, err
+	}
+	if !strings.HasPrefix(u.Hostname(), "github.") {
+		return nil, fmt.Errorf("not a GitHub URL")
+	}
+	if strings.HasSuffix(u.Hostname(), "api.github") ||
+		strings.HasPrefix(u.Hostname(), "uploads.github") {
+		return nil, fmt.Errorf("API/uploads subdomain not supported")
+	}
+
+	parts := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
+
+	gh := &ghURL{
+		host:       u.Host,
+		enterprise: enterpriseRegex.MatchString(u.Hostname()),
+		anchor:     u.Fragment,
+	}
+
+	// Handle root GitHub URL
+	if len(parts) <= 1 && parts[0] == "" {
+		return gh, nil
+	}
+
+	// out of size prevention
+	maxLength := 10
+	diff := maxLength - len(parts)
+	parts = append(parts, make([]string, diff)...)[:maxLength]
+
+	// Handle org urls
+	switch parts[0] {
+	case "organizations", "orgs":
+		gh.typ = "orgs"
+		gh.owner = parts[1]
+		gh.path = joinPath(parts[2:])
+		return gh, nil
+	case "settings":
+		gh.typ = "nope"
+		gh.path = joinPath(parts[1:])
+		return gh, nil
+	}
+
+	gh.owner = parts[0]
+	gh.repo = parts[1]
+	gh.typ = parts[2]
+
+	switch gh.typ {
+	case "":
+		if gh.repo == "" {
+			gh.typ = "user"
+		}
+	case "branches", "settings", "tags", "labels", "packages":
+	// these above go to simple 'if repo exists' validation
+	case "blob", "tree", "blame", "raw":
+		gh.ref = parts[3]
+		gh.path = joinPath(parts[4:])
+	case "releases":
+		switch parts[3] {
+		case "tag", "download":
+			gh.ref = parts[3]
+			gh.path = joinPath(parts[4:])
+		default:
+			gh.ref = ""
+			gh.path = parts[3]
+		}
+	case "commits", "commit", "issues", "pulls", "pull",
+		"discussions", "milestones", "milestone",
+		"projects", "project", "advisories", "compare",
+		"attestations", "pkgs",
+		"actions": // TODO: merge up or move to default
+		gh.ref = parts[3]
+		gh.path = joinPath(parts[4:])
+	case "security":
+		// I validate only 'advisories' existence, the rest is goes by 'handleRepoExist'
+		if parts[3] == "advisories" && parts[4] != "" {
+			gh.typ = "advisories"
+			gh.ref = parts[4]
+		}
+	default:
+		return nil, fmt.Errorf("unsupported GitHub URL found '%s', please report a bug", link)
+
+		//case "commit", "issues", "pull", , "wiki", "commits":
+		//	gh.ref = parts[3]
+		//	gh.path = joinPath(parts[4:])
+		//case "discussion", "discussions":
+		//	// there is no support for discussions in the github sdk, so they need to be fetched by using
+		//	// GraphQL API, the REST API, which creates a problem with a separate authentication.
+		//	// Maybe will be implemented in the future.
+		//	gh.typ = "discussions"
+		//case "labels":
+		//	if parts[3] != "" {
+		//		gh.typ = "label"
+		//		gh.ref = parts[3]
+		//	}
+		//case "releases":
+		////https://github.com/your-ko/link-validator/releases/tag/0.9.0
+		////https://github.com/your-ko/link-validator/releases/0.9.0
+		////https://github.com/your-ko/link-validator/releases
+		//case "packages":
+		//	// Package URLs: /packages/{package_type}/{package_name}
+		//	if parts[3] != "" {
+		//		gh.ref = parts[3] // Package type (e.g., "container", "npm", "maven")
+		//		if parts[4] != "" {
+		//			gh.path = parts[4] // Package name
+		//		}
+		//	}
+		//case :
+		//	gh.ref = parts[3]
+		//	gh.path = joinPath(parts[4:])
+	}
+
+	return gh, nil
+}
+
+func joinPath(parts []string) string {
+	i := 0
+	for ; i < len(parts) && parts[i] != ""; i++ {
+	} // find first empty
+	if i == 0 {
+		return ""
+	}
+	if i == 1 {
+		return parts[0]
+	}
+	return strings.Join(parts[:i], "/")
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
@@ -187,8 +340,4 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		urls = append(urls, raw)
 	}
 	return urls
-}
-
-func isCorpUrl(url string) bool {
-	return !strings.Contains(url, "github.com")
 }
