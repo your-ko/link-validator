@@ -109,20 +109,25 @@ jobs:
 
 ## Configuration
 
-| Environment Variable | Required | Description                                                                                                                                                                                                                                                                                       | Default |
-|----------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| `LOG_LEVEL`          | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                                                                                                                     | `info`  |
-| `FILE_MASKS`         | No       | Comma-separated file patterns to scan                                                                                                                                                                                                                                                             | `*.md`  |
-| `PAT`                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                                                                                                           | `""`    |
-| `CORP_URL`           | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                                                                                                                                                                           | `""`    |
-| `CORP_PAT`           | No       | GitHub Enterprise personal access token                                                                                                                                                                                                                                                           | `""`    |
-| `IGNORED_DOMAINS`    | No       | Comma separated list of domains or their parts that should be ignored during validation. <br/>Useful when you have some resources that require additional authentication which you can use in GutHub runners. Or if some url simply not accessible from GitHub runners due to network limitation. | `[]`    |
+| Environment Variable | Required | Description                                                                              | Default |
+|----------------------|----------|------------------------------------------------------------------------------------------|---------|
+| `LOG_LEVEL`          | No       | Controls verbosity (debug, info, warn, error)                                            | `info`  |
+| `FILE_MASKS`         | No       | Comma-separated file patterns to scan                                                    | `*.md`  |
+| `PAT`                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                  | `""`    |
+| `CORP_URL`           | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                  | `""`    |
+| `CORP_PAT`           | No       | GitHub Enterprise personal access token                                                  | `""`    |
+| `IGNORED_DOMAINS`    | No       | Comma separated list of domains or their parts that should be ignored during validation. | `[]`    |
 
 ### Authentication
 
 **GitHub.com**: Use `GITHUB_TOKEN` in CI or a PAT with `public_repo`/`repo` scope. Authentication is optional but recommended to avoid rate limiting.
 
 **GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
+
+**IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example OKTA or LDAP.
+At the moment, link-validator doesn't support such authentication, so any 401 are treated as a success. 
+So if you have such resources you can explicitly list them in this variable, so you know they are not validated. 
+Also, this option is useful when you have some resources simply not accessible from GitHub runners due to network limitation.
 
 ## Implementation Details
 
