@@ -36,12 +36,12 @@ This tool understands GitHub's URL patterns and uses the API for accurate valida
 
 ## GitHub Actions Setup
 
-Link-validator can be used either as a independent GitHub workflow or as a GitHub action.
+Link-validator can be used either as an independent GitHub workflow or as a GitHub action.
 
 ### GitHub action
 
-This can be added, for example, into the workflow that runs on PR. In this case if there are broken links in the documentation,
-the step will fail (will be improved in the coming releases)
+This can be added, for example, to the workflow that runs on PR. In this case, if there are broken links in the documentation,
+the step will fail (this will be improved in future releases)
 
 ```yaml
     - name: Link validation
@@ -52,7 +52,7 @@ the step will fail (will be improved in the coming releases)
 ```
 
 ### GitHub workflow
-This can be added as an independent workflow. Then the scan will be done for the whole repository on the push event, 
+This can be added as an independent workflow. Then the scan will be performed for the whole repository on the push event,
 so you can always see the status of the documentation. 
 
 ```yaml
@@ -63,7 +63,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read  #  # Required to checkout code and read files
+  contents: read  # Required to checkout code and read files
 
 env:
   DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:1.0.0 # pin a version or use 'latest'
@@ -116,7 +116,7 @@ jobs:
 | `PAT`                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                  | `""`    |
 | `CORP_URL`           | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                  | `""`    |
 | `CORP_PAT`           | No       | GitHub Enterprise personal access token                                                  | `""`    |
-| `IGNORED_DOMAINS`    | No       | Comma separated list of domains or their parts that should be ignored during validation. | `[]`    |
+| `IGNORED_DOMAINS`    | No       | Comma-separated list of domains or their parts that should be ignored during validation. | `[]`    |
 
 ### Authentication
 
@@ -125,9 +125,10 @@ jobs:
 **GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
 
 **IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example OKTA or LDAP.
-At the moment, link-validator doesn't support such authentication, so any 401 are treated as a success. 
-So if you have such resources you can explicitly list them in this variable, so you know they are not validated. 
-Also, this option is useful when you have some resources simply not accessible from GitHub runners due to network limitation.
+At the moment, link-validator doesn't support such authentication, so any 401 responses are treated as a success.
+If you have such resources, you can explicitly list them in this variable so you know they are not validated.
+
+This option is also useful when you have resources that are simply not accessible from GitHub runners due to network limitations.
 
 ## Implementation Details
 
@@ -145,7 +146,7 @@ The validator uses three specialized processors:
 **Local processor**: Validates local file references and anchor links within Markdown files. Resolves relative paths correctly.
 
 ```markdown
-Content of code snippets is ignored because it might contains non-parseable or non-reachable links.
+Content of code snippets is ignored because it might contain non-parseable or non-reachable links.
 ```
 
 ## Troubleshooting
@@ -157,7 +158,7 @@ Configure `CORP_URL` and `CORP_PAT`. The validator uses GitHub's API which requi
 Provide `PAT` to increase rate limits from 60/hour to 5000/hour.
 
 **Redirect loops or 3xx errors**
-Usually indicates authentication or proxy configuration issues. Enable debug logging with `LOG_LEVEL=debug` to trace redirect chains.
+This usually indicates authentication or proxy configuration issues. Enable debug logging with `LOG_LEVEL=debug` to trace redirect chains.
 
 ## Exit Codes
 
@@ -168,7 +169,7 @@ Usually indicates authentication or proxy configuration issues. Enable debug log
 
 Image size: ~10MB
 
-Recommend pinning to specific versions (e.g., `0.18.0`) rather than using `latest` for reproducible builds.
+It is recommended pinning to specific versions (e.g., `0.18.0`) rather than using `latest` for reproducible builds.
 
 ## Security
 
