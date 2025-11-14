@@ -4,6 +4,7 @@
 
 # Link Validator
 
+
 Validates links and URLs in Markdown files by checking:
 - GitHub links (files, PRs, issues, releases, workflows, etc.)
 - External HTTP(S) URLs
