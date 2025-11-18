@@ -58,46 +58,12 @@ var handlers = map[string]handlerEntry{
 	"projects":    {name: "repo-exist", fn: handleRepoExist},
 	"security":    {name: "repo-exist", fn: handleRepoExist},
 	"packages":    {name: "repo-exist", fn: handleRepoExist},
-
-	// corp
-	"orgs": {name: "org-exist", fn: handleOrgExist},
+	"orgs":        {name: "org-exist", fn: handleOrgExist},
 }
 
 var (
 	enterpriseRegex = regexp.MustCompile("github\\.[a-z0-9-]+\\.[a-z0-9.-]+")
-	//ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
-	ghRegex   = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+(?:/\S*)?`)
-	repoRegex = regexp.MustCompile(
-		`^https:\/\/` +
-			// 1: host (no subdomains like api./uploads.)
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
-			// 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// optional repo block and everything after it
-			`(?:\/` +
-			// 3: repo
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// optional kind/ref[/tail...]
-			`(?:\/` +
-			// 4: kind
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings|security|wiki|packages)` +
-			// optional ref section - some URLs like /releases, /pulls, /issues don't require a ref
-			`(?:\/` +
-			// allow "releases/tag/<ref>" (harmless for others)
-			`(?:tag\/)?` +
-			// 5: ref or first-after-kind
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// 6: tail (may include multiple / segments)
-			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` +
-			`)?` +
-			`)?` +
-			`)?` +
-			// optional trailing slash (for org-only or repo root)
-			`\/?` +
-			// 7: optional fragment
-			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
-			`$`,
-	)
+	ghRegex         = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+(?:/\S*)?`)
 )
 
 type LinkProcessor struct {
@@ -179,12 +145,6 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	var entry handlerEntry
 	var ok bool
 	switch gh.typ {
-	case "labels":
-		if gh.ref == "" {
-			entry = handlerEntry{name: "repo-exist", fn: handleRepoExist}
-		} else {
-			entry = handlerEntry{name: "label-exist", fn: handleLabel}
-		}
 	default:
 		entry, ok = handlers[gh.typ]
 		if !ok {
