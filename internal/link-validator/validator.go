@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"io/fs"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
@@ -14,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type LinkProcessor interface {
@@ -23,11 +24,11 @@ type LinkProcessor interface {
 }
 
 type Stats struct {
-	Lines    int
-	Links    int
-	Errors   int
-	NotFound int
-	Files    int
+	Lines         int
+	TotalLinks    int
+	Errors        int
+	NotFoundLinks int
+	Files         int
 }
 
 type LinkValidador struct {
@@ -94,10 +95,10 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 
 				if errors.Is(err, errs.ErrNotFound) {
 					logger.Warn("link not found", zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
-					stats.NotFound++
+					stats.NotFoundLinks++
 				} else if errors.Is(err, errs.ErrEmptyBody) {
 					logger.Warn("link not found", zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
-					stats.NotFound++
+					stats.NotFoundLinks++
 				} else {
 					stats.Errors++
 					logger.Warn("error validating link", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines), zap.Error(err))
@@ -113,7 +114,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 			logger.Warn("close failed", zap.String("file", fileName), zap.Error(err))
 		}
 		stats.Lines = stats.Lines + lines
-		stats.Links = stats.Links + linksFound
+		stats.TotalLinks = stats.TotalLinks + linksFound
 
 		if logger.Core().Enabled(zap.DebugLevel) {
 			logger.Debug("Processed: ", zap.Int("lines", lines), zap.Int("links", linksFound), zap.String("fileName", fileName))
