@@ -62,7 +62,7 @@ var handlers = map[string]handlerEntry{
 }
 
 var (
-	enterpriseRegex = regexp.MustCompile("github\\.[a-z0-9-]+\\.[a-z0-9.-]+")
+	enterpriseRegex = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)
 	ghRegex         = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+(?:/\S*)?`)
 )
 
