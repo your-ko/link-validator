@@ -209,7 +209,7 @@ func parseUrl(link string) (*ghURL, error) {
 		if gh.repo == "" {
 			gh.typ = "user"
 		}
-	case "branches", "settings", "tags", "labels", "packages":
+	case "branches", "settings", "tags", "labels", "packages", "pulls":
 	// these above go to simple 'if repo exists' validation
 	case "blob", "tree", "blame", "raw":
 		gh.ref = parts[3]
@@ -223,10 +223,10 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.ref = ""
 			gh.path = parts[3]
 		}
-	case "commits", "commit", "issues", "pulls", "pull",
+	case "commits", "commit", "issues", "pull",
 		"discussions", "milestones", "milestone",
 		"projects", "project", "advisories", "compare",
-		"attestations", "pkgs",
+		"attestations", "pkgs", "wiki",
 		"actions": // TODO: merge up or move to default
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])

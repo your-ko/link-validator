@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"io/fs"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
@@ -14,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type LinkProcessor interface {
@@ -92,6 +93,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 					continue
 				}
 
+				// TODO: improve error processing. Many handlers return fmt.Error and below is incorrect
 				if errors.Is(err, errs.ErrNotFound) {
 					logger.Warn("link not found", zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
 					stats.NotFound++

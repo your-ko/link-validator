@@ -780,42 +780,39 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 			url:  "https://github.com/your-ko",
 			want: &ghURL{host: "github.com", owner: "your-ko", typ: "user"},
 		},
-		//
-		//// Wiki URLs
-		//{
-		//	name: "repo wiki root",
-		//	url:  "https://github.com/your-ko/link-validator/wiki",
-		//	want: &ghURL{
-		//		host:  "github.com",
-		//		owner: "your-ko",
-		//		repo:  "link-validator",
-		//		typ:   "wiki",
-		//	},
-		//},
-		//{
-		//	name: "repo wiki page",
-		//	url:  "https://github.com/your-ko/link-validator/wiki/Installation-Guide",
-		//	want: &ghURL{
-		//		host:  "github.com",
-		//		owner: "your-ko",
-		//		repo:  "link-validator",
-		//		typ:   "wiki",
-		//		ref:   "Installation-Guide",
-		//	},
-		//},
-		//{
-		//	name: "repo wiki page history",
-		//	url:  "https://github.com/your-ko/link-validator/wiki/Installation-Guide/_history",
-		//	want: &ghURL{
-		//		host:  "github.com",
-		//		owner: "your-ko",
-		//		repo:  "link-validator",
-		//		typ:   "wiki",
-		//		ref:   "Installation-Guide",
-		//		path:  "_history",
-		//	},
-		//},
-		//},
+		{ // TODO: GitHub wikis are not accessible through the REST API
+			name: "repo wiki root",
+			url:  "https://github.com/your-ko/link-validator/wiki",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "wiki",
+			},
+		},
+		{
+			name: "repo wiki page",
+			url:  "https://github.com/your-ko/link-validator/wiki/Installation-Guide",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "wiki",
+				ref:   "Installation-Guide",
+			},
+		},
+		{
+			name: "repo wiki page history",
+			url:  "https://github.com/your-ko/link-validator/wiki/Installation-Guide/_history",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "wiki",
+				ref:   "Installation-Guide",
+				path:  "_history",
+			},
+		},
 		//// Gist URLs - these should return nil as they use gist.github.com
 		//{
 		//	name: "gist root",
