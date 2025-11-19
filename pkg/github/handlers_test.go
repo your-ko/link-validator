@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"link-validator/pkg/errs"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -745,6 +746,7 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 				body:   `[]`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: `security advisory "GHSA-nonexistent-id" not found`,
 		},
 		{
@@ -755,6 +757,7 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 				body:   `[{"ghsa_id": "GHSA-1111-2222-3333", "summary": "First advisory"}, {"ghsa_id": "GHSA-4444-5555-6666", "summary": "Second advisory"}]`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: `security advisory "GHSA-missing-xxxx-xxxx" not found`,
 		},
 		{
@@ -1215,6 +1218,7 @@ func Test_handleReleases(t *testing.T) {
 				body:   `{"id": 33333, "tag_name": "v1.0.0", "assets": [{"name": "existing.tar.gz"}, {"name": "another.zip"}]}`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: "asset 'nonexistent.zip' wasn't found in the release assets",
 		},
 		{
@@ -1312,6 +1316,7 @@ func Test_handleLabel(t *testing.T) {
 				body:   `[]`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: "label 'nonexistent' not found",
 		},
 		{
@@ -1322,6 +1327,7 @@ func Test_handleLabel(t *testing.T) {
 				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef"}, {"name": "documentation", "color": "0075ca"}]`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: "label 'missing-label' not found",
 		},
 		{
@@ -1332,6 +1338,7 @@ func Test_handleLabel(t *testing.T) {
 				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef"}]`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: "label 'Bug' not found",
 		},
 		{
@@ -1410,6 +1417,7 @@ func Test_handleWiki(t *testing.T) {
 				body:   `{"id": 123, "name": "link-validator", "has_wiki": false, "owner": {"login": "your-ko"}}`,
 			},
 			wantErr:          true,
+			wantIs:           errs.ErrNotFound,
 			wantErrorMessage: "wiki is not enabled for repository your-ko/link-validator",
 		},
 		{
