@@ -713,6 +713,163 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 	}
 }
 
+func Test_handleWorkflow(t *testing.T) {
+	type args struct {
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
+	}{
+		{
+			name: "actions list - repository exists",
+			args: args{"your-ko", "link-validator", "actions", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 123, "name": "link-validator"}`,
+			},
+		},
+		{
+			name: "specific workflow file",
+			args: args{"your-ko", "link-validator", "workflows", "pr.yaml", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 12345, "name": "PR", "path": ".github/workflows/pr.yml", "state": "active"}`,
+			},
+		},
+		{
+			name: "workflow badge",
+			args: args{"your-ko", "link-validator", "workflows", "build.yml/badge.svg", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 67890, "name": "Build", "path": ".github/workflows/build.yml", "state": "active"}`,
+			},
+		},
+		{
+			name: "specific workflow run",
+			args: args{"your-ko", "link-validator", "runs", "1234567890", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 1234567890, "run_number": 42, "status": "completed", "conclusion": "success"}`,
+			},
+		},
+		{
+			name: "workflow run job",
+			args: args{"your-ko", "link-validator", "runs", "1234567890/job/9876543210", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 9876543210, "run_id": 1234567890, "name": "build", "status": "completed"}`,
+			},
+		},
+		{
+			name: "workflow run attempt",
+			args: args{"your-ko", "link-validator", "runs", "1234567890/attempts/2", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"total_count": 3, "jobs": [{"id": 1, "name": "job1"}, {"id": 2, "name": "job2"}]}`,
+			},
+		},
+		{
+			name: "invalid workflow run ID - non-numeric",
+			args: args{"your-ko", "link-validator", "runs", "invalid-run-id", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "invalid workflow id: 'invalid-run-id'",
+		},
+		{
+			name: "invalid job ID - non-numeric",
+			args: args{"your-ko", "link-validator", "runs", "123456/job/invalid-job", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "invalid job id: '123456/job/invalid-job'",
+		},
+		{
+			name: "invalid attempt ID - non-numeric",
+			args: args{"your-ko", "link-validator", "runs", "123456/attempts/invalid-attempt", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "invalid attempt id: '123456/attempts/invalid-attempt'",
+		},
+		{
+			name: "unsupported ref type",
+			args: args{"your-ko", "link-validator", "unsupported", "some-path", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "unsupported ref found",
+		},
+		{
+			name: "repository not found - actions list",
+			args: args{"your-ko", "nonexistent-repo", "actions", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+		{
+			name: "workflow not found - 404",
+			args: args{"your-ko", "link-validator", "workflows", "nonexistent.yaml", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleWorkflow(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
+		})
+	}
+}
+
 func Test_handleIssue(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -916,32 +1073,6 @@ func Test_handleWiki(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := handleWiki(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
 				t.Errorf("handleWiki() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_handleWorkflow(t *testing.T) {
-	type args struct {
-		ctx      context.Context
-		c        *github.Client
-		owner    string
-		repo     string
-		ref      string
-		path     string
-		fragment string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := handleWorkflow(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
-				t.Errorf("handleWorkflow() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

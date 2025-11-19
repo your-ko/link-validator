@@ -173,7 +173,53 @@ func handleSecurityAdvisories(ctx context.Context, c *github.Client, owner, repo
 	return fmt.Errorf("security advisory %q not found", ref)
 }
 
-// ------
+// handleWorkflow validates the two UI forms:
+//   - /actions/workflows/<file>
+//   - /actions/workflows/<file>/badge.svg
+//
+// and I assume that if the workflow exists, then the badge exists too
+func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+	switch {
+	case path == "":
+		// presumably if the repo exists then the actions list exists as well
+		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	case ref == "workflows":
+		path = strings.TrimSuffix(path, "/badge.svg")
+		_, _, err := c.Actions.GetWorkflowByFileName(ctx, owner, repo, path)
+		return err
+	case ref == "runs":
+		parts := strings.Split(path, "/")
+		runId, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid workflow id: '%s'", path)
+		}
+
+		switch {
+		case strings.Contains(path, "job"):
+			job := strings.TrimPrefix(path, fmt.Sprintf("%v/job/", runId))
+			jobId, err := strconv.ParseInt(job, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid job id: '%s'", path)
+			}
+			_, _, err = c.Actions.GetWorkflowJobByID(ctx, owner, repo, jobId)
+			return err
+		case strings.Contains(path, "attempts"):
+			attempts := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
+			attemptId, err := strconv.ParseInt(attempts, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid attempt id: '%s'", path)
+			}
+			_, _, err = c.Actions.ListWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
+			return err
+		default:
+			_, _, err = c.Actions.GetWorkflowRunByID(ctx, owner, repo, runId)
+			return err
+		}
+	}
+	return fmt.Errorf("unsupported ref found") // TODO
+}
+
+// ==================
 
 // handleWiki validates existence of GitHub wiki pages.
 // For the URL pattern: /wiki/{page-name}
@@ -258,53 +304,6 @@ func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ str
 	}
 	_, _, err := c.Organizations.Get(ctx, owner)
 	return err
-}
-
-// handleWorkflow validates the two UI forms:
-//   - /actions/workflows/<file>
-//   - /actions/workflows/<file>/badge.svg
-//
-// and I assume that if the workflow exists, then the badge exists too
-func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
-	fmt.Println("test")
-	switch {
-	case path == "":
-		// presumably if the repo exists then the actions list exists as well
-		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
-	case ref == "workflows":
-		path = strings.TrimSuffix(path, "/badge.svg")
-		_, _, err := c.Actions.GetWorkflowByFileName(ctx, owner, repo, path)
-		return err
-	case ref == "runs":
-		parts := strings.Split(path, "/")
-		runId, err := strconv.ParseInt(parts[0], 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid workflow id: '%s'", path)
-		}
-
-		switch {
-		case strings.Contains(path, "job"):
-			job := strings.TrimPrefix(path, fmt.Sprintf("%v/job/", runId))
-			jobId, err := strconv.ParseInt(job, 10, 64)
-			if err != nil {
-				return fmt.Errorf("invalid job id: '%s'", path)
-			}
-			_, _, err = c.Actions.GetWorkflowJobByID(ctx, owner, repo, jobId)
-			return err
-		case strings.Contains(path, "attempts"):
-			attempts := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
-			attemptId, err := strconv.ParseInt(attempts, 10, 64)
-			if err != nil {
-				return fmt.Errorf("invalid attempt id: '%s'", path)
-			}
-			_, _, err = c.Actions.ListWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
-			return err
-		default:
-			_, _, err = c.Actions.GetWorkflowRunByID(ctx, owner, repo, runId)
-			return err
-		}
-	}
-	return fmt.Errorf("unsupported ref found") // TODO
 }
 
 // handleReleases handles
