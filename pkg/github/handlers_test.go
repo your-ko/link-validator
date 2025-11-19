@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,26 +39,124 @@ func Test_handleNothing(t *testing.T) {
 
 func Test_handleContents(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		ref   string
-		path  string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
+	}
+	type fields struct {
+		status         int
+		path           string
+		body           string
+		base64encoding bool
 	}
 	tests := []struct {
 		name    string
+		fields  fields
 		args    args
 		wantErr bool
+		wantIs  error // sentinel check via errors.Is; nil => no sentinel check
 	}{
-		// TODO: Add test cases.
+		{
+			name: "blob file main branch",
+			args: args{"your-ko", "link-validator", "main", "README.md", ""},
+			fields: fields{
+				status:         http.StatusOK,
+				body:           "test content",
+				base64encoding: true,
+			},
+		},
+		{
+			name: "blob file nested directory",
+			args: args{"your-ko", "link-validator", "main", "docs/README.md", ""},
+			fields: fields{
+				status:         http.StatusOK,
+				body:           "test content",
+				base64encoding: true,
+			},
+		},
+		{
+			name: "blob file in tag",
+			args: args{"your-ko", "link-validator", "1.0.0", "README.md", ""},
+			fields: fields{
+				status:         http.StatusOK,
+				body:           "test content",
+				base64encoding: true,
+			},
+		},
+		{
+			name: "blob file in commit",
+			args: args{"your-ko", "link-validator", "83e43288254d0f36e723ef2cf3328b8b77836560", "README.md", ""},
+			fields: fields{
+				status:         http.StatusOK,
+				body:           "test content",
+				base64encoding: true,
+			},
+		},
+		{
+			name: "tree directory",
+			args: args{"your-ko", "link-validator", "main", "cmd", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   "[]",
+			},
+		},
+		{
+			name: "refs heads pattern",
+			args: args{"your-ko", "link-validator", "refs", "heads/main/Dockerfile", ""},
+			fields: fields{
+				status:         http.StatusOK,
+				body:           "FROM alpine",
+				base64encoding: true,
+			},
+		},
+		// Error cases
+		{
+			name: "file not found - 404",
+			args: args{"your-ko", "link-validator", "main", "nonexistent.md", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+			},
+			wantErr: true,
+			wantIs:  nil, // handleContents doesn't use mapGHError, so we get raw GitHub API error
+		},
+		{
+			name: "server error - 500",
+			args: args{"your-ko", "link-validator", "main", "README.md", ""},
+			fields: fields{
+				status: http.StatusInternalServerError,
+			},
+			wantErr: true,
+			wantIs:  nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleContents(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleContents() error = %v, wantErr %v", err, tt.wantErr)
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleContents(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
 			}
+			if !tt.wantErr {
+				return
+			}
+
+			// Only check wantIs if it's specified (non-nil)
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			//expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, , tt.args.link)
+			//if err.Error() != expected {
+			//	t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
+			//}
+
 		})
 	}
 }
