@@ -147,25 +147,85 @@ func Test_handleContents(t *testing.T) {
 
 func Test_handleCommit(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
 		owner string
 		repo  string
 		ref   string
 		in5   string
 		in6   string
 	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
 	}{
-		// TODO: Add test cases.
+		// Success cases - commits list (empty ref)
+		{
+			name: "commits list - repository exists",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 123, "name": "link-validator"}`,
+			},
+		},
+		{
+			name: "specific commit hash",
+			args: args{"your-ko", "link-validator", "a96366f66ffacd461de10a1dd561ab5a598e9167", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"sha": "a96366f66ffacd461de10a1dd561ab5a598e9167", "commit": {"message": "test commit"}}`,
+			},
+		},
+		{
+			name: "commits list - repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+		{
+			name: "commit not found - 404",
+			args: args{"your-ko", "link-validator", "nonexistent-commit-hash", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleCommit(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleCommit() error = %v, wantErr %v", err, tt.wantErr)
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleCommit(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
 			}
 		})
 	}

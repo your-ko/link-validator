@@ -66,6 +66,21 @@ func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, pat
 	return err
 }
 
+// handleCommit validates existence of the specified commit.
+//
+// GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
+//
+//meta:operation GET /repos/{owner}/{repo}/commits/{ref}
+func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+	if ref == "" {
+		// presumably list of commits exists if the repo exists
+		_, _, err := c.Repositories.Get(ctx, owner, repo)
+		return err
+	}
+	_, _, err := c.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
+	return err
+}
+
 // ------
 
 // handleSecurityAdvisories validates existence of security advisories.
@@ -183,21 +198,6 @@ func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ str
 		return nil
 	}
 	_, _, err := c.Organizations.Get(ctx, owner)
-	return err
-}
-
-// handleCommit validates existence of the specified commit.
-//
-// GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
-//
-//meta:operation GET /repos/{owner}/{repo}/commits/{ref}
-func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	if ref == "" {
-		// presumably list of commits exists if the repo exists
-		_, _, err := c.Repositories.Get(ctx, owner, repo)
-		return err
-	}
-	_, _, err := c.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
 	return err
 }
 
