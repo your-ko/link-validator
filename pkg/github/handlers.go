@@ -52,6 +52,22 @@ func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _, _
 	return err
 }
 
+// handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
+//
+//meta:operation GET /repos/{owner}/{repo}/contents/{path}
+func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
+	if strings.HasPrefix(path, "heads/") {
+		// extract the branch name
+		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
+		ref = parts[0]
+		path = parts[1]
+	}
+	_, _, _, err := c.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{Ref: ref})
+	return err
+}
+
+// ------
+
 // handleSecurityAdvisories validates existence of security advisories.
 // For the URL pattern: /security/advisories/{advisory_id}
 //
@@ -167,20 +183,6 @@ func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ str
 		return nil
 	}
 	_, _, err := c.Organizations.Get(ctx, owner)
-	return err
-}
-
-// handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
-//
-//meta:operation GET /repos/{owner}/{repo}/contents/{path}
-func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
-	if strings.HasPrefix(path, "heads/") {
-		// extract the branch name
-		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
-		ref = parts[0]
-		path = parts[1]
-	}
-	_, _, _, err := c.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{Ref: ref})
 	return err
 }
 

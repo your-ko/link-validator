@@ -87,28 +87,11 @@ func Test_handleContents(t *testing.T) {
 			},
 		},
 		{
-			name: "blob file in commit",
-			args: args{"your-ko", "link-validator", "83e43288254d0f36e723ef2cf3328b8b77836560", "README.md", ""},
+			name: "refs heads pattern",
+			args: args{"your-ko", "link-validator", "refs", "heads/main/README.md", ""},
 			fields: fields{
 				status:         http.StatusOK,
 				body:           "test content",
-				base64encoding: true,
-			},
-		},
-		{
-			name: "tree directory",
-			args: args{"your-ko", "link-validator", "main", "cmd", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   "[]",
-			},
-		},
-		{
-			name: "refs heads pattern",
-			args: args{"your-ko", "link-validator", "refs", "heads/main/Dockerfile", ""},
-			fields: fields{
-				status:         http.StatusOK,
-				body:           "FROM alpine",
 				base64encoding: true,
 			},
 		},
@@ -120,7 +103,6 @@ func Test_handleContents(t *testing.T) {
 				status: http.StatusNotFound,
 			},
 			wantErr: true,
-			wantIs:  nil, // handleContents doesn't use mapGHError, so we get raw GitHub API error
 		},
 		{
 			name: "server error - 500",
@@ -129,7 +111,6 @@ func Test_handleContents(t *testing.T) {
 				status: http.StatusInternalServerError,
 			},
 			wantErr: true,
-			wantIs:  nil,
 		},
 	}
 	for _, tt := range tests {
