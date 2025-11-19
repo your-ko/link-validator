@@ -53,7 +53,6 @@ var handlers = map[string]handlerEntry{
 	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
 	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
 	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
-	"project":      {name: "repo-exist", fn: handleRepoExist},
 	"security":     {name: "repo-exist", fn: handleRepoExist},
 	"packages":     {name: "repo-exist", fn: handleRepoExist},
 	"orgs":         {name: "org-exist", fn: handleOrgExist},
@@ -207,7 +206,8 @@ func parseUrl(link string) (*ghURL, error) {
 		if gh.repo == "" {
 			gh.typ = "user"
 		}
-	case "branches", "settings", "tags", "labels", "packages", "pulls":
+	case "branches", "settings", "tags", "labels", "packages",
+		"pulls", "milestones", "projects", "pkgs":
 	// these above go to simple 'if repo exists' validation
 	case "blob", "tree", "blame", "raw":
 		gh.ref = parts[3]
@@ -225,11 +225,9 @@ func parseUrl(link string) (*ghURL, error) {
 		// those might be false positive as they are not available via GitHub API
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
-	case "commits", "commit", "issues", "pull",
-		"milestones", "milestone",
-		"projects", "project", "advisories", "compare",
-		"attestations", "pkgs",
-		"actions": // TODO: merge up or move to default
+	case "commit", "commits", "issues", "pull",
+		"milestone", "advisories", "compare",
+		"attestations", "actions":
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
 	case "security":

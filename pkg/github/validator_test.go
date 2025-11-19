@@ -538,7 +538,6 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "projects",
-				ref:   "1",
 			},
 		},
 		{
@@ -818,8 +817,6 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "pkgs",
-				ref:   "container",
-				path:  "link-validator",
 			},
 		},
 		//{
