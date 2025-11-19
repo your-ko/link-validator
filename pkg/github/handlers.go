@@ -231,6 +231,20 @@ func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string)
 	return err
 }
 
+// handleIssue validates existence of a single issue.
+//
+// GitHub API docs: https://docs.github.com/rest/issues/issues#get-an-issue
+//
+//meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
+func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+	n, err := strconv.Atoi(ref)
+	if err != nil {
+		return fmt.Errorf("invalid issue number %q: %w", ref, err)
+	}
+	_, _, err = c.Issues.Get(ctx, owner, repo, n)
+	return err
+}
+
 // ==================
 
 // handleWiki validates existence of GitHub wiki pages.
@@ -341,20 +355,6 @@ func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, pat
 		return fmt.Errorf("asset '%s' wasn't found in the relese assets", parts[1])
 	}
 	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
-}
-
-// handleIssue validates existence of a single issue.
-//
-// GitHub API docs: https://docs.github.com/rest/issues/issues#get-an-issue
-//
-//meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
-func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	n, err := strconv.Atoi(ref)
-	if err != nil {
-		return fmt.Errorf("invalid issue number %q: %w", ref, err)
-	}
-	_, _, err = c.Issues.Get(ctx, owner, repo, n)
-	return err
 }
 
 // handleLabel validates existence of a label.
