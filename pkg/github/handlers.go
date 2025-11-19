@@ -103,7 +103,7 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, fragment string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid PR number '%q'", ref)
+		return fmt.Errorf("invalid PR number %q", ref)
 	}
 	// presumably, if PR exists, then the files/commits tabs exist as well
 	if fragment == "" {
@@ -141,7 +141,7 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, frag
 func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid milestone number '%q'", ref)
+		return fmt.Errorf("invalid milestone number %q", ref)
 	}
 	_, _, err = c.Issues.GetMilestone(ctx, owner, repo, n)
 	return err
@@ -239,7 +239,7 @@ func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string)
 func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid issue number '%q'", ref)
+		return fmt.Errorf("invalid issue number %q", ref)
 	}
 	_, _, err = c.Issues.Get(ctx, owner, repo, n)
 	return err

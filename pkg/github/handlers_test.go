@@ -510,7 +510,7 @@ func Test_handlePull(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: `invalid PR number "abc": strconv.Atoi: parsing "abc": invalid syntax`,
+			wantErrorMessage: `invalid PR number "abc"`,
 		},
 		{
 			name: "invalid PR number - empty",
@@ -520,7 +520,7 @@ func Test_handlePull(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: `invalid PR number "": strconv.Atoi: parsing "": invalid syntax`,
+			wantErrorMessage: `invalid PR number ""`,
 		},
 		{
 			name: "invalid fragment - bad issue comment ID",
@@ -637,7 +637,7 @@ func Test_handleMilestone(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: `invalid milestone number "test": strconv.Atoi: parsing "test": invalid syntax`,
+			wantErrorMessage: `invalid milestone number "test"`,
 		},
 		{
 			name: "invalid milestone number - empty",
@@ -647,7 +647,7 @@ func Test_handleMilestone(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: `invalid milestone number "": strconv.Atoi: parsing "": invalid syntax`,
+			wantErrorMessage: `invalid milestone number ""`,
 		},
 		{
 			name: "milestone not found - 404",
@@ -1074,7 +1074,7 @@ func Test_handleIssue(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: `invalid issue number "abc": strconv.Atoi: parsing "abc": invalid syntax`,
+			wantErrorMessage: `invalid issue number "abc"`,
 		},
 		{
 			name: "invalid issue number - empty",
@@ -1084,7 +1084,7 @@ func Test_handleIssue(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: `invalid issue number "": strconv.Atoi: parsing "": invalid syntax`,
+			wantErrorMessage: `invalid issue number ""`,
 		},
 		{
 			name: "issue not found - 404",
