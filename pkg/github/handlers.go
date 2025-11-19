@@ -216,7 +216,7 @@ func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, pat
 			return err
 		}
 	}
-	return fmt.Errorf("unsupported ref found") // TODO
+	return fmt.Errorf("unsupported ref found, please report a bug")
 }
 
 // handleUser validater user existence
@@ -321,8 +321,6 @@ func handleWiki(ctx context.Context, c *github.Client, owner, repo, _, _, _ stri
 
 	return nil
 }
-
-// ==================
 
 // handlePackages validates existence of GitHub packages.
 // Since GetPackage requires user authentication, it is not suitable for link-validator,
