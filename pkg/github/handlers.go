@@ -282,6 +282,24 @@ func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, pat
 	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
 }
 
+// handleLabel validates existence of a label.
+//
+// GitHub API docs: https://docs.github.com/rest/issues/labels#list-labels-for-a-repository
+//
+//meta:operation GET /repos/{owner}/{repo}/labels
+func handleLabel(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+	labels, _, err := c.Issues.ListLabels(ctx, owner, repo, &github.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, l := range labels {
+		if *l.Name == ref {
+			return nil
+		}
+	}
+	return fmt.Errorf("label '%s' not found", ref)
+}
+
 // ==================
 
 // handleWiki validates existence of GitHub wiki pages.
@@ -355,24 +373,6 @@ func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ str
 	}
 	_, _, err := c.Organizations.Get(ctx, owner)
 	return err
-}
-
-// handleLabel validates existence of a label.
-//
-// GitHub API docs: https://docs.github.com/rest/issues/labels#list-labels-for-a-repository
-//
-//meta:operation GET /repos/{owner}/{repo}/labels
-func handleLabel(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	labels, _, err := c.Issues.ListLabels(ctx, owner, repo, &github.ListOptions{})
-	if err != nil {
-		return err
-	}
-	for _, l := range labels {
-		if *l.Name == ref {
-			return nil
-		}
-	}
-	return fmt.Errorf("label '%s' not found", ref)
 }
 
 func mapGHError(url string, err error) error {

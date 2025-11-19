@@ -147,11 +147,11 @@ func Test_handleContents(t *testing.T) {
 
 func Test_handleCommit(t *testing.T) {
 	type args struct {
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
 	}
 	type fields struct {
 		status         int
@@ -208,7 +208,7 @@ func Test_handleCommit(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handleCommit(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			err := handleCommit(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -233,11 +233,11 @@ func Test_handleCommit(t *testing.T) {
 
 func Test_handleCompareCommits(t *testing.T) {
 	type args struct {
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
 	}
 	type fields struct {
 		status         int
@@ -351,7 +351,7 @@ func Test_handleCompareCommits(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handleCompareCommits(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			err := handleCompareCommits(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -379,7 +379,7 @@ func Test_handlePull(t *testing.T) {
 		owner    string
 		repo     string
 		ref      string
-		in5      string
+		path     string
 		fragment string
 	}
 	type fields struct {
@@ -494,7 +494,7 @@ func Test_handlePull(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handlePull(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.fragment)
+			err := handlePull(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -519,11 +519,11 @@ func Test_handlePull(t *testing.T) {
 
 func Test_handleMilestone(t *testing.T) {
 	type args struct {
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
 	}
 	type fields struct {
 		status         int
@@ -591,7 +591,7 @@ func Test_handleMilestone(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handleMilestone(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			err := handleMilestone(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -616,11 +616,11 @@ func Test_handleMilestone(t *testing.T) {
 
 func Test_handleSecurityAdvisories(t *testing.T) {
 	type args struct {
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
 	}
 	type fields struct {
 		status         int
@@ -690,7 +690,7 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handleSecurityAdvisories(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			err := handleSecurityAdvisories(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -948,11 +948,11 @@ func Test_handleUser(t *testing.T) {
 
 func Test_handleIssue(t *testing.T) {
 	type args struct {
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
 	}
 	type fields struct {
 		status         int
@@ -1028,7 +1028,7 @@ func Test_handleIssue(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handleIssue(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			err := handleIssue(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -1053,11 +1053,11 @@ func Test_handleIssue(t *testing.T) {
 
 func Test_handleReleases(t *testing.T) {
 	type args struct {
-		owner string
-		repo  string
-		ref   string
-		path  string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
 	}
 	type fields struct {
 		status         int
@@ -1169,7 +1169,7 @@ func Test_handleReleases(t *testing.T) {
 			proc := mockValidator(testServer, "")
 			t.Cleanup(testServer.Close)
 
-			err := handleReleases(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.in6)
+			err := handleReleases(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -1194,25 +1194,97 @@ func Test_handleReleases(t *testing.T) {
 
 func Test_handleLabel(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "label found - multiple labels",
+			args: args{"your-ko", "link-validator", "enhancement", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef", "description": "New feature or request"}, {"name": "help wanted", "color": "008672"}]`,
+			},
+		},
+		{
+			name: "label not found - empty labels list",
+			args: args{"your-ko", "link-validator", "nonexistent", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[]`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "label 'nonexistent' not found",
+		},
+		{
+			name: "label not found - different labels exist",
+			args: args{"your-ko", "link-validator", "missing-label", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef"}, {"name": "documentation", "color": "0075ca"}]`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "label 'missing-label' not found",
+		},
+		{
+			name: "label not found - case sensitive mismatch",
+			args: args{"your-ko", "link-validator", "Bug", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef"}]`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "label 'Bug' not found",
+		},
+		{
+			name: "repository not found - 404",
+			args: args{"your-ko", "nonexistent-repo", "bug", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleLabel(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleLabel() error = %v, wantErr %v", err, tt.wantErr)
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleLabel(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
 			}
 		})
 	}
@@ -1220,13 +1292,13 @@ func Test_handleLabel(t *testing.T) {
 
 func Test_handleOrgExist(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		in3   string
-		in4   string
-		in5   string
-		in6   string
+		ctx      context.Context
+		c        *github.Client
+		owner    string
+		in3      string
+		in4      string
+		path     string
+		fragment string
 	}
 	tests := []struct {
 		name    string
@@ -1237,7 +1309,7 @@ func Test_handleOrgExist(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleOrgExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.in3, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
+			if err := handleOrgExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.in3, tt.args.in4, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
 				t.Errorf("handleOrgExist() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -1272,13 +1344,13 @@ func Test_handlePackages(t *testing.T) {
 
 func Test_handleRepoExist(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		in4   string
-		in5   string
-		in6   string
+		ctx      context.Context
+		c        *github.Client
+		owner    string
+		repo     string
+		in4      string
+		path     string
+		fragment string
 	}
 	tests := []struct {
 		name    string
@@ -1289,7 +1361,7 @@ func Test_handleRepoExist(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleRepoExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
+			if err := handleRepoExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
 				t.Errorf("handleRepoExist() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -1298,13 +1370,13 @@ func Test_handleRepoExist(t *testing.T) {
 
 func Test_handleWiki(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		in4   string
-		in5   string
-		in6   string
+		ctx      context.Context
+		c        *github.Client
+		owner    string
+		repo     string
+		in4      string
+		path     string
+		fragment string
 	}
 	tests := []struct {
 		name    string
@@ -1315,7 +1387,7 @@ func Test_handleWiki(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleWiki(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
+			if err := handleWiki(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
 				t.Errorf("handleWiki() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
