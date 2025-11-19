@@ -147,8 +147,6 @@ func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _,
 	return err
 }
 
-// ------
-
 // handleSecurityAdvisories validates existence of security advisories.
 // For the URL pattern: /security/advisories/{advisory_id}
 //
@@ -156,31 +154,26 @@ func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _,
 //
 //meta:operation GET /repos/{owner}/{repo}/security-advisories
 func handleSecurityAdvisories(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	// Handle different security advisory URL patterns:
-	// - /security/advisories (list all advisories)
-	// - /security/advisories/{advisory_id} (specific advisory)
-
 	if ref == "" {
 		return fmt.Errorf("security advisory ID is required")
 	}
 
-	// Since there's no direct GetRepositoryAdvisory method, we list all advisories
-	// and check if the specific advisory ID exists
+	// Since there's no direct GetRepositoryAdvisory method, I list all advisories
 	advisories, _, err := c.SecurityAdvisories.ListRepositorySecurityAdvisories(ctx, owner, repo, nil)
 	if err != nil {
 		return err
 	}
 
-	// Search for the specific advisory ID
 	for _, advisory := range advisories {
 		if advisory.GetGHSAID() == ref {
 			return nil // Found the advisory
 		}
 	}
 
-	// Advisory not found
 	return fmt.Errorf("security advisory %q not found", ref)
 }
+
+// ------
 
 // handleWiki validates existence of GitHub wiki pages.
 // For the URL pattern: /wiki/{page-name}

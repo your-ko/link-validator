@@ -614,6 +614,105 @@ func Test_handleMilestone(t *testing.T) {
 	}
 }
 
+func Test_handleSecurityAdvisories(t *testing.T) {
+	type args struct {
+		owner string
+		repo  string
+		ref   string
+		in5   string
+		in6   string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
+	}{
+		// Success cases
+		{
+			name: "specific advisory found - GHSA format",
+			args: args{"your-ko", "link-validator", "GHSA-xxxx-xxxx-xxxx", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[{"ghsa_id": "GHSA-xxxx-xxxx-xxxx", "summary": "Test security advisory", "severity": "high"}]`,
+			},
+		},
+		{
+			name: "empty advisory ID",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[]`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "security advisory ID is required",
+		},
+		{
+			name: "advisory not found - empty list",
+			args: args{"your-ko", "link-validator", "GHSA-nonexistent-id", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[]`,
+			},
+			wantErr:          true,
+			wantErrorMessage: `security advisory "GHSA-nonexistent-id" not found`,
+		},
+		{
+			name: "advisory not found - different advisories in list",
+			args: args{"your-ko", "link-validator", "GHSA-missing-xxxx-xxxx", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `[{"ghsa_id": "GHSA-1111-2222-3333", "summary": "First advisory"}, {"ghsa_id": "GHSA-4444-5555-6666", "summary": "Second advisory"}]`,
+			},
+			wantErr:          true,
+			wantErrorMessage: `security advisory "GHSA-missing-xxxx-xxxx" not found`,
+		},
+		{
+			name: "repository not found",
+			args: args{"your-ko", "nonexistent-repo", "GHSA-xxxx-xxxx-xxxx", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleSecurityAdvisories(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
+		})
+	}
+}
+
 func Test_handleIssue(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -765,32 +864,6 @@ func Test_handleRepoExist(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := handleRepoExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
 				t.Errorf("handleRepoExist() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_handleSecurityAdvisories(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := handleSecurityAdvisories(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleSecurityAdvisories() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
