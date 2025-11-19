@@ -1612,27 +1612,6 @@ func Test_handlePackages(t *testing.T) {
 	}
 }
 
-func Test_mapGHError(t *testing.T) {
-	type args struct {
-		url string
-		err error
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := mapGHError(tt.args.url, tt.args.err); (err != nil) != tt.wantErr {
-				t.Errorf("mapGHError() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func getTestServer(httpStatus int, base64enc bool, body string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		//if tt.fields.loc != "" {
