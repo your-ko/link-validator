@@ -95,6 +95,44 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 	return err
 }
 
+// handlePull validates existence of a single pull request.
+//
+// GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
+//
+//meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
+func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, fragment string) error {
+	n, err := strconv.Atoi(ref)
+	if err != nil {
+		return fmt.Errorf("invalid PR number %q: %w", ref, err)
+	}
+	// presumably, if PR exists, then the files/commits tabs exist as well
+	if fragment == "" {
+		_, _, err = c.PullRequests.Get(ctx, owner, repo, n)
+		return err
+	}
+
+	// Handle fragments
+	if strings.HasPrefix(fragment, "issuecomment-") {
+		// Handle issue comments: #issuecomment-<id>
+		commentId, err := strconv.ParseInt(strings.TrimPrefix(fragment, "issuecomment-"), 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid comment id: '%s'", fragment)
+		}
+		_, _, err = c.Issues.GetComment(ctx, owner, repo, commentId)
+		return err
+	} else if strings.HasPrefix(fragment, "discussion_r") {
+		// Handle review comments: #discussion_r<id>
+		commentId, err := strconv.ParseInt(strings.TrimPrefix(fragment, "discussion_r"), 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid comment id: '%s'", fragment)
+		}
+		_, _, err = c.PullRequests.GetComment(ctx, owner, repo, commentId)
+		return err
+	}
+
+	return fmt.Errorf("unsupported PR fragment format: '%s'. Please report a bug", fragment)
+}
+
 // ------
 
 // handleSecurityAdvisories validates existence of security advisories.
@@ -343,44 +381,6 @@ func handleLabel(ctx context.Context, c *github.Client, owner, repo, ref, _, _ s
 		}
 	}
 	return fmt.Errorf("label '%s' not found", ref)
-}
-
-// handlePull validates existence of a single pull request.
-//
-// GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
-//
-//meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
-func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, fragment string) error {
-	n, err := strconv.Atoi(ref)
-	if err != nil {
-		return fmt.Errorf("invalid PR number %q: %w", ref, err)
-	}
-	// presumably, if PR exists, then the files/commits tabs exist as well
-	if fragment == "" {
-		_, _, err = c.PullRequests.Get(ctx, owner, repo, n)
-		return err
-	}
-
-	// Handle fragments
-	if strings.HasPrefix(fragment, "issuecomment-") {
-		// Handle issue comments: #issuecomment-<id>
-		commentId, err := strconv.ParseInt(strings.TrimPrefix(fragment, "issuecomment-"), 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid comment id: '%s'", fragment)
-		}
-		_, _, err = c.Issues.GetComment(ctx, owner, repo, commentId)
-		return err
-	} else if strings.HasPrefix(fragment, "discussion_r") {
-		// Handle review comments: #discussion_r<id>
-		commentId, err := strconv.ParseInt(strings.TrimPrefix(fragment, "discussion_r"), 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid comment id: '%s'", fragment)
-		}
-		_, _, err = c.PullRequests.GetComment(ctx, owner, repo, commentId)
-		return err
-	}
-
-	return fmt.Errorf("unsupported PR fragment format: '%s'. Please report a bug", fragment)
 }
 
 func mapGHError(url string, err error) error {
