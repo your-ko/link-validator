@@ -56,8 +56,8 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			want: []string{
 				"https://github.mycorp.com/your-ko/link-validator/blob/main/file.md#L10-L20",
 				"https://github.com/your-ko/link-validator/blob/main/file.md#L10-L20",
-				"https://github.mycorp.com/your-ko/link-validator/tree/main/docs",
-				"https://github.com/your-ko/link-validator/tree/main/docs",
+				"https://github.mycorp.com/your-ko/link-validator/tree/main/docs?tab=readme",
+				"https://github.com/your-ko/link-validator/tree/main/docs?tab=readme",
 			},
 		},
 		{
