@@ -133,14 +133,6 @@ func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
 	return p
 }
 
-const content = `
-test
-# header 1
-test
-## header2
-test
-`
-
 func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 	tests := []struct {
 		name    string

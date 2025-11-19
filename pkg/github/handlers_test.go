@@ -131,7 +131,6 @@ func Test_handleContents(t *testing.T) {
 	}
 	type fields struct {
 		status         int
-		path           string
 		body           string
 		base64encoding bool
 	}
