@@ -272,7 +272,6 @@ func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, pat
 // /<owner>/<repo>/releases/latest
 // etc
 func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
-
 	switch {
 	case path == "latest":
 		_, _, err := c.Repositories.GetLatestRelease(ctx, owner, repo)
@@ -284,15 +283,24 @@ func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, pat
 	case ref == "tag":
 		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, path)
 		return err
-		//case ref == "download":
-		//	parts := strings.Split(path, "/")
-		//	if len(parts) != 2 {
-		//		return fmt.Errorf("incorrect download path in the release url")
-		//	}
-		//	_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, path)
-		//	return err
+	case ref == "download":
+		parts := strings.Split(path, "/")
+		if len(parts) != 2 {
+			return fmt.Errorf("incorrect download path '%s' in the release url", path)
+		}
+		r, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, parts[0])
+		if err != nil {
+			return err
+		}
+		for _, asset := range r.Assets {
+			if *asset.Name == parts[1] {
+				// we found an asset in the release
+				return nil
+			}
+		}
+		return fmt.Errorf("asset '%s' wasn't found in the relese assets", parts[1])
 	}
-	return nil
+	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
 }
 
 // handleIssue validates existence of a single issue.

@@ -277,18 +277,18 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 				path:  "1.0.0",
 			},
 		},
-		//{ TODO: release downloads go via http client
-		//	name: "release: download artifact",
-		//	url:  "https://github.com/your-ko/link-validator/releases/download/1.0.0/sbom.spdx.json",
-		//	want: &ghURL{
-		//		host:  "github.com",
-		//		owner: "your-ko",
-		//		repo:  "link-validator",
-		//		typ:   "releases",
-		//		ref:   "download",
-		//		path:  "1.0.0/sbom.spdx.json",
-		//	},
-		//},
+		{
+			name: "release: download artifact",
+			url:  "https://github.com/your-ko/link-validator/releases/download/1.0.0/sbom.spdx.json",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "releases",
+				ref:   "download",
+				path:  "1.0.0/sbom.spdx.json",
+			},
+		},
 		{
 			name: "issues url",
 			url:  "https://github.com/your-ko/link-validator/issues",
