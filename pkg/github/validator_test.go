@@ -456,7 +456,7 @@ test
 test
 `
 
-func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
+func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 	tests := []struct {
 		name    string
 		url     string
@@ -744,7 +744,6 @@ func TestInternalLinkProcessor_RegexRepoUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "pulls",
-				ref:   "your-ko",
 			},
 		},
 		{
