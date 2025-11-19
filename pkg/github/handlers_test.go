@@ -1051,6 +1051,147 @@ func Test_handleIssue(t *testing.T) {
 	}
 }
 
+func Test_handleReleases(t *testing.T) {
+	type args struct {
+		owner string
+		repo  string
+		ref   string
+		path  string
+		in6   string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
+	}{
+		{
+			name: "latest release exists",
+			args: args{"your-ko", "link-validator", "", "latest", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 12345, "tag_name": "v1.0.0", "name": "Release v1.0.0", "draft": false, "prerelease": false}`,
+			},
+		},
+		{
+			name: "releases list - repository exists",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 123, "name": "link-validator"}`,
+			},
+		},
+		{
+			name: "specific release by tag",
+			args: args{"your-ko", "link-validator", "tag", "v1.0.0", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 67890, "tag_name": "v1.0.0", "name": "First Release", "draft": false}`,
+			},
+		},
+		{
+			name: "download asset - asset exists",
+			args: args{"your-ko", "link-validator", "download", "v1.0.0/sbom.spdx.json", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 11111, "tag_name": "v1.0.0", "assets": [{"name": "sbom.spdx.json", "download_count": 100}, {"name": "source.zip", "download_count": 50}]}`,
+			},
+		},
+		{
+			name: "download - incorrect path format (missing slash)",
+			args: args{"your-ko", "link-validator", "download", "v1.0.0-binary.tar.gz", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "incorrect download path 'v1.0.0-binary.tar.gz' in the release url",
+		},
+		{
+			name: "download - incorrect path format (too many parts)",
+			args: args{"your-ko", "link-validator", "download", "v1.0.0/assets/binary.tar.gz", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "incorrect download path 'v1.0.0/assets/binary.tar.gz' in the release url",
+		},
+		{
+			name: "download - asset not found in release",
+			args: args{"your-ko", "link-validator", "download", "v1.0.0/nonexistent.zip", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 33333, "tag_name": "v1.0.0", "assets": [{"name": "existing.tar.gz"}, {"name": "another.zip"}]}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "asset 'nonexistent.zip' wasn't found in the release assets",
+		},
+		{
+			name: "unexpected release path",
+			args: args{"your-ko", "link-validator", "unknown", "some-path", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "unexpected release path 'some-path' found. Please report a bug",
+		},
+		{
+			name: "latest release not found - 404",
+			args: args{"your-ko", "link-validator", "", "latest", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+		{
+			name: "repository not found - releases list",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleReleases(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.in6)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
+		})
+	}
+}
+
 func Test_handleLabel(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -1124,32 +1265,6 @@ func Test_handlePackages(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := handlePackages(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.packageType, tt.args.packageName, tt.args.fragment); (err != nil) != tt.wantErr {
 				t.Errorf("handlePackages() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_handleReleases(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		ref   string
-		path  string
-		in6   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := handleReleases(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleReleases() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

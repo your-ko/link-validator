@@ -245,6 +245,43 @@ func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ s
 	return err
 }
 
+// handleReleases handles
+// /<owner>/<repo>/releases
+// /<owner>/<repo>/releases/tag/<tag>
+// /<owner>/<repo>/releases/latest
+// etc
+func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
+	switch {
+	case path == "latest":
+		_, _, err := c.Repositories.GetLatestRelease(ctx, owner, repo)
+		return err
+	case path == "":
+		// presumably if the repo exists then the releases list exists as well
+		_, _, err := c.Repositories.Get(ctx, owner, repo)
+		return err
+	case ref == "tag":
+		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, path)
+		return err
+	case ref == "download":
+		parts := strings.Split(path, "/")
+		if len(parts) != 2 {
+			return fmt.Errorf("incorrect download path '%s' in the release url", path)
+		}
+		r, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, parts[0])
+		if err != nil {
+			return err
+		}
+		for _, asset := range r.Assets {
+			if *asset.Name == parts[1] {
+				// we found an asset in the release
+				return nil
+			}
+		}
+		return fmt.Errorf("asset '%s' wasn't found in the release assets", parts[1])
+	}
+	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
+}
+
 // ==================
 
 // handleWiki validates existence of GitHub wiki pages.
@@ -318,43 +355,6 @@ func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ str
 	}
 	_, _, err := c.Organizations.Get(ctx, owner)
 	return err
-}
-
-// handleReleases handles
-// /<owner>/<repo>/releases
-// /<owner>/<repo>/releases/tag/<tag>
-// /<owner>/<repo>/releases/latest
-// etc
-func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
-	switch {
-	case path == "latest":
-		_, _, err := c.Repositories.GetLatestRelease(ctx, owner, repo)
-		return err
-	case path == "":
-		// presumably if the repo exists then the releases list exists as well
-		_, _, err := c.Repositories.Get(ctx, owner, repo)
-		return err
-	case ref == "tag":
-		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, path)
-		return err
-	case ref == "download":
-		parts := strings.Split(path, "/")
-		if len(parts) != 2 {
-			return fmt.Errorf("incorrect download path '%s' in the release url", path)
-		}
-		r, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, parts[0])
-		if err != nil {
-			return err
-		}
-		for _, asset := range r.Assets {
-			if *asset.Name == parts[1] {
-				// we found an asset in the release
-				return nil
-			}
-		}
-		return fmt.Errorf("asset '%s' wasn't found in the relese assets", parts[1])
-	}
-	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
 }
 
 // handleLabel validates existence of a label.
