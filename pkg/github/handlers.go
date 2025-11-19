@@ -81,6 +81,20 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ 
 	return err
 }
 
+// handleCompareCommits validates existence of the specified commit.
+//
+// GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
+//
+//meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
+func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+	parts := strings.Split(ref, "...")
+	if len(parts) < 2 {
+		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
+	}
+	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, parts[0], parts[1], &github.ListOptions{})
+	return err
+}
+
 // ------
 
 // handleSecurityAdvisories validates existence of security advisories.
@@ -198,20 +212,6 @@ func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ str
 		return nil
 	}
 	_, _, err := c.Organizations.Get(ctx, owner)
-	return err
-}
-
-// handleCompareCommits validates existence of the specified commit.
-//
-// GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
-//
-//meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
-func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	parts := strings.Split(ref, "...")
-	if len(parts) < 2 {
-		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
-	}
-	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, parts[0], parts[1], &github.ListOptions{})
 	return err
 }
 

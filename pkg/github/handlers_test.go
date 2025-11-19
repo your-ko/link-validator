@@ -233,25 +233,142 @@ func Test_handleCommit(t *testing.T) {
 
 func Test_handleCompareCommits(t *testing.T) {
 	type args struct {
-		ctx   context.Context
-		c     *github.Client
 		owner string
 		repo  string
 		ref   string
 		in5   string
 		in6   string
 	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "compare branches main...dev",
+			args: args{"your-ko", "link-validator", "main...dev", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "ahead", "ahead_by": 5, "behind_by": 0, "commits": []}`,
+			},
+		},
+		{
+			name: "compare branch to commit hash",
+			args: args{"your-ko", "link-validator", "main...a96366f66ffacd461de10a1dd561ab5a598e9167", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "ahead", "ahead_by": 3, "behind_by": 1, "commits": []}`,
+			},
+		},
+		{
+			name: "compare commit hashes",
+			args: args{"your-ko", "link-validator", "abc123...def456", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "identical", "ahead_by": 0, "behind_by": 0, "commits": []}`,
+			},
+		},
+		{
+			name: "compare with tags",
+			args: args{"your-ko", "link-validator", "v1.0.0...v1.1.0", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "ahead", "ahead_by": 10, "behind_by": 0, "commits": []}`,
+			},
+		},
+		{
+			name: "compare feature branches",
+			args: args{"your-ko", "link-validator", "feature-a...feature-b", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "diverged", "ahead_by": 2, "behind_by": 3, "commits": []}`,
+			},
+		},
+
+		// Validation error cases (fmt.Errorf)
+		{
+			name: "invalid compare ref - missing dots",
+			args: args{"your-ko", "link-validator", "main-dev", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'",
+		},
+		{
+			name: "invalid compare ref - single dot",
+			args: args{"your-ko", "link-validator", "main..dev", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'",
+		},
+		{
+			name: "invalid compare ref - empty ref",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'",
+		},
+		{
+			name: "compare ref - only base with empty head",
+			args: args{"your-ko", "link-validator", "main...", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "identical", "ahead_by": 0, "behind_by": 0, "commits": []}`,
+			},
+			wantErr: false, // This passes validation but GitHub API might handle it
+		},
+
+		// GitHub API error cases
+		{
+			name: "repository not found - 404",
+			args: args{"your-ko", "nonexistent-repo", "main...dev", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleCompareCommits(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleCompareCommits() error = %v, wantErr %v", err, tt.wantErr)
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleCompareCommits(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
 			}
 		})
 	}
