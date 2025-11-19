@@ -1290,6 +1290,84 @@ func Test_handleLabel(t *testing.T) {
 	}
 }
 
+func Test_handleWiki(t *testing.T) {
+	type args struct {
+		owner    string
+		repo     string
+		in4      string
+		path     string
+		fragment string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
+	}{
+		{
+			name: "repository with wiki enabled",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 123, "name": "link-validator", "has_wiki": true, "owner": {"login": "your-ko"}}`,
+			},
+		},
+		{
+			name: "repository exists but wiki disabled",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"id": 123, "name": "link-validator", "has_wiki": false, "owner": {"login": "your-ko"}}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: "wiki is not enabled for repository your-ko/link-validator",
+		},
+		{
+			name: "repository not found - 404",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleWiki(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.path, tt.args.fragment)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
+		})
+	}
+}
+
 func Test_handleOrgExist(t *testing.T) {
 	type args struct {
 		ctx      context.Context
@@ -1363,32 +1441,6 @@ func Test_handleRepoExist(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := handleRepoExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
 				t.Errorf("handleRepoExist() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_handleWiki(t *testing.T) {
-	type args struct {
-		ctx      context.Context
-		c        *github.Client
-		owner    string
-		repo     string
-		in4      string
-		path     string
-		fragment string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := handleWiki(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
-				t.Errorf("handleWiki() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

@@ -300,8 +300,6 @@ func handleLabel(ctx context.Context, c *github.Client, owner, repo, ref, _, _ s
 	return fmt.Errorf("label '%s' not found", ref)
 }
 
-// ==================
-
 // handleWiki validates existence of GitHub wiki pages.
 // For the URL pattern: /wiki/{page-name}
 //
@@ -323,6 +321,8 @@ func handleWiki(ctx context.Context, c *github.Client, owner, repo, _, _, _ stri
 
 	return nil
 }
+
+// ==================
 
 // handlePackages validates existence of GitHub packages.
 // Since GetPackage requires user authentication, it is not suitable for link-validator,
