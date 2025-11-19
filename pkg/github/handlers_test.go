@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/google/go-github/v74/github"
 )
 
 func Test_handleNothing(t *testing.T) {
@@ -905,7 +903,7 @@ func Test_handleWorkflow(t *testing.T) {
 				body:   `{}`,
 			},
 			wantErr:          true,
-			wantErrorMessage: "unsupported ref found",
+			wantErrorMessage: "unsupported ref found, please report a bug",
 		},
 		{
 			name: "repository not found - actions list",
@@ -1455,25 +1453,75 @@ func Test_handleWiki(t *testing.T) {
 
 func Test_handleOrgExist(t *testing.T) {
 	type args struct {
-		ctx      context.Context
-		c        *github.Client
 		owner    string
-		in3      string
+		repo     string
 		ref      string
 		path     string
 		fragment string
 	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "organization exists",
+			args: args{"github", "", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"login": "github", "id": 9919, "type": "Organization", "name": "GitHub", "company": null, "blog": "https://github.com/about"}`,
+			},
+		},
+		{
+			name: "empty owner - should return nil",
+			args: args{"", "", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`, // This won't be called since owner is empty
+			},
+		},
+		{
+			name: "organization not found - 404",
+			args: args{"nonexistent-org", "", "", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := handleOrgExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.in3, tt.args.ref, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
-				t.Errorf("handleOrgExist() error = %v, wantErr %v", err, tt.wantErr)
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleOrgExist(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
 			}
 		})
 	}
