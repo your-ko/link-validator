@@ -139,14 +139,9 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		client = proc.corpClient
 	}
 
-	var entry handlerEntry
-	var ok bool
-	switch gh.typ {
-	default:
-		entry, ok = handlers[gh.typ]
-		if !ok {
-			return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
-		}
+	entry, ok := handlers[gh.typ]
+	if !ok {
+		return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
 	}
 	proc.logger.Debug("using", zap.String("handler", entry.name))
 
