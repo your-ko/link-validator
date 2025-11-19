@@ -43,7 +43,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			want: nil,
 		},
 		{
-			name: "handles anchors but strips query strings",
+			name: "handles anchors and doesn't strip query strings",
 			line: `https://github.mycorp.com/your-ko/link-validator/blob/main/file.md#L10-L20
 			       https://github.com/your-ko/link-validator/blob/main/file.md#L10-L20
 			       https://github.mycorp.com/your-ko/link-validator/tree/main/docs?tab=readme
