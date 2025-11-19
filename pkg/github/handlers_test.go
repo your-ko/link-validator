@@ -52,11 +52,12 @@ func Test_handleContents(t *testing.T) {
 		base64encoding bool
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		wantIs  error // sentinel check via errors.Is; nil => no sentinel check
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error  // sentinel check via errors.Is; nil => no sentinel check
+		wantErrorMessage string // exact error message check; empty => no message check
 	}{
 		{
 			name: "blob file main branch",
@@ -145,17 +146,19 @@ func Test_handleContents(t *testing.T) {
 				return
 			}
 
-			// Only check wantIs if it's specified (non-nil)
+			// Check error type with errors.Is (for wrapped/sentinel errors like errs.ErrNotFound)
 			if tt.wantIs != nil {
 				if !errors.Is(err, tt.wantIs) {
 					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
 				}
 			}
 
-			//expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, , tt.args.link)
-			//if err.Error() != expected {
-			//	t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
-			//}
+			// Check exact error message (for fmt.Errorf() messages)
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
 
 		})
 	}
