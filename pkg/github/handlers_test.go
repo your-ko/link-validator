@@ -517,6 +517,103 @@ func Test_handlePull(t *testing.T) {
 	}
 }
 
+func Test_handleMilestone(t *testing.T) {
+	type args struct {
+		owner string
+		repo  string
+		ref   string
+		in5   string
+		in6   string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
+	}{
+		{
+			name: "particular milestone by number",
+			args: args{"your-ko", "link-validator", "1", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"number": 1, "title": "v1.0.0 Release", "state": "open"}`,
+			},
+		},
+		{
+			name: "invalid milestone number",
+			args: args{"your-ko", "link-validator", "test", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: `invalid milestone number "test": strconv.Atoi: parsing "test": invalid syntax`,
+		},
+		{
+			name: "invalid milestone number - empty",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{}`,
+			},
+			wantErr:          true,
+			wantErrorMessage: `invalid milestone number "": strconv.Atoi: parsing "": invalid syntax`,
+		},
+		{
+			name: "milestone not found - 404",
+			args: args{"your-ko", "link-validator", "1", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+		{
+			name: "repository not found",
+			args: args{"your-ko", "nonexistent-repo", "1", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleMilestone(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
+		})
+	}
+}
+
 func Test_handleIssue(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -564,32 +661,6 @@ func Test_handleLabel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := handleLabel(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
 				t.Errorf("handleLabel() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_handleMilestone(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		repo  string
-		ref   string
-		in5   string
-		in6   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := handleMilestone(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleMilestone() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

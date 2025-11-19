@@ -133,6 +133,20 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, frag
 	return fmt.Errorf("unsupported PR fragment format: '%s'. Please report a bug", fragment)
 }
 
+// handleMilestone validates existence of a single milestone.
+//
+// GitHub API docs: https://docs.github.com/rest/issues/milestones#get-a-milestone
+//
+//meta:operation GET /repos/{owner}/{repo}/milestones/{milestone_number}
+func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+	n, err := strconv.Atoi(ref)
+	if err != nil {
+		return fmt.Errorf("invalid milestone number %q: %w", ref, err)
+	}
+	_, _, err = c.Issues.GetMilestone(ctx, owner, repo, n)
+	return err
+}
+
 // ------
 
 // handleSecurityAdvisories validates existence of security advisories.
@@ -348,20 +362,6 @@ func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ s
 		return fmt.Errorf("invalid issue number %q: %w", ref, err)
 	}
 	_, _, err = c.Issues.Get(ctx, owner, repo, n)
-	return err
-}
-
-// handleMilestone validates existence of a single milestone.
-//
-// GitHub API docs: https://docs.github.com/rest/issues/milestones#get-a-milestone
-//
-//meta:operation GET /repos/{owner}/{repo}/milestones/{milestone_number}
-func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	n, err := strconv.Atoi(ref)
-	if err != nil {
-		return fmt.Errorf("invalid milestone number %q: %w", ref, err)
-	}
-	_, _, err = c.Issues.GetMilestone(ctx, owner, repo, n)
 	return err
 }
 
