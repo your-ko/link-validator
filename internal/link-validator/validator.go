@@ -93,7 +93,6 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 					continue
 				}
 
-				// TODO: improve error processing. Many handlers return fmt.Error and below is incorrect
 				if errors.Is(err, errs.ErrNotFound) {
 					logger.Warn("link not found", zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
 					stats.NotFoundLinks++

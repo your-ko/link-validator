@@ -103,7 +103,7 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, fragment string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid PR number %q: %w", ref, err)
+		return fmt.Errorf("invalid PR number '%q'", ref)
 	}
 	// presumably, if PR exists, then the files/commits tabs exist as well
 	if fragment == "" {
@@ -141,7 +141,7 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, frag
 func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid milestone number %q: %w", ref, err)
+		return fmt.Errorf("invalid milestone number '%q'", ref)
 	}
 	_, _, err = c.Issues.GetMilestone(ctx, owner, repo, n)
 	return err
@@ -170,7 +170,7 @@ func handleSecurityAdvisories(ctx context.Context, c *github.Client, owner, repo
 		}
 	}
 
-	return fmt.Errorf("security advisory %q not found", ref)
+	return errs.NewNotFoundMessage(fmt.Sprintf("security advisory %q not found", ref))
 }
 
 // handleWorkflow validates the two UI forms:
@@ -239,7 +239,7 @@ func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string)
 func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid issue number %q: %w", ref, err)
+		return fmt.Errorf("invalid issue number '%q'", ref)
 	}
 	_, _, err = c.Issues.Get(ctx, owner, repo, n)
 	return err
@@ -277,7 +277,7 @@ func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, pat
 				return nil
 			}
 		}
-		return fmt.Errorf("asset '%s' wasn't found in the release assets", parts[1])
+		return errs.NewNotFoundMessage(fmt.Sprintf("asset '%s' wasn't found in the release assets", parts[1]))
 	}
 	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
 }
@@ -297,7 +297,7 @@ func handleLabel(ctx context.Context, c *github.Client, owner, repo, ref, _, _ s
 			return nil
 		}
 	}
-	return fmt.Errorf("label '%s' not found", ref)
+	return errs.NewNotFoundMessage(fmt.Sprintf("label '%s' not found", ref))
 }
 
 // handleWiki validates existence of GitHub wiki pages.
@@ -316,7 +316,7 @@ func handleWiki(ctx context.Context, c *github.Client, owner, repo, _, _, _ stri
 
 	// Check if wiki is enabled for this repository
 	if !repository.GetHasWiki() {
-		return fmt.Errorf("wiki is not enabled for repository %s/%s", owner, repo)
+		return errs.NewNotFoundMessage(fmt.Sprintf("wiki is not enabled for repository %s/%s", owner, repo))
 	}
 
 	return nil
@@ -380,6 +380,9 @@ func mapGHError(url string, err error) error {
 	var ghErr *github.ErrorResponse
 	if errors.As(err, &ghErr) && ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusNotFound {
 		return errs.NewNotFound(url)
+	}
+	if errors.Is(err, errs.ErrNotFound) {
+		return err
 	}
 	return err
 }
