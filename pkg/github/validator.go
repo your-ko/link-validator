@@ -60,7 +60,7 @@ var handlers = map[string]handlerEntry{
 
 var (
 	enterpriseRegex = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)
-	ghRegex         = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+(?:/\S*)?`)
+	gitHubRegex     = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/\S*)?`)
 )
 
 type LinkProcessor struct {
@@ -257,7 +257,7 @@ func joinPath(parts []string) string {
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := ghRegex.FindAllString(line, -1)
+	parts := gitHubRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
