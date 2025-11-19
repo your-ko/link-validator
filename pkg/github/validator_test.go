@@ -1,13 +1,9 @@
 package github
 
 import (
-	"net/http/httptest"
-	neturl "net/url"
 	"reflect"
 	"testing"
-	"time"
 
-	"github.com/google/go-github/v74/github"
 	"go.uber.org/zap"
 )
 
@@ -110,27 +106,6 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			}
 		})
 	}
-}
-
-type githubContent struct {
-	Type     string `json:"type"`     // "file" or "dir"
-	Encoding string `json:"encoding"` // "base64" for file
-	Content  string `json:"content"`  // base64-encoded file body
-}
-
-// mockValidator creates a validator instance with mock GitHub clients
-func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p, _ := New(corp, "", "", time.Second, zap.NewNop())
-
-	if ts != nil {
-		base, _ := neturl.Parse(ts.URL + "/")
-		c := github.NewClient(ts.Client())
-		c.BaseURL = base
-		c.UploadURL = base
-		p.client = c
-		p.corpClient = c
-	}
-	return p
 }
 
 func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {

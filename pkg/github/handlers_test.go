@@ -8,7 +8,12 @@ import (
 	"link-validator/pkg/errs"
 	"net/http"
 	"net/http/httptest"
+	neturl "net/url"
 	"testing"
+	"time"
+
+	"github.com/google/go-github/v74/github"
+	"go.uber.org/zap"
 )
 
 func Test_handleNothing(t *testing.T) {
@@ -1637,4 +1642,25 @@ func getTestServer(httpStatus int, base64enc bool, body string) *httptest.Server
 			_, _ = res.Write([]byte(body))
 		}
 	}))
+}
+
+type githubContent struct {
+	Type     string `json:"type"`     // "file" or "dir"
+	Encoding string `json:"encoding"` // "base64" for file
+	Content  string `json:"content"`  // base64-encoded file body
+}
+
+// mockValidator creates a validator instance with mock GitHub clients
+func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
+	p, _ := New(corp, "", "", time.Second, zap.NewNop())
+
+	if ts != nil {
+		base, _ := neturl.Parse(ts.URL + "/")
+		c := github.NewClient(ts.Client())
+		c.BaseURL = base
+		c.UploadURL = base
+		p.client = c
+		p.corpClient = c
+	}
+	return p
 }
