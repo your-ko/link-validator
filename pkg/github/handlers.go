@@ -219,6 +219,18 @@ func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, pat
 	return fmt.Errorf("unsupported ref found") // TODO
 }
 
+// handleUser validater user existence
+//
+// GitHub API docs: https://docs.github.com/rest/users/users#get-a-user
+// GitHub API docs: https://docs.github.com/rest/users/users#get-the-authenticated-user
+//
+//meta:operation GET /user
+//meta:operation GET /users/{username}
+func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string) error {
+	_, _, err := c.Users.Get(ctx, owner)
+	return err
+}
+
 // ==================
 
 // handleWiki validates existence of GitHub wiki pages.
@@ -279,18 +291,6 @@ func handlePackages(ctx context.Context, c *github.Client, owner, repo, packageT
 	//}
 
 	//return nil
-}
-
-// handleUser validater user existence
-//
-// GitHub API docs: https://docs.github.com/rest/users/users#get-a-user
-// GitHub API docs: https://docs.github.com/rest/users/users#get-the-authenticated-user
-//
-//meta:operation GET /user
-//meta:operation GET /users/{username}
-func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string) error {
-	_, _, err := c.Users.Get(ctx, owner)
-	return err
 }
 
 // handleOrgExist  validates the org existence.

@@ -870,6 +870,82 @@ func Test_handleWorkflow(t *testing.T) {
 	}
 }
 
+func Test_handleUser(t *testing.T) {
+	type args struct {
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
+	}
+	type fields struct {
+		status         int
+		body           string
+		base64encoding bool
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		args             args
+		wantErr          bool
+		wantIs           error
+		wantErrorMessage string
+	}{
+		{
+			name: "existing user",
+			args: args{"your-ko", "", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"login": "your-ko", "id": 12345, "type": "User", "name": "Your Ko", "public_repos": 10}`,
+			},
+		},
+		{
+			name: "organization user",
+			args: args{"github", "", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"login": "github", "id": 9919, "type": "Organization", "name": "GitHub", "public_repos": 100}`,
+			},
+		},
+		{
+			name: "user not found - 404",
+			args: args{"nonexistent-user", "", "", "", ""},
+			fields: fields{
+				status: http.StatusNotFound,
+				body:   `{"message": "Not Found"}`,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
+			proc := mockValidator(testServer, "")
+			t.Cleanup(testServer.Close)
+
+			err := handleUser(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("got unexpected error %s", err)
+			}
+			if !tt.wantErr {
+				return
+			}
+
+			if tt.wantIs != nil {
+				if !errors.Is(err, tt.wantIs) {
+					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
+				}
+			}
+
+			if tt.wantErrorMessage != "" {
+				if err.Error() != tt.wantErrorMessage {
+					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+				}
+			}
+		})
+	}
+}
+
 func Test_handleIssue(t *testing.T) {
 	type args struct {
 		ctx   context.Context
@@ -1021,32 +1097,6 @@ func Test_handleRepoExist(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := handleRepoExist(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.repo, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
 				t.Errorf("handleRepoExist() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_handleUser(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		c     *github.Client
-		owner string
-		in3   string
-		in4   string
-		in5   string
-		in6   string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := handleUser(tt.args.ctx, tt.args.c, tt.args.owner, tt.args.in3, tt.args.in4, tt.args.in5, tt.args.in6); (err != nil) != tt.wantErr {
-				t.Errorf("handleUser() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
