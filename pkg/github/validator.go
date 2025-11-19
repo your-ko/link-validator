@@ -30,35 +30,33 @@ var handlers = map[string]handlerEntry{
 	"compare": {name: "compareCommits", fn: handleCompareCommits},
 
 	// Single-object routes
-	"commit":       {name: "commit", fn: handleCommit},
-	"pull":         {name: "pull", fn: handlePull},
-	"milestone":    {name: "milestone", fn: handleMilestone},
-	"project":      {name: "repo-exist", fn: handleRepoExist},
-	"advisories":   {name: "advisories", fn: handleSecurityAdvisories},
-	"commits":      {name: "repo-exist", fn: handleCommit},
-	"actions":      {name: "actions", fn: handleWorkflow},
-	"user":         {name: "user", fn: handleUser},
-	"attestations": {name: "attestations", fn: handleAttestation},
-
-	// not processed
-	"issues":   {name: "issues", fn: handleIssue},
-	"releases": {name: "releases", fn: handleReleases},
-	"wiki":     {name: "wiki", fn: handleWiki},
-	"pkgs":     {name: "pkgs", fn: handlePackages},
-	"label":    {name: "labels", fn: handleLabel},
+	"commit":     {name: "commit", fn: handleCommit},
+	"pull":       {name: "pull", fn: handlePull},
+	"milestone":  {name: "milestone", fn: handleMilestone},
+	"advisories": {name: "advisories", fn: handleSecurityAdvisories},
+	"commits":    {name: "commit", fn: handleCommit},
+	"actions":    {name: "actions", fn: handleWorkflow},
+	"user":       {name: "user", fn: handleUser},
+	"issues":     {name: "issues", fn: handleIssue},
+	"releases":   {name: "releases", fn: handleReleases},
+	"label":      {name: "labels", fn: handleLabel},
 
 	// Generic lists  — we just validate the repo exists
-	"pulls":       {name: "repo-exist", fn: handleRepoExist},
-	"labels":      {name: "repo-exist", fn: handleRepoExist},
-	"tags":        {name: "repo-exist", fn: handleRepoExist},
-	"branches":    {name: "repo-exist", fn: handleRepoExist},
-	"settings":    {name: "repo-exist", fn: handleRepoExist},
-	"milestones":  {name: "repo-exist", fn: handleRepoExist},
-	"discussions": {name: "repo-exist", fn: handleRepoExist},
-	"projects":    {name: "repo-exist", fn: handleRepoExist},
-	"security":    {name: "repo-exist", fn: handleRepoExist},
-	"packages":    {name: "repo-exist", fn: handleRepoExist},
-	"orgs":        {name: "org-exist", fn: handleOrgExist},
+	"pulls":        {name: "repo-exist", fn: handleRepoExist},
+	"labels":       {name: "repo-exist", fn: handleRepoExist},
+	"tags":         {name: "repo-exist", fn: handleRepoExist},
+	"branches":     {name: "repo-exist", fn: handleRepoExist},
+	"settings":     {name: "repo-exist", fn: handleRepoExist},
+	"milestones":   {name: "repo-exist", fn: handleRepoExist},
+	"discussions":  {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"attestations": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
+	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
+	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"project":      {name: "repo-exist", fn: handleRepoExist},
+	"security":     {name: "repo-exist", fn: handleRepoExist},
+	"packages":     {name: "repo-exist", fn: handleRepoExist},
+	"orgs":         {name: "org-exist", fn: handleOrgExist},
 }
 
 var (
@@ -223,10 +221,14 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.ref = ""
 			gh.path = parts[3]
 		}
+	case "discussions", "wiki":
+		// those might be false positive as they are not available via GitHub API
+		gh.ref = parts[3]
+		gh.path = joinPath(parts[4:])
 	case "commits", "commit", "issues", "pull",
-		"discussions", "milestones", "milestone",
+		"milestones", "milestone",
 		"projects", "project", "advisories", "compare",
-		"attestations", "pkgs", "wiki",
+		"attestations", "pkgs",
 		"actions": // TODO: merge up or move to default
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
@@ -238,35 +240,6 @@ func parseUrl(link string) (*ghURL, error) {
 		}
 	default:
 		return nil, fmt.Errorf("unsupported GitHub URL found '%s', please report a bug", link)
-
-		//case "commit", "issues", "pull", , "wiki", "commits":
-		//	gh.ref = parts[3]
-		//	gh.path = joinPath(parts[4:])
-		//case "discussion", "discussions":
-		//	// there is no support for discussions in the github sdk, so they need to be fetched by using
-		//	// GraphQL API, the REST API, which creates a problem with a separate authentication.
-		//	// Maybe will be implemented in the future.
-		//	gh.typ = "discussions"
-		//case "labels":
-		//	if parts[3] != "" {
-		//		gh.typ = "label"
-		//		gh.ref = parts[3]
-		//	}
-		//case "releases":
-		////https://github.com/your-ko/link-validator/releases/tag/0.9.0
-		////https://github.com/your-ko/link-validator/releases/0.9.0
-		////https://github.com/your-ko/link-validator/releases
-		//case "packages":
-		//	// Package URLs: /packages/{package_type}/{package_name}
-		//	if parts[3] != "" {
-		//		gh.ref = parts[3] // Package type (e.g., "container", "npm", "maven")
-		//		if parts[4] != "" {
-		//			gh.path = parts[4] // Package name
-		//		}
-		//	}
-		//case :
-		//	gh.ref = parts[3]
-		//	gh.path = joinPath(parts[4:])
 	}
 
 	return gh, nil

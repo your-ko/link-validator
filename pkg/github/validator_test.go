@@ -826,17 +826,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "discussions",
 			},
 		},
-		//{	TODO: not possible via GitHub API. Requires HTTP auth or GraphQL API
-		//	name: "repo url to a particular discussion",
-		//	url:  "https://github.com/your-ko/link-validator/discussions/test",
-		//	want: &ghURL{
-		//		host:  "github.com",
-		//		owner: "your-ko",
-		//		repo:  "link-validator",
-		//		typ:   "discussions",
-		//		ref:   "test",
-		//	},
-		//},
+		{
+			name: "repo url to a particular discussion",
+			url:  "https://github.com/your-ko/link-validator/discussions/test",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "discussions",
+				ref:   "test",
+			},
+		},
 		{
 			name: "branches: list",
 			url:  "https://github.com/your-ko/link-validator/branches",
@@ -878,7 +878,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "projects",
 			},
 		},
-		{ // TODO:  No support in GitHub API. GraphQL API needs to be used instead
+		{
 			name: "repo url to a particular project",
 			url:  "https://github.com/your-ko/link-validator/projects/1",
 			want: &ghURL{
@@ -1094,17 +1094,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "attestations",
 			},
 		},
-		//{ TODO: it seems that the attestations are available by HTTP client
-		//	name: "repo: attestations",
-		//	url:  "https://github.com/your-ko/link-validator/attestations/13059584",
-		//	want: &ghURL{
-		//		host:  "github.com",
-		//		owner: "your-ko",
-		//		repo:  "link-validator",
-		//		typ:   "attestations",
-		//		ref:   "13059584",
-		//	},
-		//},
+		{
+			name: "repo: attestations",
+			url:  "https://github.com/your-ko/link-validator/attestations/13059584",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "attestations",
+				ref:   "13059584",
+			},
+		},
 		{
 			name: "organizations: settings",
 			url:  "https://github.mycorp.com/organizations/your-ko/settings/apps/test",
@@ -1195,7 +1195,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			url:  "https://github.com/your-ko",
 			want: &ghURL{host: "github.com", owner: "your-ko", typ: "user"},
 		},
-		{ // TODO: GitHub wikis are not accessible through the REST API
+		{
 			name: "repo wiki root",
 			url:  "https://github.com/your-ko/link-validator/wiki",
 			want: &ghURL{

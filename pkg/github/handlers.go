@@ -93,7 +93,7 @@ func handleSecurityAdvisories(ctx context.Context, c *github.Client, owner, repo
 // Handles different wiki URL patterns:
 // - /wiki (wiki home page)
 // - /wiki/{page-name} (specific wiki page)
-func handleWiki(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
+func handleWiki(ctx context.Context, c *github.Client, owner, repo, _, _, _ string) error {
 	repository, _, err := c.Repositories.Get(ctx, owner, repo)
 	if err != nil {
 		return err
@@ -152,15 +152,9 @@ func handlePackages(ctx context.Context, c *github.Client, owner, repo, packageT
 //
 //meta:operation GET /user
 //meta:operation GET /users/{username}
-func handleUser(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string) error {
 	_, _, err := c.Users.Get(ctx, owner)
 	return err
-}
-
-func handleAttestation(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
-	//if ref == "" {
-	return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
-	//}
 }
 
 // handleOrgExist  validates the org existence.
@@ -168,7 +162,7 @@ func handleAttestation(ctx context.Context, c *github.Client, owner, repo, ref, 
 // GitHub API docs: https://docs.github.com/rest/orgs/orgs#get-an-organization
 //
 //meta:operation GET /orgs/{org}
-func handleOrgExist(ctx context.Context, c *github.Client, owner, org, repo, path, fragment string) error {
+func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ string) error {
 	if owner == "" {
 		return nil
 	}
