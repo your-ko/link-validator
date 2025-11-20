@@ -5,7 +5,6 @@ package http
 import (
 	"bytes"
 	"context"
-	"go.uber.org/zap"
 	"io"
 	"link-validator/pkg/errs"
 	"net/http"
@@ -13,12 +12,14 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var urlRegex = regexp.MustCompile(`https://\S+`)
 
-// ghRegex is identical to the github.repoRegex, but it is used in inverse way
-var ghRegex = regexp.MustCompile(`(?i)https://github\.[a-z0-9.-]+`)
+// gitHubRegex is identical to the github.repoRegex, but it is used in inverse way
+var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/\S*)?`)
 
 type LinkProcessor struct {
 	httpClient     *http.Client
@@ -127,7 +128,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Host == "" {
 			continue // skip malformed
 		}
-		if ghRegex.MatchString(raw) {
+		if gitHubRegex.MatchString(raw) {
 			continue // skip the majority of GitHub urls
 		}
 
