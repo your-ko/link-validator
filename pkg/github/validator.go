@@ -61,7 +61,7 @@ var handlers = map[string]handlerEntry{
 
 var (
 	enterpriseRegex = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)
-	gitHubRegex     = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60]*[^\s.,:;!?()\[\]{}\x60])?`)
+	gitHubRegex     = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]]*[^\s.,:;!?()\[\]{}\x60])?`)
 )
 
 type LinkProcessor struct {
