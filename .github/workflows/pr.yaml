@@ -87,7 +87,7 @@ jobs:
           push: false
 
       - name: Link validation
-        uses: your-ko/link-validator@1.6.0
+        uses: your-ko/link-validator@1.7.2
         with:
           log-level: 'info'
           pat: ${{ secrets.GITHUB_TOKEN }}
