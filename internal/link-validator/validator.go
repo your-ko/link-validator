@@ -18,7 +18,7 @@ import (
 )
 
 type LinkProcessor interface {
-	Process(ctx context.Context, url string, name string) error
+	Process(ctx context.Context, url string, testFileName string) error
 
 	ExtractLinks(line string) []string
 }

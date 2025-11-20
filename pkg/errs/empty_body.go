@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+// TODO: Not sure I need it
+
 var ErrEmptyBody = errors.New("empty response body")
 
 type EmptyBodyError struct {

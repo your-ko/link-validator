@@ -9,76 +9,58 @@ package github
 import (
 	"context"
 	"fmt"
-	"github.com/google/go-github/v74/github"
-	"go.uber.org/zap"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/google/go-github/v74/github"
+	"go.uber.org/zap"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
 var handlers = map[string]handlerEntry{
-	// File-ish routes — all use Contents API
-	"blob":  {name: "contents", fn: handleContents},
-	"tree":  {name: "contents", fn: handleContents},
-	"raw":   {name: "contents", fn: handleContents},
-	"blame": {name: "contents", fn: handleContents},
+	"nope": {name: "nope", fn: handleNothing},
+
+	"blob":    {name: "contents", fn: handleContents},
+	"tree":    {name: "contents", fn: handleContents},
+	"raw":     {name: "contents", fn: handleContents},
+	"blame":   {name: "contents", fn: handleContents},
+	"compare": {name: "compareCommits", fn: handleCompareCommits},
 
 	// Single-object routes
-	"commit":   {name: "commit", fn: handleCommit},
-	"issues":   {name: "issues", fn: handleIssue},
-	"pull":     {name: "pull", fn: handlePR},
-	"releases": {name: "releases", fn: handleReleases},
-	"actions":  {name: "actions", fn: handleWorkflow},
+	"commit":     {name: "commit", fn: handleCommit},
+	"pull":       {name: "pull", fn: handlePull},
+	"milestone":  {name: "milestone", fn: handleMilestone},
+	"advisories": {name: "advisories", fn: handleSecurityAdvisories},
+	"commits":    {name: "commit", fn: handleCommit},
+	"actions":    {name: "actions", fn: handleWorkflow},
+	"user":       {name: "user", fn: handleUser},
+	"issues":     {name: "issues", fn: handleIssue},
+	"releases":   {name: "releases", fn: handleReleases},
+	"label":      {name: "labels", fn: handleLabel},
 
-	// Generic repository routes — we just validate the repo exists
-	"pulls":       {name: "repo-exist", fn: handleRepoExist},
-	"commits":     {name: "repo-exist", fn: handleRepoExist},
-	"discussions": {name: "repo-exist", fn: handleRepoExist},
-	"branches":    {name: "repo-exist", fn: handleRepoExist},
-	"tags":        {name: "repo-exist", fn: handleRepoExist},
-	"milestones":  {name: "repo-exist", fn: handleRepoExist},
-	"labels":      {name: "repo-exist", fn: handleRepoExist},
-	"projects":    {name: "repo-exist", fn: handleRepoExist},
-	"settings":    {name: "repo-exist", fn: handleRepoExist},
-	"security":    {name: "repo-exist", fn: handleRepoExist},
+	// Generic lists  — we just validate the repo exists
+	"pulls":        {name: "repo-exist", fn: handleRepoExist},
+	"labels":       {name: "repo-exist", fn: handleRepoExist},
+	"tags":         {name: "repo-exist", fn: handleRepoExist},
+	"branches":     {name: "repo-exist", fn: handleRepoExist},
+	"settings":     {name: "repo-exist", fn: handleRepoExist},
+	"milestones":   {name: "repo-exist", fn: handleRepoExist},
+	"discussions":  {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"attestations": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
+	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
+	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"security":     {name: "repo-exist", fn: handleRepoExist},
+	"packages":     {name: "repo-exist", fn: handleRepoExist},
+	"orgs":         {name: "org-exist", fn: handleOrgExist},
 }
 
 var (
-	ghRegex   = regexp.MustCompile(`(?i)https://github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*)(?:/[^\s"'()<>\[\]{}?#]+)*(?:#[^\s"'()<>\[\]{}]+)?`)
-	repoRegex = regexp.MustCompile(
-		`^https:\/\/` +
-			// 1: host (no subdomains like api./uploads.)
-			`(github\.(?:com|[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*))\/` +
-			// 2: org
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// optional repo block and everything after it
-			`(?:\/` +
-			// 3: repo
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// optional kind/ref[/tail...]
-			`(?:\/` +
-			// 4: kind
-			`(blob|tree|raw|blame|releases|commit|issues|pulls|pull|commits|compare|discussions|branches|tags|milestones|labels|projects|actions|settings|security)` +
-			// optional ref section - some URLs like /releases, /pulls, /issues don't require a ref
-			`(?:\/` +
-			// allow "releases/tag/<ref>" (harmless for others)
-			`(?:tag\/)?` +
-			// 5: ref or first-after-kind
-			`([^\/\s"'()<>\[\]{},?#]+)` +
-			// 6: tail (may include multiple / segments)
-			`(?:\/([^\s"'()<>\[\]{},?#]+(?:\/[^\s"'()<>\[\]{},?#]+)*))?` +
-			`)?` +
-			`)?` +
-			`)?` +
-			// optional trailing slash (for org-only or repo root)
-			`\/?` +
-			// 7: optional fragment
-			`(?:\#([^\s"'()<>\[\]{},?#]+))?` +
-			`$`,
-	)
+	enterpriseRegex = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)
+	gitHubRegex     = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/\S*)?`)
 )
 
 type LinkProcessor struct {
@@ -130,50 +112,147 @@ func httpClient(timeout time.Duration) *http.Client {
 	return &http.Client{Timeout: timeout}
 }
 
+type ghURL struct {
+	enterprise bool
+	host       string
+	owner      string
+	repo       string
+	typ        string
+	ref        string
+	path       string
+	anchor     string
+}
+
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
-	if isCorpUrl(url) && proc.corpGitHubUrl == "" {
+	gh, err := parseUrl(strings.ToLower(url))
+	if err != nil {
+		return err
+	}
+
+	if gh.enterprise && proc.corpGitHubUrl == "" {
 		return fmt.Errorf("the url '%s' looks like a corp url, but CORP_URL is not set", url)
 	}
-	var host, owner, repo, typ, ref, path string
-
-	match := repoRegex.FindStringSubmatch(url)
-	if len(match) == 0 {
-		return fmt.Errorf("invalid or unsupported GitHub URL: %s. If you think it is a bug, please report it", url)
-	}
-	host, owner, repo, typ, ref, path, _ = match[1], match[2], strings.TrimSuffix(match[3], ".git"), match[4], match[5], strings.TrimPrefix(match[6], "/"), strings.ReplaceAll(match[7], "#", "")
-
 	client := proc.client
-	if host == proc.corpGitHubUrl {
+	if gh.host == proc.corpGitHubUrl {
 		client = proc.corpClient
 	}
 
-	var entry handlerEntry
-	var ok bool
-	switch {
-	case typ == "" || owner == "organizations":
-		switch {
-		case (owner != "" && repo == "") || owner == "organizations":
-			entry = handlerEntry{name: "org-exist", fn: handleOrgExist}
-		case owner != "" && repo != "":
-			entry = handlerEntry{name: "repo-exist", fn: handleRepoExist}
-		default:
-			return fmt.Errorf("unsupported GitHub URL: %s", url)
-		}
-	default:
-		entry, ok = handlers[typ]
-		if !ok {
-			return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", typ)
-		}
+	entry, ok := handlers[gh.typ]
+	if !ok {
+		return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
 	}
 	proc.logger.Debug("using", zap.String("handler", entry.name))
 
-	return mapGHError(url, entry.fn(ctx, client, owner, repo, ref, path))
+	return mapGHError(url, entry.fn(ctx, client, gh.owner, gh.repo, gh.ref, gh.path, gh.anchor))
+}
+
+func parseUrl(link string) (*ghURL, error) {
+	u, err := url.Parse(strings.TrimSuffix(link, ".git"))
+	if err != nil {
+		return nil, err
+	}
+	if !strings.HasPrefix(u.Hostname(), "github.") {
+		return nil, fmt.Errorf("not a GitHub URL")
+	}
+	if strings.HasSuffix(u.Hostname(), "api.github") ||
+		strings.HasPrefix(u.Hostname(), "uploads.github") {
+		return nil, fmt.Errorf("API/uploads subdomain not supported")
+	}
+
+	parts := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
+
+	gh := &ghURL{
+		host:       u.Host,
+		enterprise: enterpriseRegex.MatchString(u.Hostname()),
+		anchor:     u.Fragment,
+	}
+
+	// Handle root GitHub URL
+	if len(parts) <= 1 && parts[0] == "" {
+		return gh, nil
+	}
+
+	// out of size prevention
+	maxLength := 10
+	diff := maxLength - len(parts)
+	parts = append(parts, make([]string, diff)...)[:maxLength]
+
+	// Handle org urls
+	switch parts[0] {
+	case "organizations", "orgs":
+		gh.typ = "orgs"
+		gh.owner = parts[1]
+		gh.path = joinPath(parts[2:])
+		return gh, nil
+	case "settings":
+		gh.typ = "nope"
+		gh.path = joinPath(parts[1:])
+		return gh, nil
+	}
+
+	gh.owner = parts[0]
+	gh.repo = parts[1]
+	gh.typ = parts[2]
+
+	switch gh.typ {
+	case "":
+		if gh.repo == "" {
+			gh.typ = "user"
+		}
+	case "branches", "settings", "tags", "labels", "packages",
+		"pulls", "milestones", "projects", "pkgs":
+	// these above go to simple 'if repo exists' validation
+	case "blob", "tree", "blame", "raw":
+		gh.ref = parts[3]
+		gh.path = joinPath(parts[4:])
+	case "releases":
+		switch parts[3] {
+		case "tag", "download":
+			gh.ref = parts[3]
+			gh.path = joinPath(parts[4:])
+		default:
+			gh.ref = ""
+			gh.path = parts[3]
+		}
+	case "discussions", "wiki":
+		// those might be false positive as they are not available via GitHub API
+		gh.ref = parts[3]
+		gh.path = joinPath(parts[4:])
+	case "commit", "commits", "issues", "pull",
+		"milestone", "advisories", "compare",
+		"attestations", "actions":
+		gh.ref = parts[3]
+		gh.path = joinPath(parts[4:])
+	case "security":
+		// I validate only 'advisories' existence, the rest is goes by 'handleRepoExist'
+		if parts[3] == "advisories" && parts[4] != "" {
+			gh.typ = "advisories"
+			gh.ref = parts[4]
+		}
+	default:
+		return nil, fmt.Errorf("unsupported GitHub URL found '%s', please report a bug", link)
+	}
+
+	return gh, nil
+}
+
+func joinPath(parts []string) string {
+	i := 0
+	for ; i < len(parts) && parts[i] != ""; i++ {
+	} // find first empty
+	if i == 0 {
+		return ""
+	}
+	if i == 1 {
+		return parts[0]
+	}
+	return strings.Join(parts[:i], "/")
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := ghRegex.FindAllString(line, -1)
+	parts := gitHubRegex.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
@@ -187,8 +266,4 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		urls = append(urls, raw)
 	}
 	return urls
-}
-
-func isCorpUrl(url string) bool {
-	return !strings.Contains(url, "github.com")
 }

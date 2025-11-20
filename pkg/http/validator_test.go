@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
@@ -69,7 +70,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			name: "ignores non-repo urls (without blob|tree|raw|blame|ref)",
 			line: `
 				https://github.com/your-ko/link-validator
-				https://github.mpi-internal.com/bnl/elasticaas/actions/workflows/master.yaml
+				https://github.mycorp.com/bnl/elasticaas/actions/workflows/master.yaml
 				https://github.com/your-ko/link-validator/pulls
 				https://github.com/your-ko/link-validator/issues/4
 				`,
