@@ -114,6 +114,11 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://github.com/your-ko/link-validator/releases/download/1.3.0/SHASUMS256.txt",
 			},
 		},
+		{
+			name: "ignores urls containing special characters",
+			line: `https://[github].[mycorp].[com]`,
+			want: nil,
+		},
 	}
 
 	for _, tt := range tests {
