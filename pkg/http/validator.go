@@ -19,7 +19,7 @@ import (
 var urlRegex = regexp.MustCompile(`https://\S+`)
 
 // gitHubRegex is identical to the github.repoRegex, but it is used in inverse way
-var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/\S*)?`)
+var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s"'()<>\[\]{}\x60]*[^\s"'()<>\[\]{}.,:;!?\x60])?`)
 
 type LinkProcessor struct {
 	httpClient     *http.Client
