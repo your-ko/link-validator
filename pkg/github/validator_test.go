@@ -39,6 +39,14 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
+			name: "Catches badge url correctly",
+			line: `[![Link validation](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml)`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml/badge.svg",
+				"https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml",
+			},
+		},
+		{
 			name: "ignores subdomain uploads.* or api* ",
 			line: `test https://uploads.github.mycorp.com/org/repo/raw/main/image.png
 			       and external https://gitlab.mycorp.com/a/b
