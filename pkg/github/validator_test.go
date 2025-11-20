@@ -532,12 +532,12 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 		},
 		{
 			name: "repo url to a particular project",
-			url:  "https://github.com/your-ko/link-validator/projects/1",
+			url:  "https://github.com/orgs/your-ko/projects/1",
 			want: &ghURL{
 				host:  "github.com",
 				owner: "your-ko",
-				repo:  "link-validator",
-				typ:   "projects",
+				typ:   "orgs",
+				path:  "projects/1",
 			},
 		},
 		{
