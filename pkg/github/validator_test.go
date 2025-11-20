@@ -103,6 +103,22 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://github.mycorp.com/your-ko/link-validator/commit/a96366f66ffacd461de10a1dd561ab5a598e9167",
 			},
 		},
+		{
+			name: "excludes trailing backticks from URLs",
+			line: `- Software Bill of Materials: ` + "`" + `https://github.com/your-ko/link-validator/releases/download/1.3.0/sbom.spdx.json` + "`" + `
+				- Build provenance: ` + "`" + `https://github.com/your-ko/link-validator/releases/download/1.3.0/provenance.intoto.jsonl` + "`" + `
+				- Checksums: ` + "`" + `https://github.com/your-ko/link-validator/releases/download/1.3.0/SHASUMS256.txt` + "`",
+			want: []string{
+				"https://github.com/your-ko/link-validator/releases/download/1.3.0/sbom.spdx.json",
+				"https://github.com/your-ko/link-validator/releases/download/1.3.0/provenance.intoto.jsonl",
+				"https://github.com/your-ko/link-validator/releases/download/1.3.0/SHASUMS256.txt",
+			},
+		},
+		{
+			name: "ignores urls containing special characters",
+			line: `https://[github].[mycorp].[com]`,
+			want: nil,
+		},
 	}
 
 	for _, tt := range tests {
