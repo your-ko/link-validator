@@ -30,6 +30,15 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
+			name: "Ignores GitHub blog",
+			line: `test https://github.blog/changelog/2025-11-18-github-copilot-cli-new-models-enhanced-code-search-and-better-image-support/
+			       test https://google.com/x
+			       test https://github.com/your-ko/link-validator/blob/main/README.md`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/blob/main/README.md",
+			},
+		},
+		{
 			name: "ignores subdomain uploads.* or api* ",
 			line: `test https://uploads.github.mycorp.com/org/repo/raw/main/image.png
 			       and external https://gitlab.mycorp.com/a/b

@@ -46,6 +46,14 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
+			name: "capture GitHub blog ",
+			line: `test https://github.blog/changelog/2025-11-18-github-copilot-cli-new-models-enhanced-code-search-and-better-image-support/
+			       and https://github.mycorp.com/your-ko/link-validator/blob/main/README.md`,
+			want: []string{
+				"https://github.blog/changelog/2025-11-18-github-copilot-cli-new-models-enhanced-code-search-and-better-image-support/",
+			},
+		},
+		{
 			name: "ignores non-matching schemes, captures another hosts",
 			line: `scheme http://github.mycorp.com/org/repo/blob/main/README.md
 			       non-github https://other.com/org/repo/blob/main/README.md`,
