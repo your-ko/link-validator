@@ -19,8 +19,8 @@ import (
 // urlRegex matches valid HTTPS URLs with valid hostnames (no brackets or invalid characters)
 var urlRegex = regexp.MustCompile(`https://[a-zA-Z0-9.-]+(?:/\S*)?`)
 
-// gitHubRegex is identical to the github.repoRegex, but it is used in inverse way
-var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s"'()<>\[\]{}\x60]*[^\s"'()<>\[\]{}.,:;!?\x60])?`)
+// gitHubRegex matches GitHub URLs that should be handled by the GitHub validator
+var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60]*[^\s.,:;!?()\[\]{}\x60])?`)
 
 type LinkProcessor struct {
 	httpClient     *http.Client
