@@ -902,3 +902,74 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 		})
 	}
 }
+
+func Test_joinPath(t *testing.T) {
+	tests := []struct {
+		name  string
+		parts []string
+		want  string
+	}{
+		{
+			name:  "empty slice",
+			parts: []string{},
+			want:  "",
+		},
+		{
+			name:  "single non-empty element",
+			parts: []string{"README.md"},
+			want:  "README.md",
+		},
+		{
+			name:  "single non-empty element with trailing empty",
+			parts: []string{"README.md", ""},
+			want:  "README.md",
+		},
+		{
+			name:  "two elements",
+			parts: []string{"docs", "README.md"},
+			want:  "docs/README.md",
+		},
+		{
+			name:  "multiple elements",
+			parts: []string{"aaa", "bbb", "ccc", "ddd", "README.md"},
+			want:  "aaa/bbb/ccc/ddd/README.md",
+		},
+		{
+			name:  "multiple elements with trailing empty",
+			parts: []string{"src", "docs", "README.md", ""},
+			want:  "src/docs/README.md",
+		},
+		{
+			name:  "all empty strings",
+			parts: []string{"", "", ""},
+			want:  "",
+		},
+		{
+			name:  "mixed with empty at end",
+			parts: []string{".github", "workflows", "pr.yml", "", "", ""},
+			want:  ".github/workflows/pr.yml",
+		},
+		{
+			name:  "single empty string",
+			parts: []string{""},
+			want:  "",
+		},
+		{
+			name:  "complex path from URL parsing",
+			parts: []string{"blob", "main", "pkg", "github", "validator.go", "", "", "", "", ""},
+			want:  "blob/main/pkg/github/validator.go",
+		},
+		{
+			name:  "nil slice",
+			parts: nil,
+			want:  "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := joinPath(tt.parts); got != tt.want {
+				t.Errorf("joinPath() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
