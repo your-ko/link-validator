@@ -97,12 +97,16 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://api.github.com/repos/your-ko/link-validator/contents/?ref=a96366f66ffacd461de10a1dd561ab5a598e9167",
 			},
 		},
-
 		{
 			name: "ignores refs urls",
 			line: `
 				particular commit https://github.com/your-ko/link-validator/commit/a96366f66ffacd461de10a1dd561ab5a598e9167 text
 				particular commit https://github.mycorp.com/your-ko/link-validator/commit/a96366f66ffacd461de10a1dd561ab5a598e9167 text`,
+			want: []string{},
+		},
+		{
+			name: "ignores urls containing special characters",
+			line: `https://[github].[mycorp].[com]`,
 			want: []string{},
 		},
 	}
