@@ -21,7 +21,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	tests := []tc{
 		{
 			name: "keeps github blob; drops externals",
-			line: `test https://github.mycorp.com/your-ko/link-validator/blob/main/README.md
+			line: `test (https://github.mycorp.com/your-ko/link-validator/blob/main/README.md)
 			       test https://google.com/x
 			       test https://github.com/your-ko/link-validator/blob/main/README.md`,
 			want: []string{
