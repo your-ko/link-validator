@@ -30,7 +30,7 @@ runs:
       shell: bash
       env:
         DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-        DOCKER_VALIDATOR_VERSION: 1.7.3
+        DOCKER_VALIDATOR_VERSION: 1.7.4
       run: |
         docker run --rm \
           -e LOG_LEVEL=${{ inputs.log-level }} \
