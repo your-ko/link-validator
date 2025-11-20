@@ -118,17 +118,18 @@ jobs:
 | `CORP_PAT`           | No       | GitHub Enterprise personal access token                                                  | `""`    |
 | `IGNORED_DOMAINS`    | No       | Comma-separated list of domains or their parts that should be ignored during validation. | `[]`    |
 
-### Authentication
-
-**GitHub.com**: Use `GITHUB_TOKEN` in CI or a PAT with `public_repo`/`repo` scope. Authentication is optional but recommended to avoid rate limiting.
-
-**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
-
+### Additional explanation
 **IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example OKTA or LDAP.
 At the moment, link-validator doesn't support such authentication, so any 401 responses are treated as a success.
 If you have such resources, you can explicitly list them in this variable so you know they are not validated.
 
 This option is also useful when you have resources that are simply not accessible from GitHub runners due to network limitations.
+
+## Authentication
+
+**GitHub.com**: Use `GITHUB_TOKEN` in CI or a PAT with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
+
+**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
 
 ## Implementation Details
 
