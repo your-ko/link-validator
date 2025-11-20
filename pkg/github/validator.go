@@ -126,7 +126,7 @@ type ghURL struct {
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	proc.logger.Debug("Validating github url", zap.String("url", url))
 
-	gh, err := parseUrl(strings.ToLower(url))
+	gh, err := parseUrl(url)
 	if err != nil {
 		return err
 	}
