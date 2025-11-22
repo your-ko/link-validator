@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -33,18 +32,6 @@ type Stats struct {
 
 type LinkValidador struct {
 	processors []LinkProcessor
-}
-
-type Config struct {
-	Path           string
-	PAT            string
-	CorpPAT        string
-	CorpGitHubUrl  string
-	FileMasks      []string
-	ExcludePath    string
-	LookupPath     string
-	Timeout        time.Duration
-	IgnoredDomains []string
 }
 
 func New(config Config, logger *zap.Logger) LinkValidador {
