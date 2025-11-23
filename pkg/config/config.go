@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -21,7 +20,6 @@ type Config struct {
 	Timeout        time.Duration `yaml:"timeout"`
 	IgnoredDomains []string      `yaml:"ignoredDomains"`
 	reader         io.Reader
-	logger         *zap.Logger
 }
 
 func Default() *Config {
