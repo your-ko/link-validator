@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -30,7 +31,9 @@ func Default() *Config {
 }
 
 func (cfg *Config) WithReader(r io.Reader) *Config {
-	cfg.reader = r
+	if r != nil {
+		cfg.reader = r
+	}
 	return cfg
 }
 
@@ -43,7 +46,9 @@ func (cfg *Config) Load() (*Config, error) {
 			return nil, err
 		}
 	}
-	cfg.merge(tmp)
+	if tmp != nil {
+		cfg.merge(tmp)
+	}
 	tmp, err = readFromEnv()
 	if err != nil {
 		return nil, err
@@ -55,36 +60,60 @@ func (cfg *Config) Load() (*Config, error) {
 func (cfg *Config) loadFromReader() (*Config, error) {
 	decoder := yaml.NewDecoder(cfg.reader)
 	decoder.KnownFields(true)
-	var tmp *Config
-	if err := decoder.Decode(tmp); err != nil {
+	tmp := &Config{}
+	err := decoder.Decode(tmp)
+	if err != nil {
+		// Check if this is an empty file or no data
+		if errors.Is(err, io.EOF) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("can't decode config: %w", err)
 	}
-	return cfg, nil
+	return tmp, nil
 }
 
 func readFromEnv() (*Config, error) {
-	timeoutStr := GetEnv("TIMEOUT", "3s")
-	timeout, err := time.ParseDuration(timeoutStr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid duration value: %s", timeoutStr)
+	cfg := &Config{}
+
+	// Only set values if environment variables are actually set
+	if corpURL := GetEnv("CORP_URL", ""); corpURL != "" {
+		cfg.CorpGitHubUrl = corpURL
 	}
-	ignoredDomains := strings.Split(GetEnv("IGNORED_DOMAINS", ""), ",")
-	for i, s := range ignoredDomains {
-		ignoredDomains[i] = strings.ToLower(s)
+	if pat := GetEnv("PAT", ""); pat != "" {
+		cfg.PAT = pat
+	}
+	if corpPAT := GetEnv("CORP_PAT", ""); corpPAT != "" {
+		cfg.CorpPAT = strings.ToLower(corpPAT)
+	}
+	if fileMasks := GetEnv("FILE_MASKS", ""); fileMasks != "" {
+		cfg.FileMasks = strings.Split(fileMasks, ",")
+	}
+	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
+		cfg.LookupPath = lookupPath
+	}
+	if timeoutStr := GetEnv("TIMEOUT", ""); timeoutStr != "" {
+		timeout, err := time.ParseDuration(timeoutStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid duration value: %s", timeoutStr)
+		}
+		cfg.Timeout = timeout
+	}
+	if ignoredDomainsStr := GetEnv("IGNORED_DOMAINS", ""); ignoredDomainsStr != "" {
+		ignoredDomains := strings.Split(strings.TrimSuffix(ignoredDomainsStr, ","), ",")
+
+		for i, s := range ignoredDomains {
+			ignoredDomains[i] = strings.ToLower(s)
+		}
+		cfg.IgnoredDomains = ignoredDomains
 	}
 
-	return &Config{
-		CorpGitHubUrl:  GetEnv("CORP_URL", ""),
-		PAT:            GetEnv("PAT", ""),
-		CorpPAT:        strings.ToLower(GetEnv("CORP_PAT", "")),
-		FileMasks:      strings.Split(GetEnv("FILE_MASKS", "*.md"), ","),
-		IgnoredDomains: ignoredDomains,
-		LookupPath:     GetEnv("LOOKUP_PATH", "."),
-		Timeout:        timeout,
-	}, nil
+	return cfg, nil
 }
 
 func (cfg *Config) merge(config *Config) {
+	if config == nil {
+		return
+	}
 	if config.CorpGitHubUrl != "" {
 		cfg.CorpGitHubUrl = config.CorpGitHubUrl
 	}

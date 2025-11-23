@@ -1,0 +1,3 @@
+fileMasks:
+  - "*.md"
+timeout: 2s

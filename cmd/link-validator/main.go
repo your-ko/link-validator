@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"link-validator/internal/link-validator"
 	"link-validator/pkg/config"
 	"os"
@@ -15,7 +14,6 @@ var Version string
 var BuildDate string
 
 func main() {
-	flag.Parse()
 	logger := link_validator.Init(link_validator.LogLevel())
 	defer func(logger *zap.Logger) {
 		_ = logger.Sync()
@@ -38,13 +36,19 @@ func main() {
 		zap.String("git commit", GitCommit),
 	)
 
-	cfgReader, err := os.Open(".link-validator.yaml")
-	if err != nil {
-		logger.Info("can't open config file .link-validator.yaml")
+	cfg := config.Default()
+	if cfgReader, err := os.Open(".link-validator.yaml"); err == nil {
+		cfg = cfg.WithReader(cfgReader)
+		defer func() {
+			_ = cfgReader.Close()
+		}()
+	} else {
+		logger.Info("can't open config file .link-validator.yaml, skipping it")
 	}
-	cfg, err := config.Default().WithReader(cfgReader).Load()
+	cfg, err := cfg.Load()
 	if err != nil {
-		logger.Fatal("can't initialise, exiting", zap.Error(err))
+		logger.Error("can't initialise, exiting", zap.Error(err))
+		os.Exit(1)
 	}
 
 	if cfg.CorpGitHubUrl != "" && cfg.CorpPAT == "" {
