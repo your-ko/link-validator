@@ -23,6 +23,7 @@ type Config struct {
 	reader         io.Reader
 }
 
+// Default generates default config
 func Default() *Config {
 	return &Config{
 		FileMasks: []string{"*.md"},
@@ -37,6 +38,9 @@ func (cfg *Config) WithReader(r io.Reader) *Config {
 	return cfg
 }
 
+// Load loads the config in the following sequence:
+// Default < Config file < ENV variables
+// If there is no config file, then it is skipped
 func (cfg *Config) Load() (*Config, error) {
 	var tmp *Config
 	var err error
@@ -110,6 +114,8 @@ func readFromEnv() (*Config, error) {
 	return cfg, nil
 }
 
+// merge merges this config with another config
+// if another config has empty values, then original values are not overwritten
 func (cfg *Config) merge(config *Config) {
 	if config == nil {
 		return
