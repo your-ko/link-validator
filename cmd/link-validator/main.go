@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"go.uber.org/zap"
 	"link-validator/internal/link-validator"
+	"link-validator/pkg/config"
 	"os"
-	"strings"
-	"time"
+
+	"go.uber.org/zap"
 )
 
 var GitCommit string
@@ -15,6 +15,7 @@ var Version string
 var BuildDate string
 
 func main() {
+	flag.Parse()
 	logger := link_validator.Init(link_validator.LogLevel())
 	defer func(logger *zap.Logger) {
 		_ = logger.Sync()
@@ -31,60 +32,40 @@ func main() {
 		}
 	}()
 
-	fileMasks := strings.Split(*flag.String("FILE_MASKS", GetEnv("FILE_MASKS", "*.md"), "File masks."), ",")
-	ignoredDomains := strings.Split(*flag.String("IGNORED_DOMAINS", GetEnv("IGNORED_DOMAINS", ""), "Domains list to ignore during validation."), ",")
-	// not used atm
-	lookUpPath := *flag.String("LOOKUP_PATH", GetEnv("LOOKUP_PATH", "."), "Lookup path to validate local links. Useful if the repo is big and you want to focus only on some part if it.")
-	// not used atm
-	//excludePath := *flag.String("EXCLUDE_PATH", GetEnv("EXCLUDE_PATH", "."), "Exclude path. Don't validate some path")
-	// not used atm
-	//files := strings.Split(*flag.String("FILE_LIST", GetEnv("FILE_LIST", "."), "List of files to validate. Useful for PR validation, for example"), ",")
-	pat := *flag.String("PAT", GetEnv("PAT", ""), "GitHub PAT. Used to get access to GitHub.")
-	corpPat := *flag.String("CORP_PAT", GetEnv("CORP_PAT", ""), "Corporate GitHub PAT. Used to get access to the corporate GitHub.")
-	corpGitHub := *flag.String("CORP_URL", GetEnv("CORP_URL", ""), "Corporate GitHub URL.")
-	timeout := *flag.Duration("TIMEOUT", envDuration("TIMEOUT", 3*time.Second, logger), "HTTP request timeout")
-	corpGitHub = strings.TrimSpace(strings.ToLower(corpGitHub))
-
 	logger.Info("Starting Link Validator",
 		zap.String("version", Version),
 		zap.String("build date", BuildDate),
 		zap.String("git commit", GitCommit),
 	)
 
-	if corpGitHub != "" && corpPat == "" {
+	cfgReader, err := os.Open(".link-validator.yaml")
+	if err != nil {
+		logger.Info("can't open config file .link-validator.yaml")
+	}
+	cfg, err := config.Default().WithReader(cfgReader).Load()
+	if err != nil {
+		logger.Fatal("can't initialise, exiting", zap.Error(err))
+	}
+
+	if cfg.CorpGitHubUrl != "" && cfg.CorpPAT == "" {
 		logger.Warn("it seems you set CORP_URL but didn't provide CORP_PAT. Expect false negatives because the " +
 			"link won't be able to fetch corl github without pat")
-	}
-	for i, s := range ignoredDomains {
-		ignoredDomains[i] = strings.ToLower(s)
 	}
 
 	logger.Debug("Running with parameters",
 		zap.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
-		zap.Strings("FILE_MASKS", fileMasks),
-		zap.Strings("IGNORED_DOMAINS", ignoredDomains),
-		zap.String("LOOKUP_PATH", lookUpPath), // not implemented yet
+		zap.Strings("FILE_MASKS", cfg.FileMasks),
+		zap.Strings("IGNORED_DOMAINS", cfg.IgnoredDomains),
+		//zap.String("LOOKUP_PATH", cfg.LookupPath), // not implemented yet
 		//zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
 		//zap.Strings("FILE_LIST", files),         // not implemented yet
-		zap.String("CORP_URL", corpGitHub),
-		zap.Duration("TIMEOUT", timeout),
+		zap.String("CORP_URL", cfg.CorpGitHubUrl),
+		zap.Duration("TIMEOUT", cfg.Timeout),
 	)
 
-	config := link_validator.Config{
-		CorpGitHubUrl: corpGitHub,
-		//Path:          lookUpPath,
-		PAT:            pat,
-		CorpPAT:        corpPat,
-		FileMasks:      fileMasks,
-		IgnoredDomains: ignoredDomains,
-		LookupPath:     lookUpPath,
-		//ExcludePath:   excludePath,
-		Timeout: timeout,
-	}
+	validator := link_validator.New(cfg, logger)
 
-	validator := link_validator.New(config, logger)
-
-	filesList, err := validator.GetFiles(config)
+	filesList, err := validator.GetFiles(cfg)
 	if err != nil {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}
@@ -105,20 +86,4 @@ func main() {
 	if stats.Errors > 0 || stats.NotFoundLinks > 0 {
 		os.Exit(1)
 	}
-}
-
-func envDuration(key string, def time.Duration, logger *zap.Logger) time.Duration {
-	if str := os.Getenv(key); str != "" {
-		if dur, err := time.ParseDuration(str); err == nil {
-			return dur
-		}
-		logger.Error("invalid duration value", zap.String("key", key))
-	}
-	return def
-}
-func GetEnv(key, defaultValue string) string {
-	if val, ok := os.LookupEnv(key); ok {
-		return strings.ReplaceAll(val, " ", "")
-	}
-	return defaultValue
 }
