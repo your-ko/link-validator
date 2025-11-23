@@ -31,14 +31,6 @@ func Default() *Config {
 	}
 }
 
-type Option func(*loadOpts)
-
-type loadOpts struct {
-	filePath  string
-	reader    io.Reader     // alternate to filePath (for tests)
-	overrides func(*Config) // programmatic tweaks last
-}
-
 func (cfg *Config) WithReader(r io.Reader) *Config {
 	cfg.reader = r
 	return cfg
@@ -107,10 +99,10 @@ func (cfg *Config) merge(config *Config) {
 	if config.Timeout != 0 {
 		cfg.Timeout = config.Timeout
 	}
-	if config.FileMasks != nil && len(config.FileMasks) != 0 {
+	if len(config.FileMasks) != 0 {
 		cfg.FileMasks = config.FileMasks
 	}
-	if config.IgnoredDomains != nil && len(config.IgnoredDomains) != 0 {
+	if len(config.IgnoredDomains) != 0 {
 		cfg.IgnoredDomains = config.IgnoredDomains
 	}
 }
