@@ -1,3 +1,5 @@
 fileMasks:
   - "*.md"
 timeout: 2s
+IgnoredDomains:
+  - token.actions.githubusercontent.com
