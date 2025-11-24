@@ -115,6 +115,9 @@ jobs:
       - name: Link validation
         id: lnk
         shell: bash
+        env:
+          DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
+          DOCKER_VALIDATOR_VERSION: PR
         run: |
           docker run --rm \
             -e 'LOG_LEVEL=debug' \
