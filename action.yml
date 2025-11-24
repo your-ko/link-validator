@@ -23,6 +23,9 @@ inputs:
   ignored-domains:
     description: "Comma separated list of domains or their parts that should be ignored during validation."
     default: ""
+  files:
+    description: "Comma separated list of files to validate."
+    default: ""
   timeout:
     description: "HTTP request timeout."
     default: "3s"
@@ -41,6 +44,7 @@ runs:
           -e 'PAT=${{ inputs.pat }}' \
           -e 'CORP_PAT=${{ inputs.corp-pat }}' \
           -e CORP_URL=${{ inputs.corp-url }} \
+          -e FILES=${{ inputs.files }} \
           -e IGNORED_DOMAINS=${{ inputs.ignored-domains }} \
           -v "${{ github.workspace }}:/work" \
           -w /work \

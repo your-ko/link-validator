@@ -17,8 +17,6 @@ jobs:
   PR:
     name: PR
     runs-on: ubuntu-22.04
-    outputs:
-      sha_short: ${{ steps.sha.outputs.sha_short }}
     steps:
       - uses: actions/checkout@v4.2.2
 
@@ -86,8 +84,25 @@ jobs:
           provenance: false
           push: false
 
+      - name: Get changed files
+        id: changed-files
+        shell: bash
+        run: |
+          # Get the base branch (target of PR)
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+          
+          echo "Changed files in this PR:"
+          echo "$CHANGED_FILES"
+          
+          FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
+
       - name: Link validation
         uses: your-ko/link-validator@1.8.0
         with:
           log-level: 'info'
+          files: ${{ steps.changed-files.outputs.files}}
           pat: ${{ secrets.GITHUB_TOKEN }}
