@@ -17,7 +17,7 @@ type Config struct {
 	CorpGitHubUrl string   `yaml:"corpGitHubUrl"`
 	FileMasks     []string `yaml:"fileMasks"`
 	//ExcludePath    string        `yaml:"excludePath"`
-	//LookupPath     string        `yaml:"lookupPath"`
+	LookupPath     string        `yaml:"lookupPath"`
 	Timeout        time.Duration `yaml:"timeout"`
 	IgnoredDomains []string      `yaml:"ignoredDomains"`
 	reader         io.Reader
@@ -92,9 +92,9 @@ func readFromEnv() (*Config, error) {
 	if fileMasks := GetEnv("FILE_MASKS", ""); fileMasks != "" {
 		cfg.FileMasks = strings.Split(fileMasks, ",")
 	}
-	//if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
-	//	cfg.LookupPath = lookupPath
-	//}
+	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
+		cfg.LookupPath = lookupPath
+	}
 	if timeoutStr := GetEnv("TIMEOUT", ""); timeoutStr != "" {
 		timeout, err := time.ParseDuration(timeoutStr)
 		if err != nil {
