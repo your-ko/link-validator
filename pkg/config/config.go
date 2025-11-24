@@ -16,6 +16,7 @@ type Config struct {
 	CorpPAT       string
 	CorpGitHubUrl string   `yaml:"corpGitHubUrl"`
 	FileMasks     []string `yaml:"fileMasks"`
+	Files         []string `yaml:"files"`
 	//ExcludePath    string        `yaml:"excludePath"`
 	LookupPath     string        `yaml:"lookupPath"`
 	Timeout        time.Duration `yaml:"timeout"`
@@ -90,7 +91,10 @@ func readFromEnv() (*Config, error) {
 		cfg.CorpPAT = strings.ToLower(corpPAT)
 	}
 	if fileMasks := GetEnv("FILE_MASKS", ""); fileMasks != "" {
-		cfg.FileMasks = strings.Split(fileMasks, ",")
+		cfg.FileMasks = strings.Split(strings.TrimSuffix(fileMasks, ","), ",")
+	}
+	if files := GetEnv("FILES", ""); files != "" {
+		cfg.Files = strings.Split(strings.TrimSuffix(files, ","), ",")
 	}
 	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
 		cfg.LookupPath = lookupPath
@@ -134,6 +138,9 @@ func (cfg *Config) merge(config *Config) {
 	}
 	if len(config.FileMasks) != 0 {
 		cfg.FileMasks = config.FileMasks
+	}
+	if len(config.Files) != 0 {
+		cfg.Files = config.Files
 	}
 	if len(config.IgnoredDomains) != 0 {
 		cfg.IgnoredDomains = config.IgnoredDomains
