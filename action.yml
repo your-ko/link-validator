@@ -23,6 +23,9 @@ inputs:
   ignored-domains:
     description: "Comma separated list of domains or their parts that should be ignored during validation."
     default: ""
+  timeout:
+    description: "HTTP request timeout."
+    default: "3s"
 runs:
   using: 'composite'
   steps:
