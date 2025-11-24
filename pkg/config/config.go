@@ -27,8 +27,9 @@ type Config struct {
 // Default generates default config
 func Default() *Config {
 	return &Config{
-		FileMasks: []string{"*.md"},
-		Timeout:   3 * time.Second,
+		LookupPath: ".",
+		FileMasks:  []string{"*.md"},
+		Timeout:    3 * time.Second,
 	}
 }
 
