@@ -102,7 +102,7 @@ jobs:
           echo "Changed files in this PR:"
           echo "$CHANGED_FILES"
           
-          FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
 #      - name: Link validation
