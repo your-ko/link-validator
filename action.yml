@@ -36,7 +36,7 @@ runs:
       shell: bash
       env:
         DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-        DOCKER_VALIDATOR_VERSION: PR  # TODO: rollback
+        DOCKER_VALIDATOR_VERSION: 1.8.0
       run: |
         docker run --rm \
           -e LOG_LEVEL=${{ inputs.log-level }} \
