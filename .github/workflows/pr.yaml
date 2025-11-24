@@ -104,7 +104,7 @@ jobs:
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
       - name: Link validation
-        uses: your-ko/link-validator@1.8.0
+        uses: your-ko/link-validator@48-add-possibility-to-run-on-the-file-list
         with:
           log-level: 'info'
           files: ${{ steps.changed-files.outputs.files}}
