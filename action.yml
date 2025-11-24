@@ -45,6 +45,7 @@ runs:
           -e 'CORP_PAT=${{ inputs.corp-pat }}' \
           -e CORP_URL=${{ inputs.corp-url }} \
           -e FILES=${{ inputs.files }} \
+          -e TIMEOUT=${{ inputs.timeout }} \
           -e IGNORED_DOMAINS=${{ inputs.ignored-domains }} \
           -v "${{ github.workspace }}:/work" \
           -w /work \
