@@ -36,12 +36,12 @@ This tool understands GitHub's URL patterns and uses the API for accurate valida
 
 ## GitHub Actions Setup
 
-Link-validator can be used either as an independent GitHub workflow or as a GitHub action.
+The link-validator can be used either as an independent GitHub workflow or as a GitHub action.
 
 ### GitHub action
 
-This can be added, for example, to the workflow that runs on PR. In this case, if there are broken links in the documentation,
-the step will fail (this will be improved in future releases)
+This can be added, for example, to a workflow that runs on PRs. In this case, if there are broken links in the documentation,
+the step will fail (this will be improved in future releases).
 
 ```yaml
     - name: Link validation
@@ -52,15 +52,14 @@ the step will fail (this will be improved in future releases)
 ```
 
 ### GitHub workflow
-This can be added as an independent workflow. Then the scan will be performed for the whole repository on the push event,
-so you can always see the status of the documentation. 
+This can be added as an independent workflow. The scan will then be performed on the whole repository when a push event occurs,
+so you can always see the status of your documentation. 
 
 ```yaml
 name: Link validation
 on:
   push:
     branches: [ main, master ]
-  pull_request:
 
 permissions:
   contents: read  # Required to checkout code and read files
@@ -76,24 +75,14 @@ jobs:
         uses: actions/checkout@v5.0.0
 
       - name: Run Link validation
-        env:
-          LOG_LEVEL: "info"
-          FILE_MASKS: "*.md"
-          PAT: ${{ secrets.GITHUB_TOKEN }}
-          CORP_URL: ""
-          CORP_PAT: ${{ secrets.CORP_GITHUB_TOKEN }}
-          IGNORED_DOMAINS: "jira,internal.io"
         run: |
-          DOCKER_ENV_ARGS=""
-          for var in $(env | grep '^' | cut -d'=' -f1); do
-            DOCKER_ENV_ARGS="$DOCKER_ENV_ARGS -e $var"
-          done
-
           docker run --rm \
-            $DOCKER_ENV_ARGS \
+            -e 'LOG_LEVEL=debug' \
+            -e 'FILE_MASKS=*.md' \
+            -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            "${{ env.DOCKER_VALIDATOR }}"
+            ${DOCKER_VALIDATOR}
 ```
 
 ### Call GitHub workflow
@@ -119,17 +108,49 @@ jobs:
 | `IGNORED_DOMAINS`    | No       | Comma-separated list of domains or their parts that should be ignored during validation. | `[]`    |
 
 ### Additional explanation
-**IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example OKTA or LDAP.
-At the moment, link-validator doesn't support such authentication, so any 401 responses are treated as a success.
+**IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example, OKTA or LDAP.
+Currently, the link-validator doesn't support such authentication, so any 401 responses are treated as successful.
 If you have such resources, you can explicitly list them in this variable so you know they are not validated.
 
 This option is also useful when you have resources that are simply not accessible from GitHub runners due to network limitations.
 
+### Config file vs ENV variables
+You can configure the link-validator either via environment variables:
+```yaml
+      - name: Run Link validation
+        run: |
+          docker run --rm \
+            -e 'LOG_LEVEL=debug' \
+            -e 'FILE_MASKS=*.md' \
+            -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            ${DOCKER_VALIDATOR}
+```
+or via config file.
+
+#### Config file
+The config file needs to be called `.link-validator.yaml` and must be located in the repository root.
+The file can contain all configuration properties, except tokens. If a token is declared in the config file,
+it is ignored, because it is a bad security practice to have tokens checked into Git. 
+
+Config file example:
+```yaml
+fileMasks:
+  - "*.md"
+timeout: 2s
+```
+
+How is the configuration applied?
+* First, the config is populated with default values.
+* Then, values from the config file are applied. If the file is not present, then this step is ignored.
+* Finally, environment variables are applied. 
+
 ## Authentication
 
-**GitHub.com**: Use `GITHUB_TOKEN` in CI or a PAT with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
+**GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
 
-**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The PAT needs read access to repositories referenced in your documentation.
+**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The Personal Access Token (PAT) needs read access to repositories referenced in your documentation.
 
 ## Implementation Details
 
@@ -170,7 +191,7 @@ This usually indicates authentication or proxy configuration issues. Enable debu
 
 Image size: ~10MB
 
-It is recommended pinning to specific versions (e.g., `0.18.0`) rather than using `latest` for reproducible builds.
+Pinning to specific versions (e.g., `0.18.0`) is recommended rather than using `latest` for reproducible builds.
 
 ## Security
 

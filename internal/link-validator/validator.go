@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"link-validator/pkg/config"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
 	"link-validator/pkg/http"
@@ -12,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -35,19 +35,7 @@ type LinkValidador struct {
 	processors []LinkProcessor
 }
 
-type Config struct {
-	Path           string
-	PAT            string
-	CorpPAT        string
-	CorpGitHubUrl  string
-	FileMasks      []string
-	ExcludePath    string
-	LookupPath     string
-	Timeout        time.Duration
-	IgnoredDomains []string
-}
-
-func New(config Config, logger *zap.Logger) LinkValidador {
+func New(config *config.Config, logger *zap.Logger) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	gh, err := github.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger)
 	if err != nil {
@@ -125,7 +113,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 	return stats
 }
 
-func (v *LinkValidador) GetFiles(config Config) ([]string, error) {
+func (v *LinkValidador) GetFiles(config *config.Config) ([]string, error) {
 	var matchedFiles []string
 
 	matchesAnyMask := func(name string) bool {
