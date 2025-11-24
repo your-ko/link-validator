@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  packages: write # TODO: rollback
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -61,7 +62,6 @@ jobs:
           images: ${{ env.DOCKER_IMAGE_NAME }}
           # TODO: rollback PR
           tags: |
-            type=ref,event=pr
             type=sha,prefix=sha256-
             type=ref,event=branch,prefix=branch-
             type=raw,value=PR
