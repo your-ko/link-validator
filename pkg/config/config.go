@@ -12,11 +12,11 @@ import (
 )
 
 type Config struct {
-	PAT            string
-	CorpPAT        string
-	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
-	FileMasks      []string      `yaml:"fileMasks"`
-	ExcludePath    string        `yaml:"excludePath"`
+	PAT           string
+	CorpPAT       string
+	CorpGitHubUrl string   `yaml:"corpGitHubUrl"`
+	FileMasks     []string `yaml:"fileMasks"`
+	//ExcludePath    string        `yaml:"excludePath"`
 	LookupPath     string        `yaml:"lookupPath"`
 	Timeout        time.Duration `yaml:"timeout"`
 	IgnoredDomains []string      `yaml:"ignoredDomains"`

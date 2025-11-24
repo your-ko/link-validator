@@ -22,8 +22,6 @@ jobs:
         run: |
           docker run --rm \
             -e 'LOG_LEVEL=debug' \
-            -e 'FILE_MASKS=*.md' \
-            -e 'IGNORED_DOMAINS=token.actions.githubusercontent.com' \
             -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
