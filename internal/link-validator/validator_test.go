@@ -1,9 +1,9 @@
 package link_validator
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"link-validator/pkg/config"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"reflect"
