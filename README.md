@@ -11,6 +11,9 @@ Validates links and URLs in Markdown files by checking:
 
 Supports both github.com and GitHub Enterprise Server (GHES).
 
+broken link
+https://docs.aws.amazon.com/qqqqqq
+
 ## Features
 
 - GitHub link validation via API calls
