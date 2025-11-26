@@ -16,8 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// urlRegex matches valid HTTPS URLs with valid hostnames (no brackets or invalid characters)
-var urlRegex = regexp.MustCompile(`https://[a-zA-Z0-9.-]+(?:/\S*)?`)
+// urlRegex matches valid HTTPS URLs with valid hostnames, excluding trailing punctuation but allowing valid URL endings
+var urlRegex = regexp.MustCompile(`https://[a-zA-Z0-9.-]+(?:/[^\s)]*[a-zA-Z0-9/#?&=_-]|/)?`)
 
 // gitHubRegex matches GitHub URLs that should be handled by the GitHub validator
 var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]]*[^\s.,:;!?()\[\]{}\x60])?`)
@@ -63,6 +63,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		return nil
 	}
 
+	url = strings.TrimSuffix(url, "/")
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
 		return err
