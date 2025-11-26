@@ -132,16 +132,17 @@ jobs:
 
 ## Configuration
 
-| Env Variable      | Config         | Required | Description                                                                                                                                 | Default |
-|-------------------|----------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                                                                               | `info`  |
-| `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan                                                                                                       | `*.md`  |
-| `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                     | `""`    |
-| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                     | `""`    |
-| `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                                                                     | `""`    |
-| `IGNORED_DOMAINS` | ignoredDomains | No       | Comma-separated list of domains or their parts that should be ignored during validation.                                                    | `3s`    |
-| `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                        | `[]`    |
-| `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements | `[]`    |
+| Env Variable      | Config         | Required | Description                                                                                                                                                                                                | Default |
+|-------------------|----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                              | `info`  |
+| `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan                                                                                                                                                                      | `*.md`  |
+| `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                    | `""`    |
+| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                                                                                    | `""`    |
+| `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                                                                                                                                    | `""`    |
+| `IGNORED_DOMAINS` | ignoredDomains | No       | Comma-separated list of domains or their parts that should be ignored during validation.                                                                                                                   | `3s`    |
+| `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                                                                                       | `[]`    |
+| `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements                                                                | `[]`    |
+| `EXCLUDE`         | exclude        | No       | List of files or folders to exclude from validation. Is useful to exclude, for example, `/vendor` or `*/charts` because these folders can contain 3rd party documentation, which we don't need to validate | `[]`    |
 
 ### Additional explanation
 **IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example, OKTA or LDAP.
