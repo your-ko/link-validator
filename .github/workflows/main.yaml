@@ -16,7 +16,7 @@ env:
 jobs:
   Main:
     name: Main
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       sha_short: ${{ steps.sha.outputs.sha_short }}
     steps:
