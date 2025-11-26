@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  packages: write # TODO: rollback
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -60,11 +59,10 @@ jobs:
         id: meta
         with:
           images: ${{ env.DOCKER_IMAGE_NAME }}
-          # TODO: rollback PR
           tags: |
             type=sha,prefix=sha256-
             type=ref,event=branch,prefix=branch-
-            type=raw,value=PR
+#            type=raw,value=PR
           labels: |
             org.opencontainers.image.title=Link Validator
             org.opencontainers.image.description=Validates GitHub links in documentation
@@ -87,7 +85,7 @@ jobs:
             BUILD_DATE=${{ steps.timestamp.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ github.sha }}
           provenance: false
-          push: true    # TODO: rollback push
+          push: false
 
       - name: Get changed files
         id: changed-files
@@ -106,23 +104,8 @@ jobs:
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
 #      - name: Link validation
-#        uses: your-ko/link-validator@1.8.0
+#        uses: your-ko/link-validator@1.9.0
 #        with:
 #          log-level: 'debug'
 #          files: ${{ steps.changed-files.outputs.files}}
 #          pat: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Link validation
-        id: lnk
-        shell: bash
-        env:
-          DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-          DOCKER_VALIDATOR_VERSION: PR
-        run: |
-          docker run --rm \
-            -e 'LOG_LEVEL=debug' \
-            -e 'FILES="${{ steps.changed-files.outputs.files}}"' \
-            -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
-            -v "${{ github.workspace }}:/work" \
-            -w /work \
-            ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
