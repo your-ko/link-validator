@@ -73,7 +73,7 @@ jobs:
             org.opencontainers.image.created=${{ steps.timestamp.outputs.BUILD_DATE }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Build Check image
+      - name: Build and push PR image
         uses: docker/build-push-action@v6.18.0
         with:
           context: .
@@ -85,7 +85,7 @@ jobs:
             BUILD_DATE=${{ steps.timestamp.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ github.sha }}
           provenance: false
-          push: false
+          push: true
 
       - name: Get changed files
         id: changed-files
@@ -104,15 +104,10 @@ jobs:
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
       - name: Link validation
-        uses: your-ko/link-validator@1.9.0
-        with:
-          log-level: 'debug'
-          files: ${{ steps.changed-files.outputs.files}}
-          pat: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Link validation
         id: lnk
         shell: bash
+        env:
+          DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
         run: |
           docker run --rm \
             -e 'LOG_LEVEL=debug' \
@@ -120,4 +115,4 @@ jobs:
             -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            ${DOCKER_VALIDATOR}:PR
+            ${{ env.DOCKER_IMAGE_NAME }}:PR
