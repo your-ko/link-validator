@@ -522,3 +522,189 @@ func TestIncludeExplicitFilesProcessor(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterByMaskProcessor(t *testing.T) {
+	type testCase struct {
+		name       string
+		masks      []string
+		inputFiles []string
+		wantFiles  []string
+		wantErr    bool
+	}
+
+	tests := []testCase{
+		{
+			name:       "empty masks - returns all files",
+			masks:      []string{},
+			inputFiles: []string{"file1.md", "file2.go", "file3.txt"},
+			wantFiles:  []string{"file1.md", "file2.go", "file3.txt"},
+			wantErr:    false,
+		},
+		{
+			name:       "nil masks - returns all files",
+			masks:      nil,
+			inputFiles: []string{"file1.md", "file2.go", "file3.txt"},
+			wantFiles:  []string{"file1.md", "file2.go", "file3.txt"},
+			wantErr:    false,
+		},
+		{
+			name:       "empty input files - returns empty",
+			masks:      []string{"*.md", "*.go"},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name:       "nil input files - returns nil",
+			masks:      []string{"*.md"},
+			inputFiles: nil,
+			wantFiles:  nil,
+			wantErr:    false,
+		},
+		{
+			name:       "single mask matches multiple files",
+			masks:      []string{"*.md"},
+			inputFiles: []string{"README.md", "main.go", "CHANGELOG.md", "Dockerfile"},
+			wantFiles:  []string{"README.md", "CHANGELOG.md"},
+			wantErr:    false,
+		},
+		{
+			name:       "single mask matches no files",
+			masks:      []string{"*.py"},
+			inputFiles: []string{"main.go", "README.md", "Dockerfile"},
+			wantFiles:  nil, // FilterByMaskProcessor returns nil when no matches are found
+			wantErr:    false,
+		},
+		{
+			name:       "multiple masks match different files",
+			masks:      []string{"*.md", "*.go", "*.txt"},
+			inputFiles: []string{"README.md", "main.go", "notes.txt", "Dockerfile", "config.yml"},
+			wantFiles:  []string{"README.md", "main.go", "notes.txt"},
+			wantErr:    false,
+		},
+		{
+			name:       "file matches multiple masks",
+			masks:      []string{"README.*", "*.md"},
+			inputFiles: []string{"README.md", "main.go", "other.txt"},
+			wantFiles:  []string{"README.md"},
+			wantErr:    false,
+		},
+		{
+			name:       "complex glob patterns",
+			masks:      []string{"test_*.go", "*_test.go"},
+			inputFiles: []string{"test_main.go", "main_test.go", "helper_test.go", "main.go", "test_utils.go"},
+			wantFiles:  []string{"test_main.go", "main_test.go", "helper_test.go", "test_utils.go"},
+			wantErr:    false,
+		},
+		{
+			name:       "character class patterns",
+			masks:      []string{"file[0-9].txt"},
+			inputFiles: []string{"file1.txt", "file2.txt", "filea.txt", "file10.txt", "file.txt"},
+			wantFiles:  []string{"file1.txt", "file2.txt"},
+			wantErr:    false,
+		},
+		{
+			name:       "question mark wildcard",
+			masks:      []string{"file?.md"},
+			inputFiles: []string{"file1.md", "file22.md", "filea.md", "file.md"},
+			wantFiles:  []string{"file1.md", "filea.md"},
+			wantErr:    false,
+		},
+		{
+			name:       "full path vs basename matching",
+			masks:      []string{"*.go"},
+			inputFiles: []string{"src/main.go", "pkg/utils/helper.go", "docs/README.md", "/absolute/path/test.go"},
+			wantFiles:  []string{"src/main.go", "pkg/utils/helper.go", "/absolute/path/test.go"},
+			wantErr:    false,
+		},
+		{
+			name:       "nested directories - matches basename only",
+			masks:      []string{"config.*"},
+			inputFiles: []string{"config.yaml", "src/config.go", "deploy/k8s/config.yml", "other.txt"},
+			wantFiles:  []string{"config.yaml", "src/config.go", "deploy/k8s/config.yml"},
+			wantErr:    false,
+		},
+		{
+			name:       "case sensitive matching",
+			masks:      []string{"*.MD"},
+			inputFiles: []string{"README.md", "CHANGELOG.MD", "notes.Md"},
+			wantFiles:  []string{"CHANGELOG.MD"},
+			wantErr:    false,
+		},
+		{
+			name:       "files with no extension",
+			masks:      []string{"Dockerfile", "Makefile"},
+			inputFiles: []string{"Dockerfile", "Makefile", "main.go", "README.md"},
+			wantFiles:  []string{"Dockerfile", "Makefile"},
+			wantErr:    false,
+		},
+		{
+			name:       "files with dots in names",
+			masks:      []string{"*.validator.*"},
+			inputFiles: []string{"link.validator.yaml", "test.validator.json", "main.go", ".validator.conf"},
+			wantFiles:  []string{"link.validator.yaml", "test.validator.json", ".validator.conf"}, // .validator.conf matches because * can be empty
+			wantErr:    false,
+		},
+		{
+			name:       "hidden files and dotfiles",
+			masks:      []string{".*"},
+			inputFiles: []string{".gitignore", ".env", "main.go", ".hidden.txt"},
+			wantFiles:  []string{".gitignore", ".env", ".hidden.txt"},
+			wantErr:    false,
+		},
+		{
+			name:       "preserve file order",
+			masks:      []string{"*.txt"},
+			inputFiles: []string{"z.txt", "a.txt", "m.txt", "b.go"},
+			wantFiles:  []string{"z.txt", "a.txt", "m.txt"}, // preserves original order
+			wantErr:    false,
+		},
+		{
+			name:       "duplicate files in input",
+			masks:      []string{"*.md"},
+			inputFiles: []string{"README.md", "main.go", "README.md", "other.txt", "README.md"},
+			wantFiles:  []string{"README.md", "README.md", "README.md"}, // preserves duplicates
+			wantErr:    false,
+		},
+		{
+			name:       "invalid glob pattern - returns error",
+			masks:      []string{"["},
+			inputFiles: []string{"test.txt"},
+			wantFiles:  nil,
+			wantErr:    true,
+		},
+		{
+			name:       "mixed valid and invalid patterns - returns error on first invalid",
+			masks:      []string{"*.md", "[", "*.go"},
+			inputFiles: []string{"test.md", "main.go"},
+			wantFiles:  nil,
+			wantErr:    true,
+		},
+		{
+			name:  "real-world scenario - documentation files",
+			masks: []string{"README*", "*.md", "CHANGELOG*", "LICENSE*"},
+			inputFiles: []string{
+				"README.md", "src/main.go", "CHANGELOG.md", "LICENSE",
+				"docs/api.md", "README.txt", "pkg/utils.go", "LICENSE.txt",
+			},
+			wantFiles: []string{"README.md", "CHANGELOG.md", "LICENSE", "docs/api.md", "README.txt", "LICENSE.txt"},
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			processor := FilterByMaskProcessor(tt.masks)
+			got, err := processor(tt.inputFiles)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FilterByMaskProcessor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !reflect.DeepEqual(got, tt.wantFiles) {
+				t.Errorf("FilterByMaskProcessor() = %v, want %v", got, tt.wantFiles)
+			}
+		})
+	}
+}
