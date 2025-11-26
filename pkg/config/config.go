@@ -98,7 +98,7 @@ func readFromEnv() (*Config, error) {
 		cfg.Files = strings.Split(strings.TrimSuffix(files, ","), ",")
 	}
 	if exclude := GetEnv("EXCLUDE", ""); exclude != "" {
-		cfg.Files = strings.Split(strings.TrimSuffix(exclude, ","), ",")
+		cfg.Exclude = strings.Split(strings.TrimSuffix(exclude, ","), ",")
 	}
 	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
 		cfg.LookupPath = lookupPath
