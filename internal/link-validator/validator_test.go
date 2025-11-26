@@ -423,3 +423,102 @@ func TestExcludePathsProcessor(t *testing.T) {
 		})
 	}
 }
+
+func TestIncludeExplicitFilesProcessor(t *testing.T) {
+	type testCase struct {
+		name          string
+		explicitFiles []string
+		inputFiles    []string
+		wantFiles     []string
+		wantErr       bool
+	}
+
+	tests := []testCase{
+		{
+			name:          "empty input files - returns explicit files",
+			explicitFiles: []string{"README.md", "LICENSE", "main.go"},
+			inputFiles:    []string{},
+			wantFiles:     []string{"README.md", "LICENSE", "main.go"},
+			wantErr:       false,
+		},
+		{
+			name:          "nil input files - returns explicit files",
+			explicitFiles: []string{"config.yaml", "docker-compose.yml"},
+			inputFiles:    nil,
+			wantFiles:     []string{"config.yaml", "docker-compose.yml"},
+			wantErr:       false,
+		},
+		{
+			name:          "non-empty input files - returns input files unchanged",
+			explicitFiles: []string{"README.md", "LICENSE"},
+			inputFiles:    []string{"src/main.go", "pkg/utils.go"},
+			wantFiles:     []string{"src/main.go", "pkg/utils.go"},
+			wantErr:       false,
+		},
+		{
+			name:          "empty explicit files with empty input - returns empty",
+			explicitFiles: []string{},
+			inputFiles:    []string{},
+			wantFiles:     []string{},
+			wantErr:       false,
+		},
+		{
+			name:          "nil explicit files with empty input - returns nil",
+			explicitFiles: nil,
+			inputFiles:    []string{},
+			wantFiles:     nil,
+			wantErr:       false,
+		},
+		{
+			name:          "empty explicit files with non-empty input - returns input",
+			explicitFiles: []string{},
+			inputFiles:    []string{"found.md", "discovered.go"},
+			wantFiles:     []string{"found.md", "discovered.go"},
+			wantErr:       false,
+		},
+		{
+			name:          "nil explicit files with non-empty input - returns input",
+			explicitFiles: nil,
+			inputFiles:    []string{"auto-discovered.txt"},
+			wantFiles:     []string{"auto-discovered.txt"},
+			wantErr:       false,
+		},
+		{
+			name:          "single explicit file with empty input",
+			explicitFiles: []string{"single-file.md"},
+			inputFiles:    []string{},
+			wantFiles:     []string{"single-file.md"},
+			wantErr:       false,
+		},
+		{
+			name:          "single explicit file with single input file - returns input",
+			explicitFiles: []string{"explicit.md"},
+			inputFiles:    []string{"input.go"},
+			wantFiles:     []string{"input.go"},
+			wantErr:       false,
+		},
+		{
+			name:          "explicit files with duplicates",
+			explicitFiles: []string{"file.md", "file.md", "other.go", "file.md"},
+			inputFiles:    []string{},
+			wantFiles:     []string{"file.md", "file.md", "other.go", "file.md"}, // preserves duplicates
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			processor := IncludeExplicitFilesProcessor(tt.explicitFiles)
+			got, err := processor(tt.inputFiles)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IncludeExplicitFilesProcessor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !reflect.DeepEqual(got, tt.wantFiles) {
+				t.Errorf("IncludeExplicitFilesProcessor() = %v, want %v", got, tt.wantFiles)
+			}
+		})
+	}
+}
