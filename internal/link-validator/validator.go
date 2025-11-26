@@ -256,9 +256,7 @@ func subtraction(left, right []string) []string {
 		accu[l] = true
 	}
 	for _, r := range right {
-		if _, ok := accu[r]; ok {
-			delete(accu, r)
-		}
+		delete(accu, r)
 	}
 	result := make([]string, 0, len(accu))
 	for k := range accu {
