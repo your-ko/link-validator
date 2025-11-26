@@ -8,37 +8,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 type LinkProcessor struct {
-	fileRegex *regexp.Regexp
-	logger    *zap.Logger
+	logger *zap.Logger
 }
 
+// captures local markdown links [text](path)
+var regex = regexp.MustCompile(`\[[^\]]*\]\(((?:\.{1,2}/)*[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:#[^)\s]*)?)\)`)
+
 func New(logger *zap.Logger) *LinkProcessor {
-	localTarget := `(?:` +
-		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
-		`|` +
-		`[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*` + // bare filename / relative path
-		`)` +
-		`(?:#[^)\s]*)?` // optional fragment
-
-	regex := regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`)
-
 	return &LinkProcessor{
-		fileRegex: regex,
-		logger:    logger,
+		logger: logger,
 	}
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	matches := proc.fileRegex.FindAllStringSubmatch(line, -1)
+	matches := regex.FindAllStringSubmatch(line, -1)
 	if len(matches) == 0 {
 		return nil
 	}
