@@ -20,7 +20,7 @@ jobs:
     outputs:
       sha_short: ${{ steps.sha.outputs.sha_short }}
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4.3.1
 
       - uses: actions/setup-go@v6.0.0
         with:
