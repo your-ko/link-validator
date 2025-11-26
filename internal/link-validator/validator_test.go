@@ -154,7 +154,14 @@ func TestLinkValidador_GetFiles(t *testing.T) {
 				cleanUp(tt.fields)
 			})
 
-			v := &LinkValidador{nil, getFileProcessors(tt.args.config)}
+			// Create file processing pipeline for test
+			fileProcessor := ProcessFilesPipeline(
+				WalkDirectoryProcessor(tt.args.config),
+				IncludeExplicitFilesProcessor(tt.args.config.Files),
+				FilterByMaskProcessor(tt.args.config.FileMasks),
+				ExcludePathsProcessor(tt.args.config.ExcludePath),
+			)
+			v := &LinkValidador{nil, fileProcessor}
 			got, err := v.GetFiles()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetFiles() error = %v, wantErr %v", err, tt.wantErr)
