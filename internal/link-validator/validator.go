@@ -113,17 +113,29 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 	return stats
 }
 
+// matchesFileMask checks if a filename matches any of the provided file masks
+func matchesFileMask(filename string, masks []string) bool {
+	for _, mask := range masks {
+		matched, err := filepath.Match(mask, filename)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
+}
+
+// GetFiles returns a list of files to process based on configuration
 func (v *LinkValidador) GetFiles(config *config.Config) ([]string, error) {
 	var matchedFiles []string
 
-	matchesAnyMask := func(name string) bool {
-		for _, mask := range config.FileMasks {
-			matched, err := filepath.Match(mask, name)
-			if err == nil && matched {
-				return true
+	if len(config.Files) != 0 {
+		// Filter explicit file list
+		for _, fileName := range config.Files {
+			if matchesFileMask(fileName, config.FileMasks) {
+				matchedFiles = append(matchedFiles, fileName)
 			}
 		}
-		return false
+		return matchedFiles, nil
 	}
 
 	err := filepath.WalkDir(config.LookupPath, func(path string, d fs.DirEntry, err error) error {
@@ -134,16 +146,13 @@ func (v *LinkValidador) GetFiles(config *config.Config) ([]string, error) {
 		if d.IsDir() {
 			return nil
 		}
-		if matchesAnyMask(d.Name()) {
+		if matchesFileMask(d.Name(), config.FileMasks) {
 			matchedFiles = append(matchedFiles, path)
 		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
 
-	return matchedFiles, nil
+	return matchedFiles, err
 }
 
 func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {

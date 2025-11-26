@@ -50,6 +50,40 @@ the step will fail (this will be improved in future releases).
         log-level: 'info'
         pat: ${{ secrets.GITHUB_TOKEN }}
 ```
+In case if you run validator in a repo, containing a lot of documentation and you don't want your PR be constantly failing,
+then you can run validation only on files, updated in the RR. Then it will make it easier to "clean up" the repository from dead links. 
+Then your PR pipeline should contain following steps:
+```yaml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: '0' # this is necessary to build the list of updated files
+
+      - name: Get changed files
+        id: changed-files
+        shell: bash
+        run: |
+          # Get the base branch (target of PR)
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+
+          echo "Changed files in this PR:"
+          echo "$CHANGED_FILES"
+
+          FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
+          echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
+
+      - name: Link validation
+        uses: your-ko/link-validator@1.9.0
+        with:
+          log-level: 'debug'
+          files: ${{ steps.changed-files.outputs.files}}
+          pat: ${{ secrets.GITHUB_TOKEN }}
+
+```
 
 ### GitHub workflow
 This can be added as an independent workflow. The scan will then be performed on the whole repository when a push event occurs,
@@ -98,15 +132,16 @@ jobs:
 
 ## Configuration
 
-| Env Variable      | Config         | Required | Description                                                                              | Default |
-|-------------------|----------------|----------|------------------------------------------------------------------------------------------|---------|
-| `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                            | `info`  |
-| `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan                                                    | `*.md`  |
-| `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                  | `""`    |
-| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                  | `""`    |
-| `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                  | `""`    |
-| `IGNORED_DOMAINS` | ignoredDomains | No       | Comma-separated list of domains or their parts that should be ignored during validation. | `3s`    |
-| `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                     | `[]`    |
+| Env Variable      | Config         | Required | Description                                                                                                                                 | Default |
+|-------------------|----------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                                                                               | `info`  |
+| `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan                                                                                                       | `*.md`  |
+| `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                     | `""`    |
+| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                     | `""`    |
+| `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                                                                     | `""`    |
+| `IGNORED_DOMAINS` | ignoredDomains | No       | Comma-separated list of domains or their parts that should be ignored during validation.                                                    | `3s`    |
+| `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                        | `[]`    |
+| `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements | `[]`    |
 
 ### Additional explanation
 **IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example, OKTA or LDAP.

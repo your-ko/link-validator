@@ -59,10 +59,10 @@ func main() {
 	logger.Debug("Running with parameters",
 		zap.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
 		zap.Strings("FILE_MASKS", cfg.FileMasks),
+		zap.Strings("FILES", cfg.Files),
 		zap.Strings("IGNORED_DOMAINS", cfg.IgnoredDomains),
 		//zap.String("LOOKUP_PATH", cfg.LookupPath), // not implemented yet
 		//zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
-		//zap.Strings("FILE_LIST", files),         // not implemented yet
 		zap.String("CORP_URL", cfg.CorpGitHubUrl),
 		zap.Duration("TIMEOUT", cfg.Timeout),
 	)
