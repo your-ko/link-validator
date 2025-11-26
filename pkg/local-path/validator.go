@@ -22,12 +22,7 @@ type LinkProcessor struct {
 }
 
 func New(logger *zap.Logger) *LinkProcessor {
-	localTarget := `(?:` +
-		`(?:\./|\.\./)+(?:[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*)?` + // ./... or ../... any depth
-		`|` +
-		`[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*` + // bare filename / relative path
-		`)` +
-		`(?:#[^)\s]*)?` // optional fragment
+	localTarget := `(?:\.{1,2}/)*[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:#[^)\s]*)?`
 
 	regex := regexp.MustCompile(`\[[^\]]*\]\((` + localTarget + `)\)`)
 
