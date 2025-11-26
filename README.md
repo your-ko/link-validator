@@ -77,18 +77,11 @@ Then your PR pipeline should contain following steps:
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
       - name: Link validation
-        id: lnk
-        shell: bash
-        env:
-          DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
-          DOCKER_VALIDATOR_VERSION: latest
-        run: |
-          docker run --rm \
-            -e 'FILES="${{ steps.changed-files.outputs.files}}"' \
-            -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
-            -v "${{ github.workspace }}:/work" \
-            -w /work \
-            ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
+        uses: your-ko/link-validator@1.9.0
+        with:
+          log-level: 'debug'
+          files: ${{ steps.changed-files.outputs.files}}
+          pat: ${{ secrets.GITHUB_TOKEN }}
 
 ```
 
