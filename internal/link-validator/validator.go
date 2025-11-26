@@ -221,12 +221,12 @@ func IncludeExplicitFilesProcessor(explicitFiles []string) FileProcessorFunc {
 }
 
 // ExcludePathsProcessor returns a processor that excludes specific paths
-func ExcludePathsProcessor(excludePaths []string) FileProcessorFunc {
+func ExcludePathsProcessor(exclude []string) FileProcessorFunc {
 	return func(files []string) ([]string, error) {
-		if len(excludePaths) == 0 {
+		if len(exclude) == 0 {
 			return files, nil
 		}
-		return subtraction(files, excludePaths), nil
+		return subtraction(files, exclude), nil
 	}
 }
 
