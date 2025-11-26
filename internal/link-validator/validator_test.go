@@ -173,3 +173,126 @@ func TestLinkValidador_GetFiles(t *testing.T) {
 		})
 	}
 }
+
+func Test_subtraction(t *testing.T) {
+	type args struct {
+		left  []string
+		right []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "empty left slice",
+			args: args{
+				left:  []string{},
+				right: []string{"a", "b"},
+			},
+			want: []string{},
+		},
+		{
+			name: "empty right slice",
+			args: args{
+				left:  []string{"a", "b", "c"},
+				right: []string{},
+			},
+			want: []string{"a", "b", "c"},
+		},
+		{
+			name: "both slices empty",
+			args: args{
+				left:  []string{},
+				right: []string{},
+			},
+			want: []string{},
+		},
+		{
+			name: "no intersection - all elements remain",
+			args: args{
+				left:  []string{"a", "b", "c"},
+				right: []string{"x", "y", "z"},
+			},
+			want: []string{"a", "b", "c"},
+		},
+		{
+			name: "partial intersection - some elements removed",
+			args: args{
+				left:  []string{"a", "b", "c", "d"},
+				right: []string{"b", "d", "x"},
+			},
+			want: []string{"a", "c"},
+		},
+		{
+			name: "complete intersection - all elements removed",
+			args: args{
+				left:  []string{"a", "b", "c"},
+				right: []string{"a", "b", "c"},
+			},
+			want: []string{},
+		},
+		{
+			name: "right slice larger than left",
+			args: args{
+				left:  []string{"a", "b"},
+				right: []string{"a", "b", "c", "d", "e"},
+			},
+			want: []string{},
+		},
+		{
+			name: "left slice larger than right",
+			args: args{
+				left:  []string{"a", "b", "c", "d", "e"},
+				right: []string{"b", "d"},
+			},
+			want: []string{"a", "c", "e"},
+		},
+		{
+			name: "duplicate elements in left slice",
+			args: args{
+				left:  []string{"a", "b", "a", "c", "b"},
+				right: []string{"a"},
+			},
+			want: []string{"b", "c"}, // Note: duplicates are removed due to map usage
+		},
+		{
+			name: "duplicate elements in right slice",
+			args: args{
+				left:  []string{"a", "b", "c"},
+				right: []string{"a", "a", "b", "b"},
+			},
+			want: []string{"c"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := subtraction(tt.args.left, tt.args.right)
+			// Since the order of elements in the result is not deterministic due to map iteration,
+			// we need to compare the sets rather than the slices directly
+			if !equalSets(got, tt.want) {
+				t.Errorf("subtraction() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// Helper function to compare two slices as sets (ignoring order)
+func equalSets(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	setA := make(map[string]bool, len(a))
+	for _, v := range a {
+		setA[v] = true
+	}
+
+	for _, v := range b {
+		if !setA[v] {
+			return false
+		}
+	}
+
+	return true
+}
