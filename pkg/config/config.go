@@ -89,7 +89,7 @@ func readFromEnv() (*Config, error) {
 		cfg.PAT = pat
 	}
 	if corpPAT := GetEnv("CORP_PAT", ""); corpPAT != "" {
-		cfg.CorpPAT = strings.ToLower(corpPAT)
+		cfg.CorpPAT = corpPAT
 	}
 	if fileMasks := GetEnv("FILE_MASKS", ""); fileMasks != "" {
 		cfg.FileMasks = strings.Split(strings.TrimSuffix(fileMasks, ","), ",")
