@@ -21,7 +21,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       digest: ${{ steps.docker.outputs.digest }}
     steps:
@@ -131,7 +131,7 @@ jobs:
           push: true
 
   attest:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build
     steps:
       - name: Login to GHCR
@@ -171,7 +171,7 @@ jobs:
           path: sbom.spdx.json
 
   prepare-attestations-for-release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [build, attest]
     steps:
       - name: Download provenance attestation with retry
@@ -219,7 +219,7 @@ jobs:
           path: provenance.intoto.jsonl
 
   sign:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build
     steps:
       - name: Login to GHCR
@@ -248,7 +248,7 @@ jobs:
             --certificate-identity-regexp "^https://github.com/your-ko/link-validator/\.github/workflows/.*"
 
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [ build, prepare-attestations-for-release, sign ]
     steps:
       - uses: actions/checkout@v4.3.1
