@@ -245,6 +245,8 @@ func ProcessFilesPipeline(processors ...FileProcessorFunc) FileProcessorFunc {
 	}
 }
 
+// subtraction subtracts the right slice from the left slice
+// so the result will contain elements of left slice that are not present in the right slice
 func subtraction(left, right []string) []string {
 	if len(left) == 0 || len(right) == 0 {
 		return left

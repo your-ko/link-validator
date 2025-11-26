@@ -296,3 +296,130 @@ func equalSets(a, b []string) bool {
 
 	return true
 }
+
+func TestExcludePathsProcessor(t *testing.T) {
+	type testCase struct {
+		name         string
+		excludePaths []string
+		inputFiles   []string
+		wantFiles    []string
+		wantErr      bool
+	}
+
+	tests := []testCase{
+		{
+			name:         "empty exclude paths - returns all files",
+			excludePaths: []string{},
+			inputFiles:   []string{"file1.md", "file2.go", "file3.txt"},
+			wantFiles:    []string{"file1.md", "file2.go", "file3.txt"},
+			wantErr:      false,
+		},
+		{
+			name:         "nil exclude paths - returns all files",
+			excludePaths: nil,
+			inputFiles:   []string{"file1.md", "file2.go", "file3.txt"},
+			wantFiles:    []string{"file1.md", "file2.go", "file3.txt"},
+			wantErr:      false,
+		},
+		{
+			name:         "empty input files - returns empty",
+			excludePaths: []string{"vendor/", "node_modules/"},
+			inputFiles:   []string{},
+			wantFiles:    []string{},
+			wantErr:      false,
+		},
+		{
+			name:         "exclude single file",
+			excludePaths: []string{"README.md"},
+			inputFiles:   []string{"README.md", "main.go", "Dockerfile"},
+			wantFiles:    []string{"main.go", "Dockerfile"},
+			wantErr:      false,
+		},
+		{
+			name:         "exclude multiple files",
+			excludePaths: []string{"vendor/lib.go", "test/main_test.go"},
+			inputFiles:   []string{"src/main.go", "vendor/lib.go", "docs/README.md", "test/main_test.go"},
+			wantFiles:    []string{"src/main.go", "docs/README.md"},
+			wantErr:      false,
+		},
+		{
+			name:         "exclude directory paths",
+			excludePaths: []string{"vendor/", "node_modules/", ".git/"},
+			inputFiles:   []string{"src/main.go", "vendor/", "docs/README.md", "node_modules/", ".git/"},
+			wantFiles:    []string{"src/main.go", "docs/README.md"},
+			wantErr:      false,
+		},
+		{
+			name:         "no matches - returns all files",
+			excludePaths: []string{"nonexistent.txt", "missing/"},
+			inputFiles:   []string{"src/main.go", "docs/README.md", "Dockerfile"},
+			wantFiles:    []string{"src/main.go", "docs/README.md", "Dockerfile"},
+			wantErr:      false,
+		},
+		{
+			name:         "exclude all files",
+			excludePaths: []string{"file1.md", "file2.go", "file3.txt"},
+			inputFiles:   []string{"file1.md", "file2.go", "file3.txt"},
+			wantFiles:    []string{},
+			wantErr:      false,
+		},
+		{
+			name:         "exclude paths with duplicates in input",
+			excludePaths: []string{"duplicate.md"},
+			inputFiles:   []string{"unique.go", "duplicate.md", "unique.go", "another.txt", "duplicate.md"},
+			wantFiles:    []string{"unique.go", "another.txt"}, // duplicates removed by subtraction
+			wantErr:      false,
+		},
+		{
+			name:         "exclude paths larger than input",
+			excludePaths: []string{"a.md", "b.go", "c.txt", "d.yml", "e.json"},
+			inputFiles:   []string{"a.md", "b.go"},
+			wantFiles:    []string{},
+			wantErr:      false,
+		},
+		{
+			name:         "complex file paths exclusion",
+			excludePaths: []string{"build/output/", "dist/bundle.js", "coverage/report.html"},
+			inputFiles: []string{
+				"src/components/Header.tsx",
+				"src/utils/helpers.ts",
+				"build/output/",
+				"dist/bundle.js",
+				"coverage/report.html",
+				"package.json",
+			},
+			wantFiles: []string{"src/components/Header.tsx", "src/utils/helpers.ts", "package.json"},
+			wantErr:   false,
+		},
+		{
+			name:         "exclude with absolute and relative paths",
+			excludePaths: []string{"/absolute/path/file.go", "relative/path/file.md"},
+			inputFiles: []string{
+				"src/main.go",
+				"/absolute/path/file.go",
+				"relative/path/file.md",
+				"docs/README.md",
+			},
+			wantFiles: []string{"src/main.go", "docs/README.md"},
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			processor := ExcludePathsProcessor(tt.excludePaths)
+			got, err := processor(tt.inputFiles)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ExcludePathsProcessor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Since subtraction function uses map internally, order is not deterministic
+			// Use the same equalSets helper function we created for subtraction tests
+			if !equalSets(got, tt.wantFiles) {
+				t.Errorf("ExcludePathsProcessor() = %v, want %v", got, tt.wantFiles)
+			}
+		})
+	}
+}
