@@ -120,4 +120,4 @@ jobs:
             -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            ${DOCKER_VALIDATOR}:RP
+            ${DOCKER_VALIDATOR}:PR
