@@ -62,7 +62,7 @@ func main() {
 		zap.Strings("FILES", cfg.Files),
 		zap.Strings("IGNORED_DOMAINS", cfg.IgnoredDomains),
 		//zap.String("LOOKUP_PATH", cfg.LookupPath), // not implemented yet
-		zap.Strings("EXCLUDE_PATH", cfg.Exclude),
+		zap.Strings("EXCLUDE", cfg.Exclude),
 		zap.String("CORP_URL", cfg.CorpGitHubUrl),
 		zap.Duration("TIMEOUT", cfg.Timeout),
 	)
