@@ -5,6 +5,7 @@
   ],
   packageRules: [
     {
+      "matchPackagePatterns": [".*"],
       commitMessagePrefix: "chore:",
       labels: ["chore"],
     },
