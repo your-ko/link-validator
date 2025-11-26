@@ -109,6 +109,20 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			line: `https://[github].[mycorp].[com]`,
 			want: []string{},
 		},
+		{
+			name: "excludes non-url characters from the end of URLs",
+			line: `
+				[test](https://www.test.com/) and 
+				[Example](https://example.org/docs) and
+				https://example.org/docs. and
+				[Example](https://example.org/docs/) in markdown`,
+			want: []string{
+				"https://www.test.com/",
+				"https://example.org/docs",
+				"https://example.org/docs",
+				"https://example.org/docs/",
+			},
+		},
 	}
 
 	for _, tt := range tests {
