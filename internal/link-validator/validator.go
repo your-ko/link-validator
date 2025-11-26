@@ -226,7 +226,21 @@ func ExcludePathsProcessor(exclude []string) FileProcessorFunc {
 		if len(exclude) == 0 {
 			return files, nil
 		}
-		return subtraction(files, exclude), nil
+		var result []string
+		// TODO: fix loop below
+		for _, ex := range exclude {
+			for _, fileName := range files {
+				match, err := filepath.Match(ex, fileName)
+				if err != nil {
+					return nil, err
+				}
+				if !match {
+					result = append(result, fileName)
+					break
+				}
+			}
+		}
+		return result, nil
 	}
 }
 
