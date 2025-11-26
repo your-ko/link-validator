@@ -73,7 +73,7 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build Check image
-        uses: docker/build-push-action@v6.15.0
+        uses: docker/build-push-action@v6.18.0
         with:
           context: .
           file: Dockerfile
