@@ -159,7 +159,7 @@ func TestLinkValidador_GetFiles(t *testing.T) {
 				WalkDirectoryProcessor(tt.args.config),
 				IncludeExplicitFilesProcessor(tt.args.config.Files),
 				FilterByMaskProcessor(tt.args.config.FileMasks),
-				ExcludePathsProcessor(tt.args.config.ExcludePath),
+				ExcludePathsProcessor(tt.args.config.Exclude),
 			)
 			v := &LinkValidador{nil, fileProcessor}
 			got, err := v.GetFiles()

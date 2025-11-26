@@ -50,7 +50,7 @@ func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
 		WalkDirectoryProcessor(cfg),
 		IncludeExplicitFilesProcessor(cfg.Files),
 		FilterByMaskProcessor(cfg.FileMasks),
-		ExcludePathsProcessor(cfg.ExcludePath),
+		ExcludePathsProcessor(cfg.Exclude),
 	)
 
 	return LinkValidador{processors, fileProcessor}
