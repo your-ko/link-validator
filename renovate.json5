@@ -1,13 +1,17 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
   ],
   packageRules: [
     {
-      "matchPackagePatterns": [".*"],
-      commitMessagePrefix: "chore:",
-      labels: ["chore"],
+      commitMessagePrefix: 'chore:',
+      labels: [
+        'chore',
+      ],
+      matchPackageNames: [
+        '/.*/',
+      ],
     },
-  ]
+  ],
 }
