@@ -146,6 +146,9 @@ func (cfg *Config) merge(config *Config) {
 	if len(config.Files) != 0 {
 		cfg.Files = config.Files
 	}
+	if len(config.Exclude) != 0 {
+		cfg.Exclude = config.Exclude
+	}
 	if len(config.IgnoredDomains) != 0 {
 		cfg.IgnoredDomains = config.IgnoredDomains
 	}
