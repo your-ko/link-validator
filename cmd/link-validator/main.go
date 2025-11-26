@@ -62,14 +62,14 @@ func main() {
 		zap.Strings("FILES", cfg.Files),
 		zap.Strings("IGNORED_DOMAINS", cfg.IgnoredDomains),
 		//zap.String("LOOKUP_PATH", cfg.LookupPath), // not implemented yet
-		//zap.String("EXCLUDE_PATH", excludePath), // not implemented yet
+		zap.Strings("EXCLUDE_PATH", cfg.ExcludePath),
 		zap.String("CORP_URL", cfg.CorpGitHubUrl),
 		zap.Duration("TIMEOUT", cfg.Timeout),
 	)
 
 	validator := link_validator.New(cfg, logger)
 
-	filesList, err := validator.GetFiles(cfg)
+	filesList, err := validator.GetFiles()
 	if err != nil {
 		logger.Fatal("Error generating file list", zap.Error(err))
 	}

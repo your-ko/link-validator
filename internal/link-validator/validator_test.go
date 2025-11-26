@@ -154,8 +154,8 @@ func TestLinkValidador_GetFiles(t *testing.T) {
 				cleanUp(tt.fields)
 			})
 
-			v := &LinkValidador{}
-			got, err := v.GetFiles(tt.args.config)
+			v := &LinkValidador{nil, getFileProcessors(tt.args.config)}
+			got, err := v.GetFiles()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetFiles() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -12,12 +12,12 @@ import (
 )
 
 type Config struct {
-	PAT           string
-	CorpPAT       string
-	CorpGitHubUrl string   `yaml:"corpGitHubUrl"`
-	FileMasks     []string `yaml:"fileMasks"`
-	Files         []string `yaml:"files"`
-	//ExcludePath    string        `yaml:"excludePath"`
+	PAT            string
+	CorpPAT        string
+	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
+	FileMasks      []string      `yaml:"fileMasks"`
+	Files          []string      `yaml:"files"`
+	ExcludePath    []string      `yaml:"excludePath"`
 	LookupPath     string        `yaml:"lookupPath"`
 	Timeout        time.Duration `yaml:"timeout"`
 	IgnoredDomains []string      `yaml:"ignoredDomains"`
@@ -96,6 +96,9 @@ func readFromEnv() (*Config, error) {
 	}
 	if files := GetEnv("FILES", ""); files != "" {
 		cfg.Files = strings.Split(strings.TrimSuffix(files, ","), ",")
+	}
+	if exclude := GetEnv("EXCLUDE_PATH", ""); exclude != "" {
+		cfg.Files = strings.Split(strings.TrimSuffix(exclude, ","), ",")
 	}
 	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
 		cfg.LookupPath = lookupPath
