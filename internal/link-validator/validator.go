@@ -228,10 +228,7 @@ func FilterByMaskProcessor(masks []string) FileProcessorFunc {
 // IncludeExplicitFilesProcessor returns a processor that includes explicit files when input is empty
 func IncludeExplicitFilesProcessor(explicitFiles []string) FileProcessorFunc {
 	return func(files []string) ([]string, error) {
-		if len(files) == 0 {
-			return explicitFiles, nil
-		}
-		return files, nil
+		return explicitFiles, nil
 	}
 }
 
