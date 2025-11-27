@@ -245,7 +245,7 @@ func DeDupFilesProcessor() FileProcessorFunc {
 		for k := range accu {
 			res = append(res, k)
 		}
-		return files, nil
+		return res, nil
 	}
 }
 
