@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+#  packages: write
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/your-ko/link-validator
@@ -73,7 +74,7 @@ jobs:
             org.opencontainers.image.created=${{ steps.timestamp.outputs.BUILD_DATE }}
             org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Build Check image
+      - name: Build image
         uses: docker/build-push-action@v6.18.0
         with:
           context: .

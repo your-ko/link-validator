@@ -32,19 +32,42 @@ type Stats struct {
 }
 
 type LinkValidador struct {
-	processors []LinkProcessor
+	processors    []LinkProcessor
+	fileProcessor FileProcessorFunc
 }
 
-func New(config *config.Config, logger *zap.Logger) LinkValidador {
+func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
 	processors := make([]LinkProcessor, 0)
-	gh, err := github.New(config.CorpGitHubUrl, config.CorpPAT, config.PAT, config.Timeout, logger)
+	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout, logger)
 	if err != nil {
 		logger.Error("can't instantiate GitHub link validator", zap.Error(err))
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New(logger))
-	processors = append(processors, http.New(config.Timeout, config.IgnoredDomains, logger))
-	return LinkValidador{processors}
+	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, logger))
+
+	if len(cfg.Files) != 0 {
+		return LinkValidador{processors, includeFilesPipeline(cfg)}
+	}
+	return LinkValidador{processors, walkFilesPipeline(cfg)}
+}
+
+func includeFilesPipeline(cfg *config.Config) FileProcessorFunc {
+	return ProcessFilesPipeline(
+		IncludeExplicitFilesProcessor(cfg.Files),
+		DeDupFilesProcessor(),
+		ExcludePathsProcessor(cfg.Exclude),
+		FilterByMaskProcessor(cfg.FileMasks),
+	)
+}
+
+func walkFilesPipeline(cfg *config.Config) FileProcessorFunc {
+	return ProcessFilesPipeline(
+		WalkDirectoryProcessor(cfg),
+		DeDupFilesProcessor(),
+		ExcludePathsProcessor(cfg.Exclude),
+		FilterByMaskProcessor(cfg.FileMasks),
+	)
 }
 
 func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
@@ -115,8 +138,10 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 
 // matchesFileMask checks if a filename matches any of the provided file masks
 func matchesFileMask(filename string, masks []string) bool {
+	// Extract just the filename part from the full path
+	baseName := filepath.Base(filename)
 	for _, mask := range masks {
-		matched, err := filepath.Match(mask, filename)
+		matched, err := filepath.Match(mask, baseName)
 		if err == nil && matched {
 			return true
 		}
@@ -125,34 +150,8 @@ func matchesFileMask(filename string, masks []string) bool {
 }
 
 // GetFiles returns a list of files to process based on configuration
-func (v *LinkValidador) GetFiles(config *config.Config) ([]string, error) {
-	var matchedFiles []string
-
-	if len(config.Files) != 0 {
-		// Filter explicit file list
-		for _, fileName := range config.Files {
-			if matchesFileMask(fileName, config.FileMasks) {
-				matchedFiles = append(matchedFiles, fileName)
-			}
-		}
-		return matchedFiles, nil
-	}
-
-	err := filepath.WalkDir(config.LookupPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			// Just skip files/dirs we can't read
-			return nil
-		}
-		if d.IsDir() {
-			return nil
-		}
-		if matchesFileMask(d.Name(), config.FileMasks) {
-			matchedFiles = append(matchedFiles, path)
-		}
-		return nil
-	})
-
-	return matchedFiles, err
+func (v *LinkValidador) GetFiles() ([]string, error) {
+	return v.fileProcessor([]string{})
 }
 
 func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
@@ -164,4 +163,143 @@ func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 		}
 	}
 	return found
+}
+
+// FileProcessorFunc is a function that processes a list of files
+type FileProcessorFunc func(files []string) ([]string, error)
+
+// =============================================================================
+// FILE PROCESSORS
+// =============================================================================
+
+// WalkDirectoryProcessor returns a processor that walks a directory and finds files matching masks
+func WalkDirectoryProcessor(cfg *config.Config) FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		// If explicit files are provided, don't walk directory
+		if len(cfg.Files) > 0 {
+			return files, nil
+		}
+
+		var result []string
+		err := filepath.WalkDir(cfg.LookupPath, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				// Just skip files/dirs we can't read
+				return nil
+			}
+			if d.IsDir() {
+				return nil
+			}
+			if matchesFileMask(d.Name(), cfg.FileMasks) {
+				result = append(result, path)
+			}
+			return nil
+		})
+		return result, err
+	}
+}
+
+// FilterByMaskProcessor returns a processor that filters files by mask patterns
+func FilterByMaskProcessor(masks []string) FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		if len(files) == 0 || len(masks) == 0 {
+			return files, nil
+		}
+
+		var result []string
+		for _, fileName := range files {
+			// Extract just the filename part from the full path for matching
+			baseName := filepath.Base(fileName)
+			for _, mask := range masks {
+				match, err := filepath.Match(mask, baseName)
+				if err != nil {
+					return nil, err
+				}
+				if match {
+					result = append(result, fileName)
+					break // Found a match, no need to check other masks for this file
+				}
+			}
+		}
+		return result, nil
+	}
+}
+
+// IncludeExplicitFilesProcessor returns a processor that includes explicit files when input is empty
+func IncludeExplicitFilesProcessor(explicitFiles []string) FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		return explicitFiles, nil
+	}
+}
+
+// DeDupFilesProcessor removes file duplicates
+func DeDupFilesProcessor() FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		accu := make(map[string]bool)
+		for _, fileName := range files {
+			accu[fileName] = true
+		}
+		res := make([]string, 0, len(accu))
+		for k := range accu {
+			res = append(res, k)
+		}
+		return res, nil
+	}
+}
+
+// ExcludePathsProcessor returns a processor that excludes specific paths
+func ExcludePathsProcessor(exclude []string) FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		if len(exclude) == 0 {
+			return files, nil
+		}
+		var result []string
+		for _, fileName := range files {
+			needToExclude := false
+			for _, ex := range exclude {
+				if strings.HasPrefix(fileName, ex) {
+					needToExclude = true
+					break
+				}
+			}
+			if !needToExclude {
+				result = append(result, fileName)
+			}
+		}
+		return result, nil
+	}
+}
+
+// ProcessFilesPipeline composes multiple processors into a pipeline
+func ProcessFilesPipeline(processors ...FileProcessorFunc) FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		result := files
+		for _, processor := range processors {
+			var err error
+			result, err = processor(result)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return result, nil
+	}
+}
+
+// subtraction subtracts the right slice from the left slice
+// so the result will contain elements of left slice that are not present in the right slice
+func subtraction(left, right []string) []string {
+	if len(left) == 0 || len(right) == 0 {
+		return left
+	}
+	accu := make(map[string]bool, len(left))
+	for _, l := range left {
+		accu[l] = true
+	}
+	for _, r := range right {
+		delete(accu, r)
+	}
+	result := make([]string, 0, len(accu))
+	for k := range accu {
+		result = append(result, k)
+	}
+	return result
 }

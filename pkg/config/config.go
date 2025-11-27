@@ -12,12 +12,12 @@ import (
 )
 
 type Config struct {
-	PAT           string
-	CorpPAT       string
-	CorpGitHubUrl string   `yaml:"corpGitHubUrl"`
-	FileMasks     []string `yaml:"fileMasks"`
-	Files         []string `yaml:"files"`
-	//ExcludePath    string        `yaml:"excludePath"`
+	PAT            string
+	CorpPAT        string
+	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
+	FileMasks      []string      `yaml:"fileMasks"`
+	Files          []string      `yaml:"files"`
+	Exclude        []string      `yaml:"exclude"`
 	LookupPath     string        `yaml:"lookupPath"`
 	Timeout        time.Duration `yaml:"timeout"`
 	IgnoredDomains []string      `yaml:"ignoredDomains"`
@@ -97,6 +97,9 @@ func readFromEnv() (*Config, error) {
 	if files := GetEnv("FILES", ""); files != "" {
 		cfg.Files = strings.Split(strings.TrimSuffix(files, ","), ",")
 	}
+	if exclude := GetEnv("EXCLUDE", ""); exclude != "" {
+		cfg.Exclude = strings.Split(strings.TrimSuffix(exclude, ","), ",")
+	}
 	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
 		cfg.LookupPath = lookupPath
 	}
@@ -142,6 +145,9 @@ func (cfg *Config) merge(config *Config) {
 	}
 	if len(config.Files) != 0 {
 		cfg.Files = config.Files
+	}
+	if len(config.Exclude) != 0 {
+		cfg.Exclude = config.Exclude
 	}
 	if len(config.IgnoredDomains) != 0 {
 		cfg.IgnoredDomains = config.IgnoredDomains
