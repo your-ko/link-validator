@@ -45,7 +45,6 @@ func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New(logger))
 	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, logger))
-	// Create the file processing pipeline (functional approach)
 
 	if len(cfg.Files) != 0 {
 		return LinkValidador{processors, includeFilesPipeline(cfg)}
@@ -170,7 +169,7 @@ func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 type FileProcessorFunc func(files []string) ([]string, error)
 
 // =============================================================================
-// FUNCTIONAL FILE PROCESSORS (Higher-order functions that return processors)
+// FILE PROCESSORS
 // =============================================================================
 
 // WalkDirectoryProcessor returns a processor that walks a directory and finds files matching masks
