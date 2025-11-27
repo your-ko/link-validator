@@ -3,6 +3,19 @@
   extends: [
     'config:recommended',
   ],
+  regexManagers: [
+    {
+      fileMatch: [
+        '^\.github/workflows/.*\.yaml$',
+      ],
+      matchStrings: [
+        'DOCKER_VALIDATOR_VERSION:\\s*["\']?(?<currentValue>[^"\'\\s]+)["\']?',
+      ],
+      depNameTemplate: 'ghcr.io/your-ko/link-validator',
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'docker',
+    },
+  ],
   packageRules: [
     {
       commitMessagePrefix: 'chore:',
@@ -12,6 +25,22 @@
       matchPackageNames: [
         '/.*/',
       ],
+    },
+    {
+      // Specific rules for link-validator updates
+      matchPackageNames: [
+        'ghcr.io/your-ko/link-validator',
+      ],
+      commitMessagePrefix: 'chore(deps): ',
+      commitMessageTopic: 'link-validator',
+      commitMessageExtra: 'to {{newVersion}}',
+      labels: [
+        'chore',
+        'link-validator',
+      ],
+      // automerge: true,
+      // automergeType: 'pr',
+      // matchUpdateTypes: ['patch', 'minor'],
     },
   ],
 }
