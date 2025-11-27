@@ -939,3 +939,61 @@ func TestWalkDirectoryProcessor(t *testing.T) {
 		})
 	}
 }
+
+func TestDeDupFilesProcessor(t *testing.T) {
+	type testCase struct {
+		name       string
+		inputFiles []string
+		wantFiles  []string
+		wantErr    bool
+	}
+
+	tests := []testCase{
+		{
+			name:       "empty input - returns empty",
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name:       "nil input - returns empty",
+			inputFiles: nil,
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name:       "single file - returns same file",
+			inputFiles: []string{"README.md"},
+			wantFiles:  []string{"README.md"},
+			wantErr:    false,
+		},
+		{
+			name:       "no duplicates - returns all files",
+			inputFiles: []string{"README.md", "main.go", "config.yml"},
+			wantFiles:  []string{"README.md", "main.go", "config.yml"},
+			wantErr:    false,
+		},
+		{
+			name:       "removes all duplicates",
+			inputFiles: []string{"file.txt", "main.go", "file.txt", "config.yml", "main.go", "file.txt"},
+			wantFiles:  []string{"file.txt", "main.go", "config.yml"},
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			processor := DeDupFilesProcessor()
+			got, err := processor(tt.inputFiles)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DeDupFilesProcessor() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !equalSets(got, tt.wantFiles) {
+				t.Errorf("DeDupFilesProcessor() = %v, want %v", got, tt.wantFiles)
+			}
+		})
+	}
+}
