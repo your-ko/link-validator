@@ -47,27 +47,28 @@ func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
 	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, logger))
 	// Create the file processing pipeline (functional approach)
 
-	fileProcessor := getFileProcessorPipeline(cfg)
-
-	return LinkValidador{processors, fileProcessor}
+	if len(cfg.Files) != 0 {
+		return LinkValidador{processors, getIncludeFilesPipeline(cfg)}
+	}
+	return LinkValidador{processors, getWalkFilesPipeline(cfg)}
 }
 
-func getFileProcessorPipeline(cfg *config.Config) FileProcessorFunc {
-	if len(cfg.Files) != 0 {
-		return ProcessFilesPipeline(
-			IncludeExplicitFilesProcessor(cfg.Files),
-			DeDupFilesProcessor(),
-			ExcludePathsProcessor(cfg.Exclude),
-			FilterByMaskProcessor(cfg.FileMasks),
-		)
-	} else {
-		return ProcessFilesPipeline(
-			WalkDirectoryProcessor(cfg),
-			DeDupFilesProcessor(),
-			ExcludePathsProcessor(cfg.Exclude),
-			FilterByMaskProcessor(cfg.FileMasks),
-		)
-	}
+func getIncludeFilesPipeline(cfg *config.Config) FileProcessorFunc {
+	return ProcessFilesPipeline(
+		IncludeExplicitFilesProcessor(cfg.Files),
+		DeDupFilesProcessor(),
+		ExcludePathsProcessor(cfg.Exclude),
+		FilterByMaskProcessor(cfg.FileMasks),
+	)
+}
+
+func getWalkFilesPipeline(cfg *config.Config) FileProcessorFunc {
+	return ProcessFilesPipeline(
+		WalkDirectoryProcessor(cfg),
+		DeDupFilesProcessor(),
+		ExcludePathsProcessor(cfg.Exclude),
+		FilterByMaskProcessor(cfg.FileMasks),
+	)
 }
 
 func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
