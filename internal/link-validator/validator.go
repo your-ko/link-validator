@@ -223,18 +223,20 @@ func IncludeExplicitFilesProcessor(explicitFiles []string) FileProcessorFunc {
 // ExcludePathsProcessor returns a processor that excludes specific paths
 func ExcludePathsProcessor(exclude []string) FileProcessorFunc {
 	return func(files []string) ([]string, error) {
+		var err error
 		if len(exclude) == 0 {
 			return files, nil
 		}
 		var result []string
 		// TODO: fix loop below
-		for _, ex := range exclude {
-			for _, fileName := range files {
-				match, err := filepath.Match(ex, fileName)
+		for _, fileName := range files {
+			needToExclude := false
+			for _, ex := range exclude {
+				needToExclude, err = filepath.Match(ex, fileName)
 				if err != nil {
 					return nil, err
 				}
-				if !match {
+				if needToExclude {
 					result = append(result, fileName)
 					break
 				}
