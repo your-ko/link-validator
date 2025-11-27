@@ -25,7 +25,7 @@ jobs:
     outputs:
       digest: ${{ steps.docker.outputs.digest }}
     steps:
-      - uses: actions/checkout@v4.3.1
+      - uses: actions/checkout@v6.0.0
       - name: SetUp
         run: |
           git config --local user.name  "github-actions[bot]"
@@ -251,7 +251,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [ build, prepare-attestations-for-release, sign ]
     steps:
-      - uses: actions/checkout@v4.3.1
+      - uses: actions/checkout@v6.0.0
 
       - name: Download SBOM artifact
         uses: actions/download-artifact@v6.0.0
