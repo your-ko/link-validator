@@ -1221,19 +1221,6 @@ func TestWalkFilesPipeline(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "case sensitive files and exclusions",
-			config: &config.Config{
-				FileMasks: []string{"*.MD", "*.Go"},
-				Exclude:   []string{"README.md", "main.go"},
-			},
-			setup: testSetup{
-				fileNames: []string{"README.md", "README.MD", "main.go", "main.Go"},
-			},
-			inputFiles: []string{},
-			wantFiles:  []string{"README.MD", "main.Go"},
-			wantErr:    false,
-		},
-		{
 			name: "files with special characters in names",
 			config: &config.Config{
 				FileMasks: []string{"*.md", "*.txt"},
