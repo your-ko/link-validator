@@ -48,12 +48,12 @@ func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
 	// Create the file processing pipeline (functional approach)
 
 	if len(cfg.Files) != 0 {
-		return LinkValidador{processors, getIncludeFilesPipeline(cfg)}
+		return LinkValidador{processors, includeFilesPipeline(cfg)}
 	}
-	return LinkValidador{processors, getWalkFilesPipeline(cfg)}
+	return LinkValidador{processors, walkFilesPipeline(cfg)}
 }
 
-func getIncludeFilesPipeline(cfg *config.Config) FileProcessorFunc {
+func includeFilesPipeline(cfg *config.Config) FileProcessorFunc {
 	return ProcessFilesPipeline(
 		IncludeExplicitFilesProcessor(cfg.Files),
 		DeDupFilesProcessor(),
@@ -62,7 +62,7 @@ func getIncludeFilesPipeline(cfg *config.Config) FileProcessorFunc {
 	)
 }
 
-func getWalkFilesPipeline(cfg *config.Config) FileProcessorFunc {
+func walkFilesPipeline(cfg *config.Config) FileProcessorFunc {
 	return ProcessFilesPipeline(
 		WalkDirectoryProcessor(cfg),
 		DeDupFilesProcessor(),

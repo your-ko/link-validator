@@ -997,3 +997,460 @@ func TestDeDupFilesProcessor(t *testing.T) {
 		})
 	}
 }
+
+func TestIncludeFilesPipeline(t *testing.T) {
+	type testCase struct {
+		name       string
+		config     *config.Config
+		inputFiles []string
+		wantFiles  []string
+		wantErr    bool
+	}
+
+	tests := []testCase{
+		{
+			name: "explicit files with no exclusions or masks",
+			config: &config.Config{
+				Files:     []string{"README.md", "main.go", "config.yml"},
+				Exclude:   []string{},
+				FileMasks: []string{},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go", "config.yml"},
+			wantErr:    false,
+		},
+		{
+			name: "explicit files with duplicates - removes duplicates",
+			config: &config.Config{
+				Files:     []string{"README.md", "main.go", "README.md", "config.yml", "main.go"},
+				Exclude:   []string{},
+				FileMasks: []string{},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go", "config.yml"},
+			wantErr:    false,
+		},
+		{
+			name: "explicit files with exclusions - excludes specified files",
+			config: &config.Config{
+				Files:     []string{"README.md", "main.go", "config.yml", "Dockerfile"},
+				Exclude:   []string{"config.yml", "Dockerfile"},
+				FileMasks: []string{},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go"},
+			wantErr:    false,
+		},
+		{
+			name: "explicit files with file masks - filters by masks",
+			config: &config.Config{
+				Files:     []string{"README.md", "main.go", "config.yml", "Dockerfile"},
+				Exclude:   []string{},
+				FileMasks: []string{"*.md", "*.go"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go"},
+			wantErr:    false,
+		},
+		{
+			name: "explicit files with both exclusions and masks",
+			config: &config.Config{
+				Files:     []string{"README.md", "CHANGELOG.md", "main.go", "test.go", "config.yml"},
+				Exclude:   []string{"test.go"},
+				FileMasks: []string{"*.md", "*.go"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "CHANGELOG.md", "main.go"},
+			wantErr:    false,
+		},
+		{
+			name: "explicit files all excluded - returns empty",
+			config: &config.Config{
+				Files:     []string{"README.md", "main.go"},
+				Exclude:   []string{"README.md", "main.go"},
+				FileMasks: []string{},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name: "explicit files none match masks - returns empty",
+			config: &config.Config{
+				Files:     []string{"README.md", "main.go"},
+				Exclude:   []string{},
+				FileMasks: []string{"*.txt", "*.yml"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name: "empty explicit files list - returns empty",
+			config: &config.Config{
+				Files:     []string{},
+				Exclude:   []string{"some.file"},
+				FileMasks: []string{"*.md"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name: "complex scenario with duplicates, exclusions, and masks",
+			config: &config.Config{
+				Files: []string{
+					"README.md", "CHANGELOG.md", "main.go", "util.go",
+					"config.yml", "docker-compose.yml", "README.md", "test.py",
+					"main.go", "docs/api.md",
+				},
+				Exclude:   []string{"test.py", "docker-compose.yml"},
+				FileMasks: []string{"*.md", "*.go"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "CHANGELOG.md", "main.go", "util.go", "docs/api.md"},
+			wantErr:    false,
+		},
+		{
+			name: "files with special paths and characters",
+			config: &config.Config{
+				Files:     []string{"./README.md", "../config.go", "/absolute/path/file.txt", "spaced file.md"},
+				Exclude:   []string{},
+				FileMasks: []string{"*.md", "*.go", "*.txt"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"./README.md", "../config.go", "/absolute/path/file.txt", "spaced file.md"},
+			wantErr:    false,
+		},
+		{
+			name: "case sensitive exclusions and masks",
+			config: &config.Config{
+				Files:     []string{"README.md", "readme.md", "Main.go", "main.GO"},
+				Exclude:   []string{"readme.md"},
+				FileMasks: []string{"*.md", "*.go"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "Main.go"},
+			wantErr:    false,
+		},
+		{
+			name: "pipeline with non-empty input files - input should be ignored",
+			config: &config.Config{
+				Files:     []string{"explicit1.md", "explicit2.go"},
+				Exclude:   []string{},
+				FileMasks: []string{},
+			},
+			inputFiles: []string{"input1.txt", "input2.yml"},
+			wantFiles:  []string{"explicit1.md", "explicit2.go"},
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pipeline := includeFilesPipeline(tt.config)
+			got, err := pipeline(tt.inputFiles)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("includeFilesPipeline() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !equalSets(got, tt.wantFiles) {
+				t.Errorf("includeFilesPipeline() = %v, want %v", got, tt.wantFiles)
+			}
+		})
+	}
+}
+
+func TestWalkFilesPipeline(t *testing.T) {
+	type testSetup struct {
+		dirName   string
+		fileNames []string
+	}
+
+	type testCase struct {
+		name       string
+		config     *config.Config
+		setup      testSetup
+		inputFiles []string
+		wantFiles  []string
+		wantErr    bool
+	}
+
+	tests := []testCase{
+		{
+			name: "basic directory walk with file masks",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.go"},
+				Exclude:   []string{},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "main.go", "config.yml", "Dockerfile"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go"},
+			wantErr:    false,
+		},
+		{
+			name: "directory walk with duplicates from filesystem - removes duplicates",
+			config: &config.Config{
+				FileMasks: []string{"*.txt"},
+				Exclude:   []string{},
+			},
+			setup: testSetup{
+				fileNames: []string{"file.txt", "other.txt"},
+			},
+			inputFiles: []string{"file.txt", "file.txt", "other.txt"},
+			wantFiles:  []string{"file.txt", "other.txt"},
+			wantErr:    false,
+		},
+		{
+			name: "directory walk with exclusions",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.go", "*.yml"},
+				Exclude:   []string{"config.yml", "docker-compose.yml"},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "main.go", "config.yml", "docker-compose.yml", "app.yml"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go", "app.yml"},
+			wantErr:    false,
+		},
+		{
+			name: "directory walk with both exclusions and masks",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.go"},
+				Exclude:   []string{"test.go", "CHANGELOG.md"},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "CHANGELOG.md", "main.go", "test.go", "config.yml"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "main.go"},
+			wantErr:    false,
+		},
+		{
+			name: "directory walk all files excluded",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.go"},
+				Exclude:   []string{"README.md", "main.go"},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "main.go", "config.yml"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name: "directory walk no files match masks",
+			config: &config.Config{
+				FileMasks: []string{"*.py", "*.rb"},
+				Exclude:   []string{},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "main.go", "config.yml"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name: "empty directory",
+			config: &config.Config{
+				FileMasks: []string{"*.md"},
+				Exclude:   []string{},
+			},
+			setup: testSetup{
+				fileNames: []string{},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{},
+			wantErr:    false,
+		},
+		{
+			name: "nested directory structure",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.go"},
+				Exclude:   []string{"internal/test.go"},
+			},
+			setup: testSetup{
+				fileNames: []string{
+					"README.md",
+					"src/main.go",
+					"src/utils/helper.go",
+					"internal/test.go",
+					"docs/api.md",
+					"config/app.yml",
+				},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.md", "docs/api.md", "src/main.go", "src/utils/helper.go"},
+			wantErr:    false,
+		},
+		{
+			name: "complex real-world scenario",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.go", "*.yml", "*.yaml"},
+				Exclude:   []string{"vendor/", ".git/", "node_modules/", "coverage.out", "test/fixtures/"},
+			},
+			setup: testSetup{
+				fileNames: []string{
+					"README.md",
+					"CHANGELOG.md",
+					"main.go",
+					"pkg/validator.go",
+					"internal/config.go",
+					"docker-compose.yml",
+					"k8s/deployment.yaml",
+					"vendor/lib.go",
+					"coverage.out",
+					"test/main_test.go",
+					"test/fixtures/sample.yaml",
+				},
+			},
+			inputFiles: []string{},
+			wantFiles: []string{
+				"README.md", "CHANGELOG.md", "main.go", "pkg/validator.go",
+				"internal/config.go", "docker-compose.yml", "k8s/deployment.yaml",
+				"test/main_test.go",
+			},
+			wantErr: false,
+		},
+		{
+			name: "hidden files and dotfiles",
+			config: &config.Config{
+				FileMasks: []string{".*", "*.md"},
+				Exclude:   []string{".DS_Store"},
+			},
+			setup: testSetup{
+				fileNames: []string{".gitignore", ".env", ".DS_Store", "README.md"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{".gitignore", ".env", "README.md"},
+			wantErr:    false,
+		},
+		{
+			name: "case sensitive files and exclusions",
+			config: &config.Config{
+				FileMasks: []string{"*.MD", "*.Go"},
+				Exclude:   []string{"README.md", "main.go"},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "README.MD", "main.go", "main.Go"},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"README.MD", "main.Go"},
+			wantErr:    false,
+		},
+		{
+			name: "files with special characters in names",
+			config: &config.Config{
+				FileMasks: []string{"*.md", "*.txt"},
+				Exclude:   []string{"file-to-exclude.md"},
+			},
+			setup: testSetup{
+				fileNames: []string{
+					"file-name.md",
+					"file_name.txt",
+					"file name.md",
+					"file@name.txt",
+					"file-to-exclude.md",
+				},
+			},
+			inputFiles: []string{},
+			wantFiles:  []string{"file-name.md", "file_name.txt", "file name.md", "file@name.txt"},
+			wantErr:    false,
+		},
+		{
+			name: "pipeline ignores input files when walking directory",
+			config: &config.Config{
+				FileMasks: []string{"*.md"},
+				Exclude:   []string{},
+			},
+			setup: testSetup{
+				fileNames: []string{"README.md", "CHANGELOG.md"},
+			},
+			inputFiles: []string{"input1.txt", "input2.yml"}, // these should be ignored
+			wantFiles:  []string{"README.md", "CHANGELOG.md"},
+			wantErr:    false,
+		},
+	}
+
+	tmpName, err := GetRndName()
+	if err != nil {
+		t.Fatalf("can't create tmp dir: %s", err)
+	}
+	tmp := filepath.Join(os.TempDir(), tmpName)
+
+	mkDir := func(rel string) {
+		full := filepath.Join(tmp, rel)
+		if err := os.MkdirAll(full, 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+	}
+
+	mkFile := func(rel string) {
+		full := filepath.Join(tmp, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		if err := os.WriteFile(full, []byte("# Test Content"), 0o644); err != nil {
+			t.Fatalf("write file: %v", err)
+		}
+	}
+
+	cleanUp := func(test testSetup) {
+		if len(test.fileNames) != 0 {
+			for _, f := range test.fileNames {
+				err := os.Remove(filepath.Join(tmp, f))
+				if err != nil && !os.IsNotExist(err) {
+					t.Fatalf("cleanup file: %v", err)
+				}
+			}
+		}
+		err := os.RemoveAll(filepath.Join(tmp))
+		if err != nil && !os.IsNotExist(err) {
+			t.Fatalf("cleanup dir: %v", err)
+		}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup test directory structure
+			if len(tt.setup.fileNames) != 0 {
+				mkDir(tt.setup.dirName)
+				for _, f := range tt.setup.fileNames {
+					mkFile(f)
+				}
+				// Set lookup path to temp directory
+				tt.config.LookupPath = tmp
+
+				// Update expected paths to include full temporary directory path
+				if len(tt.wantFiles) > 0 && !filepath.IsAbs(tt.wantFiles[0]) {
+					for i, wantFile := range tt.wantFiles {
+						tt.wantFiles[i] = filepath.Join(tmp, wantFile)
+					}
+				}
+			}
+
+			t.Cleanup(func() {
+				cleanUp(tt.setup)
+			})
+
+			pipeline := walkFilesPipeline(tt.config)
+			got, err := pipeline(tt.inputFiles)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("walkFilesPipeline() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !equalSets(got, tt.wantFiles) {
+				t.Errorf("walkFilesPipeline() = %v, want %v", got, tt.wantFiles)
+			}
+		})
+	}
+}
