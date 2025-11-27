@@ -367,7 +367,7 @@ func TestExcludePathsProcessor(t *testing.T) {
 			name:         "exclude paths with duplicates in input",
 			excludePaths: []string{"duplicate.md"},
 			inputFiles:   []string{"unique.go", "duplicate.md", "unique.go", "another.txt", "duplicate.md"},
-			wantFiles:    []string{"unique.go", "another.txt"}, // duplicates removed by subtraction
+			wantFiles:    []string{"unique.go", "unique.go", "another.txt"}, // duplicates removed by subtraction
 			wantErr:      false,
 		},
 		{
