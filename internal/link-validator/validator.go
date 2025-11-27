@@ -46,14 +46,28 @@ func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
 	processors = append(processors, local_path.New(logger))
 	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, logger))
 	// Create the file processing pipeline (functional approach)
-	fileProcessor := ProcessFilesPipeline(
-		WalkDirectoryProcessor(cfg),
-		IncludeExplicitFilesProcessor(cfg.Files),
-		FilterByMaskProcessor(cfg.FileMasks),
-		ExcludePathsProcessor(cfg.Exclude),
-	)
+
+	fileProcessor := getFileProcessorPipeline(cfg)
 
 	return LinkValidador{processors, fileProcessor}
+}
+
+func getFileProcessorPipeline(cfg *config.Config) FileProcessorFunc {
+	if len(cfg.Files) != 0 {
+		return ProcessFilesPipeline(
+			IncludeExplicitFilesProcessor(cfg.Files),
+			DeDupFilesProcessor(),
+			ExcludePathsProcessor(cfg.Exclude),
+			FilterByMaskProcessor(cfg.FileMasks),
+		)
+	} else {
+		return ProcessFilesPipeline(
+			WalkDirectoryProcessor(cfg),
+			DeDupFilesProcessor(),
+			ExcludePathsProcessor(cfg.Exclude),
+			FilterByMaskProcessor(cfg.FileMasks),
+		)
+	}
 }
 
 func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
@@ -215,6 +229,21 @@ func IncludeExplicitFilesProcessor(explicitFiles []string) FileProcessorFunc {
 	return func(files []string) ([]string, error) {
 		if len(files) == 0 {
 			return explicitFiles, nil
+		}
+		return files, nil
+	}
+}
+
+// DeDupFilesProcessor removes file duplicates
+func DeDupFilesProcessor() FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		accu := make(map[string]bool)
+		for _, fileName := range files {
+			accu[fileName] = true
+		}
+		res := make([]string, 0, len(accu))
+		for k := range accu {
+			res = append(res, k)
 		}
 		return files, nil
 	}
