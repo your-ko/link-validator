@@ -64,12 +64,6 @@ jobs:
         run: |
           go mod tidy
 
-#      - name: Set version
-#        shell: bash
-#        run: |
-#          yq '.runs.steps[0].env.DOCKER_VALIDATOR_VERSION = "${{ inputs.version }}"' -i action.yml
-#          echo "New value:" && yq '.runs.steps[0].env.DOCKER_VALIDATOR_VERSION' action.yml
-
       - name: Commit changes
         shell: bash
         env:
@@ -77,7 +71,6 @@ jobs:
         run: |
           set -e
 
-#          git add action.yml
           git add go.mod
           git add go.sum
           if git diff --cached --quiet; then
