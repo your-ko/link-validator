@@ -3,10 +3,11 @@
   extends: [
     'config:recommended',
   ],
-  regexManagers: [
+  customManagers: [
     {
-      fileMatch: [
-        '^\.github/workflows/.*\.yaml$',
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^.github/workflows/.*.yaml$/',
       ],
       matchStrings: [
         'DOCKER_VALIDATOR_VERSION:\\s*["\']?(?<currentValue>[^"\'\\s]+)["\']?',
@@ -27,7 +28,6 @@
       ],
     },
     {
-      // Specific rules for link-validator updates
       matchPackageNames: [
         'ghcr.io/your-ko/link-validator',
       ],
@@ -38,9 +38,6 @@
         'chore',
         'link-validator',
       ],
-      // automerge: true,
-      // automergeType: 'pr',
-      // matchUpdateTypes: ['patch', 'minor'],
     },
   ],
 }
