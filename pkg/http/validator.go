@@ -7,20 +7,14 @@ import (
 	"context"
 	"io"
 	"link-validator/pkg/errs"
+	"link-validator/pkg/regex"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
 )
-
-// urlRegex matches valid HTTPS URLs with valid hostnames, excluding trailing punctuation but allowing valid URL endings
-var urlRegex = regexp.MustCompile(`https://[a-zA-Z0-9.-]+(?:/[^\s)]*[a-zA-Z0-9/#?&=_-]|/)?`)
-
-// gitHubRegex matches GitHub URLs that should be handled by the GitHub validator
-var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]~]*[^\s.,:;!?()\[\]{}\x60~])?`)
 
 type LinkProcessor struct {
 	httpClient     *http.Client
@@ -122,7 +116,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := urlRegex.FindAllString(line, -1)
+	parts := regex.Url.FindAllString(line, -1)
 	urls := make([]string, 0, len(parts))
 
 	for _, raw := range parts {
@@ -130,7 +124,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Host == "" {
 			continue // skip malformed
 		}
-		if gitHubRegex.MatchString(raw) {
+		if regex.GitHub.MatchString(raw) {
 			continue // skip GitHub urls
 		}
 

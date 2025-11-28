@@ -9,9 +9,9 @@ package github
 import (
 	"context"
 	"fmt"
+	"link-validator/pkg/regex"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
@@ -58,11 +58,6 @@ var handlers = map[string]handlerEntry{
 	"packages":     {name: "repo-exist", fn: handleRepoExist},
 	"orgs":         {name: "org-exist", fn: handleOrgExist},
 }
-
-var (
-	enterpriseRegex = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)
-	gitHubRegex     = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]~]*[^\s.,:;!?()\[\]{}\x60~])?`)
-)
 
 type LinkProcessor struct {
 	corpGitHubUrl string
@@ -166,7 +161,7 @@ func parseUrl(link string) (*ghURL, error) {
 
 	gh := &ghURL{
 		host:       u.Host,
-		enterprise: enterpriseRegex.MatchString(u.Hostname()),
+		enterprise: regex.EnterpriseGitHub.MatchString(u.Hostname()),
 		anchor:     u.Fragment,
 	}
 
@@ -255,7 +250,7 @@ func joinPath(parts []string) string {
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
-	parts := gitHubRegex.FindAllString(line, -1)
+	parts := regex.GitHub.FindAllString(line, -1)
 	if len(parts) == 0 {
 		return nil
 	}
@@ -266,7 +261,18 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Hostname() == "" {
 			continue
 		}
+
+		// Filter out GitHub API URLs that shouldn't be validated here
+		hostname := strings.ToLower(u.Hostname())
+		if hostname == "github.blog" || // GitHub blog
+			strings.HasPrefix(hostname, "api.github") || // API endpoints
+			strings.HasPrefix(hostname, "uploads.github") || // Upload endpoints
+			strings.HasSuffix(hostname, ".githubusercontent.com") { // Raw content CDN
+			continue
+		}
+
 		urls = append(urls, raw)
 	}
+
 	return urls
 }
