@@ -231,7 +231,10 @@ func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string)
 // GitHub API docs: https://docs.github.com/rest/issues/issues#get-an-issue
 //
 //meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
-func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+	if ref == "" {
+		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	}
 	n, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid issue number %q", ref)
