@@ -1058,6 +1058,14 @@ func Test_handleIssue(t *testing.T) {
 		wantErrorMessage string
 	}{
 		{
+			name: "issues list",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"number": 1, "title": "Issues", "state": "open", "user": {"login": "your-ko"}}`,
+			},
+		},
+		{
 			name: "specific issue by number",
 			args: args{"your-ko", "link-validator", "1", "", ""},
 			fields: fields{
@@ -1082,16 +1090,6 @@ func Test_handleIssue(t *testing.T) {
 			},
 			wantErr:          true,
 			wantErrorMessage: `invalid issue number "abc"`,
-		},
-		{
-			name: "invalid issue number - empty",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: `invalid issue number ""`,
 		},
 		{
 			name: "issue not found - 404",
