@@ -102,7 +102,7 @@ jobs:
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
       - name: Link validation
-        uses: your-ko/link-validator@1.10.0
+        uses: your-ko/link-validator@1.11.0
         with:
           log-level: 'debug'
           files: ${{ steps.changed-files.outputs.files}}
