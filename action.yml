@@ -49,4 +49,4 @@ runs:
           -e IGNORED_DOMAINS=${{ inputs.ignored-domains }} \
           -v "${{ github.workspace }}:/work" \
           -w /work \
-          ${{env.DOCKER_VALIDATOR}}:${{env.DOCKER_VALIDATOR_VERSION}}
+          ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
