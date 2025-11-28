@@ -34,6 +34,9 @@ runs:
   steps:
     - name: Link validation
       shell: bash
+      env:
+        DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
+        DOCKER_VALIDATOR_VERSION: 1.10.0
       run: |
         docker run --rm \
           -e LOG_LEVEL=${{ inputs.log-level }} \
@@ -46,4 +49,4 @@ runs:
           -e IGNORED_DOMAINS=${{ inputs.ignored-domains }} \
           -v "${{ github.workspace }}:/work" \
           -w /work \
-          ghcr.io/your-ko/link-validator:1.10.0
+          ${{env.DOCKER_VALIDATOR}}:${{env.DOCKER_VALIDATOR_VERSION}}
