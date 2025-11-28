@@ -20,7 +20,7 @@ import (
 var urlRegex = regexp.MustCompile(`https://[a-zA-Z0-9.-]+(?:/[^\s)]*[a-zA-Z0-9/#?&=_-]|/)?`)
 
 // gitHubRegex matches GitHub URLs that should be handled by the GitHub validator
-var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]]*[^\s.,:;!?()\[\]{}\x60])?`)
+var gitHubRegex = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]~]*[^\s.,:;!?()\[\]{}\x60~])?`)
 
 type LinkProcessor struct {
 	httpClient     *http.Client
