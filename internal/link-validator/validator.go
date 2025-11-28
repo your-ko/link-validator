@@ -105,10 +105,10 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, lo
 				}
 
 				if errors.Is(err, errs.ErrNotFound) {
-					logger.Warn("link not found", zap.String("link", link), zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+					logger.Warn("link not found", zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
 					stats.NotFoundLinks++
 				} else if errors.Is(err, errs.ErrEmptyBody) {
-					logger.Warn("link not found", zap.String("link", link), zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+					logger.Warn("link not found", zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
 					stats.NotFoundLinks++
 				} else {
 					stats.Errors++
