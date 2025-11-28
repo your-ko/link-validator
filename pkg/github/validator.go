@@ -176,9 +176,11 @@ func parseUrl(link string) (*ghURL, error) {
 	}
 
 	// out of size prevention
-	maxLength := 10
-	diff := maxLength - len(parts)
-	parts = append(parts, make([]string, diff)...)[:maxLength]
+	growTo := 10 // some arbitrary number more than 5 to prevent 'len out of range' during parsing below
+	if len(parts) < growTo {
+		diff := growTo - len(parts)
+		parts = append(parts, make([]string, diff)...)[:growTo]
+	}
 
 	// Handle org urls
 	switch parts[0] {
