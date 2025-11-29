@@ -30,6 +30,17 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
+			name: "Ignores templated GitHub urls",
+			line: `test 
+			       test https://github.com/your-ko/[repo]/[path]/workflows/link-validator.yaml
+			       test https://github.com/your-ko/{repo}/{path}/workflows/link-validator.yaml
+			       test https://github.com/your-ko/{{repo}}/{{path}}/workflows/link-validator.yaml
+			       test https://github.com/your-ko/link-validator/blob/main/README.md`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/blob/main/README.md",
+			},
+		},
+		{
 			name: "Ignores GitHub blog",
 			line: `test https://github.blog/changelog/2025-11-18-github-copilot-cli-new-models-enhanced-code-search-and-better-image-support/
 			       test https://google.com/x
