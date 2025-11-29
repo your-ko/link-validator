@@ -124,6 +124,9 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Host == "" {
 			continue // skip malformed
 		}
+		if strings.ContainsAny(raw, "[]{}()") {
+			continue // seems it is templated url
+		}
 		if regex.GitHub.MatchString(raw) {
 			continue // skip GitHub urls
 		}
