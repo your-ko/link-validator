@@ -31,6 +31,9 @@
       matchPackageNames: [
         'ghcr.io/your-ko/link-validator',
       ],
+      automerge: true,
+      pruneBranchAfterAutomerge: true,
+      groupName: "link-validator",
       commitMessagePrefix: 'chore(deps): ',
       commitMessageTopic: 'link-validator',
       commitMessageExtra: 'to {{newVersion}}',
