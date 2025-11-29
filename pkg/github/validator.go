@@ -259,7 +259,10 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	for _, raw := range parts {
 		u, err := url.Parse(raw)
 		if err != nil || u.Hostname() == "" {
-			continue
+			continue // skip malformed
+		}
+		if strings.ContainsAny(raw, "[]{}()") {
+			continue // seems it is the templated url
 		}
 
 		// Filter out GitHub API URLs that shouldn't be validated here

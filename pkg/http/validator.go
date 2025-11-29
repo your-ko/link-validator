@@ -121,11 +121,11 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 
 	for _, raw := range parts {
 		u, err := url.Parse(raw)
-		if err != nil || u.Host == "" {
+		if err != nil || u.Hostname() == "" {
 			continue // skip malformed
 		}
 		if strings.ContainsAny(raw, "[]{}()") {
-			continue // seems it is templated url
+			continue // seems it is the templated url
 		}
 		if regex.GitHub.MatchString(raw) {
 			continue // skip GitHub urls
