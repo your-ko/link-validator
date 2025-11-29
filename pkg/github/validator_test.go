@@ -41,6 +41,14 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
+			name: "Captures urls separated by new line",
+			line: `test  https://github.com/your-ko/link-validator\n\nhttps://github.com/your-ko/link-validator`,
+			want: []string{
+				"https://github.com/your-ko/link-validator",
+				"https://github.com/your-ko/link-validator",
+			},
+		},
+		{
 			name: "Ignores GitHub blog",
 			line: `test https://github.blog/changelog/2025-11-18-github-copilot-cli-new-models-enhanced-code-search-and-better-image-support/
 			       test https://google.com/x
