@@ -265,7 +265,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			continue // seems it is the templated url
 		}
 
-		// Filter out GitHub API URLs that shouldn't be validated here
+		// Filter out GitHub non-API URLs that shouldn't be validated here
 		hostname := strings.ToLower(u.Hostname())
 		if hostname == "github.blog" || // GitHub blog
 			strings.HasPrefix(hostname, "api.github") || // API endpoints
