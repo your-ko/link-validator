@@ -46,8 +46,14 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		},
 		{
 			name: "Captures urls separated by new line",
-			line: `test https://google.com\n\nhttps://google.com\thttps://google.com`,
+			line: `
+				test https://google.com\n\nhttps://google.com\thttps://google.com
+				"test https://google.com\n\nhttps://google.com\thttps://google.com""
+				`,
 			want: []string{
+				"https://google.com",
+				"https://google.com",
+				"https://google.com",
 				"https://google.com",
 				"https://google.com",
 				"https://google.com",
