@@ -35,6 +35,31 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
+			name: "Ignores templated urls",
+			line: `test https://host.[blah].[blah]/path/path
+				   https://google.com
+			       test https://host.{blah}.{blah}/path/path
+			       test https://host.{blah}.{blah}:1234/path/path
+			       test https://host.com/{blah}/{blah}/path/path
+			       test https://host.{{blah}}.{{blah}}/path/path`,
+			want: []string{"https://google.com"},
+		},
+		{
+			name: "Captures urls separated by new line",
+			line: `
+				test https://google.com\n\nhttps://google.com\thttps://google.com
+				"test https://google.com\n\nhttps://google.com\thttps://google.com""
+				`,
+			want: []string{
+				"https://google.com",
+				"https://google.com",
+				"https://google.com",
+				"https://google.com",
+				"https://google.com",
+				"https://google.com",
+			},
+		},
+		{
 			name: "capture subdomain uploads.* or api* ",
 			line: `test https://uploads.github.mycorp.com/org/repo/raw/main/image.png
 			       and external https://gitlab.mycorp.com/a/b
