@@ -33,7 +33,20 @@
       ],
       automerge: true,
       pruneBranchAfterAutomerge: true,
-      groupName: "link-validator",
+      commitMessagePrefix: 'chore(deps): ',
+      commitMessageTopic: 'link-validator',
+      commitMessageExtra: 'to {{newVersion}}',
+      labels: [
+        'chore',
+        'link-validator',
+      ],
+    },
+    {
+      matchPackageNames: [
+        'your-ko/link-validator',
+      ],
+      automerge: true,
+      pruneBranchAfterAutomerge: true,
       commitMessagePrefix: 'chore(deps): ',
       commitMessageTopic: 'link-validator',
       commitMessageExtra: 'to {{newVersion}}',
