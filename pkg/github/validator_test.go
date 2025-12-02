@@ -939,6 +939,15 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				path:  "_history",
 			},
 		},
+		{
+			name: "github api",
+			url:  "https://github.com/api/v3/repos/xxxx",
+			want: &ghURL{
+				host: "github.com",
+				typ:  "nope",
+				path: "v3/repos/xxxx",
+			},
+		},
 		//// Gist URLs - these should return nil as they use gist.github.com
 		//{
 		//	name: "gist root",

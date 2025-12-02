@@ -184,7 +184,7 @@ func parseUrl(link string) (*ghURL, error) {
 		gh.owner = parts[1]
 		gh.path = joinPath(parts[2:])
 		return gh, nil
-	case "settings", "search":
+	case "settings", "search", "api":
 		gh.typ = "nope"
 		gh.path = joinPath(parts[1:])
 		return gh, nil
