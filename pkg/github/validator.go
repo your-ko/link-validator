@@ -22,7 +22,7 @@ import (
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
 var handlers = map[string]handlerEntry{
 	"nope": {name: "nope", fn: handleNothing},
-	"":     {name: "repo-exist", fn: handleRepoExist},
+	"":     {name: "nope", fn: handleNothing},
 
 	"blob":    {name: "contents", fn: handleContents},
 	"tree":    {name: "contents", fn: handleContents},
