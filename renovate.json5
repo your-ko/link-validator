@@ -19,6 +19,12 @@
   ],
   packageRules: [
     {
+      "matchManagers": ["gomod"],
+      "matchDepNames": ["go"],
+      "matchDepTypes": ["golang"],
+      "rangeStrategy": "bump"
+    },
+    {
       commitMessagePrefix: 'chore:',
       labels: [
         'chore',
