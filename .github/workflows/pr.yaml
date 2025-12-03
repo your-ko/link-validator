@@ -106,7 +106,7 @@ jobs:
     name: Link Validator
     steps:
       - name: Link validation
-        uses: your-ko/link-validator@1.12.1
+        uses: your-ko/link-validator@1.13.0
         with:
           log-level: 'info'
           files: ${{ steps.changed-files.outputs.files}}
