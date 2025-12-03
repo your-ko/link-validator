@@ -36,7 +36,7 @@ type LinkValidador struct {
 	fileProcessor FileProcessorFunc
 }
 
-func New(cfg *config.Config, logger *zap.Logger) LinkValidador {
+func New(cfg *config.Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout, logger)
 	if err != nil {
@@ -70,7 +70,7 @@ func walkFilesPipeline(cfg *config.Config) FileProcessorFunc {
 	)
 }
 
-func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string, logger *zap.Logger) Stats {
+func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) Stats {
 	stats := Stats{}
 
 	for _, fileName := range filesList {
