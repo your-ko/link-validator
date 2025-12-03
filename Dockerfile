@@ -5,13 +5,9 @@ ARG GIT_COMMIT
 ARG VERSION
 
 ARG CA_CERT_VERSION=20241121-r1
-ARG MAKE_VERSION=4.4.1-r2
-ARG BB_VERSION=0.5-r3
 
 RUN apk update && apk add --no-cache \
     ca-certificates=${CA_CERT_VERSION} \
-    make=${MAKE_VERSION} \
-    build-base=${BB_VERSION} \
     && update-ca-certificates
 
 RUN addgroup gouser &&\
