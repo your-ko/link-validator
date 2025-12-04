@@ -8,7 +8,7 @@
     {
       customType: 'regex',
       managerFilePatterns: [
-        '^.github\/workflows\/.*.yaml$',
+        '**/.github/workflows/*.yaml',
       ],
       matchStrings: [
         '# renovate: datasource=(?<datasource>\S+) depName=(?<depName>\S+)(?: versioning=(?<versioning>\S+))?\s*\n\s*\w*VERSION:\s*["\']?(?<currentValue>[^"\'\\s]+)["\']?',
