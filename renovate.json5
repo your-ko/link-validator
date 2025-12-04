@@ -2,19 +2,29 @@
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'config:recommended',
+    'customManagers:dockerfileVersions'
   ],
   customManagers: [
     {
       customType: 'regex',
       managerFilePatterns: [
         '/^.github/workflows/.*.yaml$/',
-        'Dockerfile*',
       ],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?\\s.*version: (?<currentValue>.*)',
-        '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))\\s.*VERSION: (?<currentValue>.*)'
+        'DOCKER_VALIDATOR_VERSION:\\s*["\']?(?<currentValue>[^"\'\\s]+)["\']?',
       ],
+      depNameTemplate: 'ghcr.io/your-ko/link-validator',
+      datasourceTemplate: 'docker',
+      versioningTemplate: 'docker',
     },
+    {
+      "customType": "regex",
+      "fileMatch": ["^Dockerfile.*$"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*[\\r\\n]+ARG\\s+\\w+_VERSION=(?<currentValue>\\S+)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
   ],
   packageRules: [
     {
