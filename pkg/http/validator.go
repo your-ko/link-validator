@@ -13,8 +13,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type LinkProcessor struct {
@@ -49,10 +47,10 @@ func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
-	slog.Debug("Validating external url", zap.String("url", url))
+	slog.Debug("Validating external url", slog.String("url", url))
 
 	if proc.urlShouldBeIgnored(url) {
-		slog.Debug("url should be ignored", zap.String("url", url))
+		slog.Debug("url should be ignored", slog.String("url", url))
 		return nil
 	}
 
@@ -93,7 +91,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		}
 		err = resp.Body.Close()
 		if err != nil {
-			slog.Info("error closing body: ", slog.Error(err))
+			slog.Info("error closing body: %s", err)
 		}
 
 		if len(bodyBytes) == 0 {
