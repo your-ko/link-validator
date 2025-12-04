@@ -5,7 +5,7 @@ ARG GIT_COMMIT
 ARG VERSION
 
 # renovate: datasource=repology depName=alpine_3_20/ca-certificates versioning=loose
-ARG CA_CERT_VERSION=20241121-r1
+ARG CA_CERT_VERSION=20250911-r0
 
 RUN apk update && apk add --no-cache \
     ca-certificates=${CA_CERT_VERSION} \
