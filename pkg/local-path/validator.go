@@ -10,21 +10,17 @@ import (
 	"fmt"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/regex"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"go.uber.org/zap"
 )
 
 type LinkProcessor struct {
-	logger *zap.Logger
 }
 
-func New(logger *zap.Logger) *LinkProcessor {
-	return &LinkProcessor{
-		logger: logger,
-	}
+func New() *LinkProcessor {
+	return &LinkProcessor{}
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {
@@ -43,7 +39,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 }
 
 func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string) error {
-	proc.logger.Debug("validating local url", zap.String("filename", link))
+	slog.Debug("validating local url", slog.String("filename", link))
 
 	// Parse link into file path and optional header
 	linkPath, header, err := proc.parseLink(link)

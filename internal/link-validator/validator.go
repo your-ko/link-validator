@@ -38,13 +38,13 @@ type LinkValidador struct {
 
 func New(cfg *config.Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
-	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout, logger)
+	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
 		logger.Error("can't instantiate GitHub link validator", zap.Error(err))
 	}
 	processors = append(processors, gh)
-	processors = append(processors, local_path.New(logger))
-	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, logger))
+	processors = append(processors, local_path.New())
+	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains))
 
 	if len(cfg.Files) != 0 {
 		return LinkValidador{processors, includeFilesPipeline(cfg)}

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/google/go-github/v74/github"
-	"go.uber.org/zap"
 )
 
 func Test_handleNothing(t *testing.T) {
@@ -1650,7 +1649,7 @@ type githubContent struct {
 
 // mockValidator creates a validator instance with mock GitHub clients
 func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p, _ := New(corp, "", "", time.Second, zap.NewNop())
+	p, _ := New(corp, "", "", time.Second)
 
 	if ts != nil {
 		base, _ := neturl.Parse(ts.URL + "/")

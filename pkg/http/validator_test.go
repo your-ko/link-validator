@@ -11,8 +11,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
@@ -155,7 +153,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			proc := New(10, nil, nil)
+			proc := New(10, nil)
 			got := proc.ExtractLinks(tt.line)
 
 			if !reflect.DeepEqual(got, tt.want) {
@@ -291,7 +289,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(time.Second, nil, zap.NewNop())
+			proc := New(time.Second, nil)
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse

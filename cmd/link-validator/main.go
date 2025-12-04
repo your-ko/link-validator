@@ -62,15 +62,17 @@ func main() {
 	}
 
 	slog.Debug("Running with parameters",
+		//slog.Group()
 		slog.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
-		slog.Strings("FILE_MASKS", cfg.FileMasks),
-		slog.Strings("FILES", cfg.Files),
-		slog.Strings("IGNORED_DOMAINS", cfg.IgnoredDomains),
+		slog.Any("FILE_MASKS", cfg.FileMasks),
+		slog.Any("FILES", cfg.Files),
+		slog.Any("IGNORED_DOMAINS", cfg.IgnoredDomains),
 		//zap.String("LOOKUP_PATH", cfg.LookupPath), // not implemented yet
-		slog.Strings("EXCLUDE", cfg.Exclude),
+		slog.Any("EXCLUDE", cfg.Exclude),
 		slog.String("CORP_URL", cfg.CorpGitHubUrl),
 		slog.Duration("TIMEOUT", cfg.Timeout),
 	)
+	os.Exit(1)
 
 	validator := link_validator.New(cfg)
 
@@ -96,11 +98,4 @@ func main() {
 	if stats.Errors > 0 || stats.NotFoundLinks > 0 {
 		os.Exit(1)
 	}
-}
-
-type StringSlice []string
-
-func (ss StringSlice) LogValuer() slog.Value {
-	// Convert the slice to a format suitable for logging
-	return slog.ListValue(ss)
 }
