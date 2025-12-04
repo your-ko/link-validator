@@ -11,7 +11,7 @@
         '^.github\/workflows\/.*.yaml$',
       ],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))s.*VERSION: (?<currentValue>.*)',
+        '# renovate: datasource=(?<datasource>\S+) depName=(?<depName>\S+)(?: versioning=(?<versioning>\S+))?\s*\n\s*\w*VERSION:\s*["\']?(?<currentValue>[^"\'\\s]+)["\']?',
       ],
     },
     {
