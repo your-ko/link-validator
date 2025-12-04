@@ -10,6 +10,7 @@ import (
 	"link-validator/pkg/github"
 	"link-validator/pkg/http"
 	"link-validator/pkg/local-path"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +41,7 @@ func New(cfg *config.Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
-		logger.Error("can't instantiate GitHub link validator", zap.Error(err))
+		slog.Error("can't instantiate GitHub link validator: %s", err)
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New())
@@ -74,11 +75,11 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 	stats := Stats{}
 
 	for _, fileName := range filesList {
-		logger.Debug("Processing file:", zap.String("fileName", fileName))
+		slog.Debug("Processing file:", slog.String("fileName", fileName))
 		stats.Files++
 		f, err := os.Open(fileName)
 		if err != nil {
-			logger.Error("Error opening file", zap.String("file", fileName), zap.Error(err))
+			slog.Error("Error opening file", slog.String("file", fileName), "err", err)
 			continue
 		}
 
@@ -100,38 +101,35 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 				err := processor.Process(ctx, link, fileName)
 				linksFound++
 				if err == nil {
-					logger.Debug("link validation successful", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines))
+					slog.Debug("link validation successful", slog.String("link", link), slog.String("filename", fileName), slog.Int("line", lines))
 					continue
 				}
 
 				if errors.Is(err, errs.ErrNotFound) {
-					logger.Warn("link not found", zap.String("link", link), zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
 					stats.NotFoundLinks++
 				} else if errors.Is(err, errs.ErrEmptyBody) {
-					logger.Warn("link not found", zap.String("link", link), zap.String("error", err.Error()), zap.String("filename", fileName), zap.Int("line", lines))
+					slog.Warn("link not found", zap.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
 					stats.NotFoundLinks++
 				} else {
 					stats.Errors++
-					logger.Warn("error validating link", zap.String("link", link), zap.String("filename", fileName), zap.Int("line", lines), zap.Error(err))
+					slog.Warn("error validating link", slog.String("link", link), slog.String("filename", fileName), slog.Int("line", lines), "err", err)
 				}
 			}
 			lines++
 		}
 		if err := scanner.Err(); err != nil {
-			logger.Warn("scan failed", zap.String("file", fileName), zap.Error(err))
+			slog.Warn("scan failed", slog.String("file", fileName), "err", err)
 		}
 		// Close file next iteration
 		if err := f.Close(); err != nil {
-			logger.Warn("close failed", zap.String("file", fileName), zap.Error(err))
+			slog.Warn("close failed", slog.String("file", fileName), "err", err)
 		}
 		stats.Lines = stats.Lines + lines
 		stats.TotalLinks = stats.TotalLinks + linksFound
 
-		if logger.Core().Enabled(zap.DebugLevel) {
-			logger.Debug("Processed: ", zap.Int("lines", lines), zap.Int("links", linksFound), zap.String("fileName", fileName))
-		} else {
-			logger.Info("Processed: ", zap.String("fileName", fileName))
-		}
+		slog.Debug("Processed: ", slog.Int("lines", lines), slog.Int("links", linksFound), slog.String("fileName", fileName))
+		slog.Info("Processed: ", slog.String("fileName", fileName))
 	}
 	return stats
 }
