@@ -2,7 +2,7 @@
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
     'config:recommended',
-    'customManagers:dockerfileVersions'
+    'customManagers:dockerfileVersions',
   ],
   customManagers: [
     {
@@ -11,24 +11,32 @@
         '/^.github/workflows/.*.yaml$/',
       ],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))\s.*VERSION: (?<currentValue>.*)',
+        '# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))s.*VERSION: (?<currentValue>.*)',
       ],
     },
     {
-      "customType": "regex",
-      "fileMatch": ["^Dockerfile.*$"],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*[\\r\\n]+ARG\\s+\\w+_VERSION=(?<currentValue>\\S+)"
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^Dockerfile.*$/',
       ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    }
+      matchStrings: [
+        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*[\\r\\n]+ARG\\s+\\w+_VERSION=(?<currentValue>\\S+)',
+      ],
+      versioningTemplate: '{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}',
+    },
   ],
   packageRules: [
     {
-      "matchManagers": ["gomod"],
-      "matchDepNames": ["go"],
-      "matchDepTypes": ["golang"],
-      "rangeStrategy": "bump"
+      matchManagers: [
+        'gomod',
+      ],
+      matchDepNames: [
+        'go',
+      ],
+      matchDepTypes: [
+        'golang',
+      ],
+      rangeStrategy: 'bump',
     },
     {
       commitMessagePrefix: 'chore:',
