@@ -1,17 +1,14 @@
-FROM golang:1.24.3-alpine3.20 AS builder
+FROM golang:1.25.5-alpine3.21 AS builder
 
 ARG BUILD_DATE
 ARG GIT_COMMIT
 ARG VERSION
 
-ARG CA_CERT_VERSION=20241121-r1
-ARG MAKE_VERSION=4.4.1-r2
-ARG BB_VERSION=0.5-r3
+# renovate: datasource=repology depName=alpine_3_21/ca-certificates versioning=loose
+ARG CA_CERT_VERSION=20250911-r0
 
 RUN apk update && apk add --no-cache \
     ca-certificates=${CA_CERT_VERSION} \
-    make=${MAKE_VERSION} \
-    build-base=${BB_VERSION} \
     && update-ca-certificates
 
 RUN addgroup gouser &&\
