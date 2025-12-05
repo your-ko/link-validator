@@ -9,7 +9,9 @@ on:
 
 permissions:
   contents: read
-#  packages: write
+
+env:
+  DOCKER_IMAGE_NAME: your-ko/link-validator
 
 jobs:
   PR:
@@ -60,7 +62,7 @@ jobs:
           tags: |
             type=sha,prefix=sha256-
             type=ref,event=branch,prefix=branch-
-          #            type=raw,value=PR
+            type=raw,value=PR
           labels: |
             org.opencontainers.image.title=Link Validator
             org.opencontainers.image.description=Validates GitHub links in documentation
@@ -82,8 +84,7 @@ jobs:
             VERSION=pr-${{ github.head_ref || github.ref_name }}
             BUILD_DATE=${{ steps.timestamp.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ github.sha }}
-          provenance: false
-          push: false
+          load: true
 
       - name: Get changed files
         id: changed-files
@@ -101,13 +102,13 @@ jobs:
           FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
-  link-validator:
-    runs-on: ubuntu-24.04
-    name: Link Validator
-    steps:
       - name: Link validation
-        uses: your-ko/link-validator@1.13.0
-        with:
-          log-level: 'info'
-          files: ${{ steps.changed-files.outputs.files}}
-          pat: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          docker run --rm \
+            -e 'LOG_LEVEL=debug' \
+            -e 'GITHUB_ACTIONS=true' \
+            -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            ${{ env.DOCKER_IMAGE_NAME }}:PR
