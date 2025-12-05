@@ -3,14 +3,12 @@ package github
 import (
 	"reflect"
 	"testing"
-
-	"go.uber.org/zap"
 )
 
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
 
-	p, _ := New("https://github.mycorp.com", "", "", 0, zap.NewNop()) // PAT not needed for regex tests
+	p, _ := New("https://github.mycorp.com", "", "", 0) // PAT not needed for regex tests
 
 	type tc struct {
 		name string

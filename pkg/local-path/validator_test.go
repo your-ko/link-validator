@@ -3,7 +3,6 @@ package local_path
 import (
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"link-validator/pkg/errs"
 	"os"
 	"path/filepath"
@@ -14,7 +13,7 @@ import (
 func TestLinkProcessor_ExtractLinks_LocalOnly(t *testing.T) {
 	t.Parallel()
 
-	proc := New(nil)
+	proc := New()
 
 	type tc struct {
 		name string
@@ -125,7 +124,7 @@ func TestLinkProcessor_parseLink(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proc := New(zap.NewNop())
+			proc := New()
 			gotPath, gotHeader, err := proc.parseLink(tt.args.link)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseLink() error = %v, wantErr %v", err, tt.wantErr)
@@ -273,7 +272,7 @@ func TestLinkProcessor_resolveTargetPath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proc := New(zap.NewNop())
+			proc := New()
 			got := proc.resolveTargetPath(tt.args.linkPath, tt.args.testFileName)
 			if got != tt.want {
 				t.Errorf("resolveTargetPath(): %v,\n                                 want: %v", got, tt.want)
@@ -440,7 +439,7 @@ func TestLinkProcessor_validateTarget(t *testing.T) {
 		}
 	}
 
-	proc := New(zap.NewNop())
+	proc := New()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.fields.fileName != "" {

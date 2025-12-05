@@ -1,63 +1,74 @@
 package link_validator
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"io"
+	"link-validator/pkg/config"
+	"log/slog"
 	"os"
-	"strings"
 )
 
-// Init Create a production encoder config (JSON, ISO8601 timestamps)
-func Init(logLevel zapcore.Level) *zap.Logger {
-	encoderCfg := zapcore.EncoderConfig{
-		TimeKey:        "", // omit timestamp, GitHub adds its own
-		LevelKey:       "level",
-		NameKey:        "",
-		CallerKey:      "", // hide caller for cleaner output
-		MessageKey:     "msg",
-		StacktraceKey:  "stack",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    ghActionsLevelEncoder, // GH annotations
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.StringDurationEncoder,
-	}
-
-	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		logLevel,
-	)
-
-	return zap.New(core, zap.AddStacktrace(zapcore.PanicLevel))
+type CustomHandler struct {
+	writer io.Writer
+	level  slog.Level
 }
 
-// LogLevel reads LOG_LEVEL and defaults to info.
-func LogLevel() zapcore.Level {
-	val := os.Getenv("LOG_LEVEL")
-	if val == "" {
-		return zapcore.InfoLevel
+func InitLogger(cfg *config.Config) *CustomHandler {
+	return &CustomHandler{
+		writer: os.Stdout,
+		level:  cfg.LogLevel.Level(),
 	}
-	var lvl zapcore.Level
-	if err := lvl.Set(strings.ToLower(val)); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL=%q, using info\n", val)
-		return zapcore.InfoLevel
-	}
-	return lvl
 }
 
-// ghActionsLevelEncoder adds ::error:: / ::warning:: prefixes for GH Actions.
-func ghActionsLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-	switch l {
-	case zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel:
-		enc.AppendString("::error::")
-	case zapcore.WarnLevel:
-		enc.AppendString("::warning::")
-	case zapcore.InfoLevel:
-		enc.AppendString("INFO")
-	case zapcore.DebugLevel:
-		enc.AppendString("DEBUG")
+func (h *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return level >= h.level
+}
+
+func (h *CustomHandler) Handle(ctx context.Context, record slog.Record) error {
+	// Format level with colors
+	var levelStr string
+	switch record.Level {
+	case slog.LevelWarn:
+		levelStr = "::warning::"
+	case slog.LevelError:
+		levelStr = "::error::"
+	case slog.LevelInfo:
+		levelStr = "INFO"
+	case slog.LevelDebug:
+		levelStr = "DEBUG"
 	default:
-		enc.AppendString(strings.ToUpper(l.String()))
+		levelStr = record.Level.String()
 	}
+
+	// Collect all attributes
+	attrs := make(map[string]any)
+	record.Attrs(func(a slog.Attr) bool {
+		attrs[a.Key] = a.Value.Any()
+		return true
+	})
+
+	// Format output: LEVEL\tMESSAGE\tJSON_ATTRS
+	var output string
+	if len(attrs) > 0 {
+		attrsJSON, _ := json.Marshal(attrs)
+		output = fmt.Sprintf("%s\t%s\t%s\n", levelStr, record.Message, string(attrsJSON))
+	} else {
+		output = fmt.Sprintf("%s\t%s\n", levelStr, record.Message)
+	}
+
+	_, err := h.writer.Write([]byte(output))
+	return err
+}
+
+func (h *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	// For simplicity, return the same handler
+	// In a full implementation, you'd store these attrs and include them in output
+	return h
+}
+
+func (h *CustomHandler) WithGroup(name string) slog.Handler {
+	// For simplicity, return the same handler
+	return h
 }

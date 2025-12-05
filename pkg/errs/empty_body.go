@@ -2,7 +2,6 @@ package errs
 
 import (
 	"errors"
-	"fmt"
 )
 
 // TODO: Not sure I need it
@@ -20,7 +19,7 @@ func NewEmptyBody(link string) EmptyBodyError {
 }
 
 func (e EmptyBodyError) Error() string {
-	return fmt.Sprintf("empty response body. Incorrect link: '%s'", e.link)
+	return ErrEmptyBody.Error()
 }
 
 func (e EmptyBodyError) Is(target error) bool { return target == ErrEmptyBody }

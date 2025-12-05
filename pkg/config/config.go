@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -14,6 +15,7 @@ import (
 type Config struct {
 	PAT            string
 	CorpPAT        string
+	LogLevel       slog.Level    `yaml:"logLevel"`
 	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
 	FileMasks      []string      `yaml:"fileMasks"`
 	Files          []string      `yaml:"files"`
@@ -27,6 +29,7 @@ type Config struct {
 // Default generates default config
 func Default() *Config {
 	return &Config{
+		LogLevel:   slog.LevelInfo,
 		LookupPath: ".",
 		FileMasks:  []string{"*.md"},
 		Timeout:    3 * time.Second,
@@ -91,6 +94,13 @@ func readFromEnv() (*Config, error) {
 	if corpPAT := GetEnv("CORP_PAT", ""); corpPAT != "" {
 		cfg.CorpPAT = corpPAT
 	}
+	if LogLevelStr := GetEnv("LOG_LEVEL", ""); LogLevelStr != "" {
+		slogLevel, err := ParseLevel(LogLevelStr)
+		if err != nil {
+			return nil, fmt.Errorf("can't parse logLevel: '%s', error: %w", LogLevelStr, err)
+		}
+		cfg.LogLevel = slogLevel
+	}
 	if fileMasks := GetEnv("FILE_MASKS", ""); fileMasks != "" {
 		cfg.FileMasks = strings.Split(strings.TrimSuffix(fileMasks, ","), ",")
 	}
@@ -137,6 +147,9 @@ func (cfg *Config) merge(config *Config) {
 	if config.PAT != "" {
 		cfg.PAT = config.PAT
 	}
+	if config.LogLevel != slog.LevelInfo {
+		cfg.LogLevel = config.LogLevel
+	}
 	if config.Timeout != 0 {
 		cfg.Timeout = config.Timeout
 	}
@@ -159,4 +172,10 @@ func GetEnv(key, defaultValue string) string {
 		return strings.ReplaceAll(val, " ", "")
 	}
 	return defaultValue
+}
+
+func ParseLevel(s string) (slog.Level, error) {
+	var level slog.Level
+	var err = level.UnmarshalText([]byte(s))
+	return level, err
 }

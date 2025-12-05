@@ -10,13 +10,13 @@ import (
 	"context"
 	"fmt"
 	"link-validator/pkg/regex"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/google/go-github/v74/github"
-	"go.uber.org/zap"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
@@ -63,10 +63,9 @@ type LinkProcessor struct {
 	corpGitHubUrl string
 	corpClient    *github.Client
 	client        *github.Client
-	logger        *zap.Logger
 }
 
-func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration, logger *zap.Logger) (*LinkProcessor, error) {
+func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*LinkProcessor, error) {
 	client := github.NewClient(httpClient(timeout))
 	if publicPat != "" {
 		client = client.WithAuthToken(publicPat)
@@ -74,7 +73,6 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration, logger
 	if corpGitHubUrl == "" {
 		return &LinkProcessor{
 			client: client,
-			logger: logger,
 		}, nil
 	}
 
@@ -100,7 +98,6 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration, logger
 		corpGitHubUrl: u.Hostname(),
 		corpClient:    corpClient,
 		client:        client,
-		logger:        logger,
 	}, nil
 }
 
@@ -120,7 +117,7 @@ type ghURL struct {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
-	proc.logger.Debug("Validating github url", zap.String("url", url))
+	slog.Debug("Validating github url", slog.String("url", url))
 
 	gh, err := parseUrl(url)
 	if err != nil {
@@ -137,9 +134,9 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 	entry, ok := handlers[gh.typ]
 	if !ok {
-		return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
+		return fmt.Errorf("unsupported GitHub request type %q. Report an issue", gh.typ)
 	}
-	proc.logger.Debug("using", zap.String("handler", entry.name))
+	slog.Debug("using", slog.String("handler", fmt.Sprintf("github/%s", entry.name)))
 
 	return mapGHError(url, entry.fn(ctx, client, gh.owner, gh.repo, gh.ref, gh.path, gh.anchor))
 }
@@ -154,6 +151,7 @@ func parseUrl(link string) (*ghURL, error) {
 	}
 	if strings.HasSuffix(u.Hostname(), "api.github") ||
 		strings.HasPrefix(u.Hostname(), "uploads.github") {
+		// TODO: Improve
 		return nil, fmt.Errorf("API/uploads subdomain not supported")
 	}
 

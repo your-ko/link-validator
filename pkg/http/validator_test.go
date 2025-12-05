@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"errors"
-	"fmt"
 	"link-validator/pkg/errs"
 	"net/http"
 	"net/http/httptest"
@@ -11,8 +10,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
@@ -155,7 +152,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			proc := New(10, nil, nil)
+			proc := New(10, nil)
 			got := proc.ExtractLinks(tt.line)
 
 			if !reflect.DeepEqual(got, tt.want) {
@@ -291,7 +288,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(time.Second, nil, zap.NewNop())
+			proc := New(time.Second, nil)
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
@@ -322,9 +319,8 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 
-			expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, testServer.URL, tt.args.url)
-			if err.Error() != expected {
-				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
+			if err.Error() != tt.wantIs.Error() {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), tt.wantIs.Error())
 			}
 		})
 	}

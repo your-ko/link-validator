@@ -8,28 +8,26 @@ import (
 	"io"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/regex"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type LinkProcessor struct {
 	httpClient     *http.Client
-	logger         *zap.Logger
 	ignoredDomains []string
 }
 
-func New(timeout time.Duration, ignoredDomains []string, logger *zap.Logger) *LinkProcessor {
+func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 	httpClient := &http.Client{
 		Timeout: timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			logger.Debug("redirecting", zap.String("to", req.URL.String()), zap.Int("hops", len(via)))
+			slog.Debug("redirecting", slog.String("to", req.URL.String()), slog.Int("hops", len(via)))
 			redirectLimit := 3
 			if len(via) > redirectLimit {
-				logger.Error("too many redirects", zap.Int("redirect limit", redirectLimit))
+				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit))
 			}
 			for k, vs := range via[0].Header {
 				if req.Header.Get(k) == "" {
@@ -45,15 +43,14 @@ func New(timeout time.Duration, ignoredDomains []string, logger *zap.Logger) *Li
 	return &LinkProcessor{
 		httpClient:     httpClient,
 		ignoredDomains: ignoredDomains,
-		logger:         logger,
 	}
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
-	proc.logger.Debug("Validating external url", zap.String("url", url))
+	slog.Debug("Validating external url", slog.String("url", url))
 
 	if proc.urlShouldBeIgnored(url) {
-		proc.logger.Debug("url should be ignored", zap.String("url", url))
+		slog.Debug("url should be ignored", slog.String("url", url))
 		return nil
 	}
 
@@ -74,27 +71,27 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	case resp.StatusCode == 401 || resp.StatusCode == 403:
 		// we can proceed without authentication, so we don't know whether the url is alive.
 		// maybe in the future this will be improved
-		proc.logger.Info("requires auth", zap.Int("statusCode", resp.StatusCode), zap.String("url", url))
+		slog.Info("requires auth", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	case resp.StatusCode == 404 || resp.StatusCode == 410:
-		proc.logger.Debug("not found", zap.Int("statusCode", resp.StatusCode), zap.String("url", url))
+		slog.Debug("not found", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return errs.NewNotFound(url)
 	case resp.StatusCode == 429:
-		proc.logger.Info("probably rate limit", zap.String("ra", resp.Header.Get("Retry-After")), zap.String("url", url))
+		slog.Info("probably rate limit", slog.String("ra", resp.Header.Get("Retry-After")), slog.String("url", url))
 		return nil
 	case resp.StatusCode >= 500 && resp.StatusCode <= 599:
-		proc.logger.Info("ignoring the url validation due to problems on the remote server", zap.Int("statusCode", resp.StatusCode), zap.String("url", url))
+		slog.Info("ignoring the url validation due to problems on the remote server", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
-		// check just the first 10 KB of the body
-		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 10240))
+		// check just the first 1 KB of the body
+		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		if err != nil {
 			// we can't read body, something is off
 			return err
 		}
 		err = resp.Body.Close()
 		if err != nil {
-			proc.logger.Info("error closing body: ", zap.Error(err))
+			slog.Info("error closing body: %s", slog.Any("error", err))
 		}
 
 		if len(bodyBytes) == 0 {
@@ -110,7 +107,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 			return nil
 		}
 	default:
-		proc.logger.Warn("unexpected status", zap.Int("statusCode", resp.StatusCode), zap.String("url", url))
+		slog.Warn("unexpected status", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	}
 }
