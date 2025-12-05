@@ -7,30 +7,30 @@ import (
 )
 
 func InitLogger(cfg *config.Config) *slog.TextHandler {
-	// Custom handler for GitHub Actions integration
+	// Custom handler for clean, readable format
 	textHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: cfg.LogLevel,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			// GitHub Actions workflow commands integration
+			// Remove timestamp completely
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+
+			// Format log levels with colors and GitHub Actions support
 			if a.Key == slog.LevelKey {
 				switch a.Value.String() {
 				case "WARN":
-					// GitHub Actions warning command with color
-					if os.Getenv("GITHUB_ACTIONS") == "true" {
-						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Warning:")}
-					}
-					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Warning")}
+					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("::warning::")}
 				case "ERROR":
-					// GitHub Actions error command with color
-					if os.Getenv("GITHUB_ACTIONS") == "true" {
-						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Error:")}
-					}
-					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Error")}
+					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("::error::")}
+				case "INFO":
+					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("INFO")}
+				case "DEBUG":
+					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("DEBUG")}
 				}
 			}
 			return a
 		},
 	})
 	return textHandler
-
 }
