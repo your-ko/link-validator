@@ -76,12 +76,12 @@ func main() {
 	if stats.Errors != 0 {
 		slog.Error("Errors found:", slog.Int("errors", stats.Errors))
 	}
-	if stats.NotFoundLinks > 0 {
-		slog.Error("Links not found", slog.Int("links", stats.NotFoundLinks))
-	}
 	slog.Info("Files processed", slog.Int("files", stats.Files))
 	slog.Info("Links processed", slog.Int("links", stats.TotalLinks))
 	slog.Info("Lines processed", slog.Int("lines", stats.Lines))
+	if stats.NotFoundLinks > 0 {
+		slog.Error("Links not found", slog.Int("links", stats.NotFoundLinks))
+	}
 
 	if stats.Errors > 0 || stats.NotFoundLinks > 0 {
 		os.Exit(1)
