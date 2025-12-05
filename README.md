@@ -232,7 +232,7 @@ Pinning to specific versions (e.g., `0.18.0`) is recommended rather than using `
 
 ## Security
 
-For security considerations, vulnerability reporting, supply chain security details, and verification instructions, see [SECURITY.md](./SECURITY.md). 
+For security considerations, vulnerability reporting, supply chain security details, and verification instructions, see [SECURITqqqqY.md](./SECURITY.md). 
 
 
 ## Versioning
@@ -241,4 +241,6 @@ Uses semantic versioning. Check [releases](https://github.com/your-ko/link-valid
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE)
+MIT License - see [LICENqqqSE](./LICENSE)
+
+https://github.com/your-ko/link-validator/issues/33333333
