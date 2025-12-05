@@ -9,7 +9,9 @@ on:
 
 permissions:
   contents: read
-#  packages: write
+
+env:
+  DOCKER_IMAGE_NAME: your-ko/link-validator
 
 env:
   DOCKER_IMAGE_NAME: your-ko/link-validator
