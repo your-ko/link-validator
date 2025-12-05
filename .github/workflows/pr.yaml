@@ -60,7 +60,7 @@ jobs:
           tags: |
             type=sha,prefix=sha256-
             type=ref,event=branch,prefix=branch-
-            type=raw,value=PR
+            type=raw,value=pr
           labels: |
             org.opencontainers.image.title=Link Validator
             org.opencontainers.image.description=Validates GitHub links in documentation
@@ -108,4 +108,4 @@ jobs:
             -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            your-ko/link-validator:PR
+            your-ko/link-validator:pr
