@@ -1,5 +1,6 @@
 fileMasks:
   - "*.md"
 timeout: 2s
+lookupPath: "/"
 ignoredDomains:
   - token.actions.githubusercontent.com
