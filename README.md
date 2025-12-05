@@ -143,13 +143,29 @@ jobs:
 | `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                                                                                                                                                                             | `[]`    |
 | `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements                                                                                                                                                      | `[]`    |
 | `EXCLUDE`         | exclude        | No       | List of files or folders to exclude from validation. Is useful to exclude, for example, `/vendor` or `*/charts` because these folders can contain 3rd party documentation, which we don't need to validate. Files also possible to exclude. The path should be relative from the repository root | `[]`    |
+| `LOOKUP_PATH`     | lookupPath     | No       | A path to look for the files up (read below)                                                                                                                                                                                                                                                     | `./`    |
 
 ### Additional explanation
-**IGNORED_DOMAINS**: You might have some resources in your network behind additional authentication, for example, OKTA or LDAP.
+
+#### IGNORED_DOMAINS 
+You might have some resources in your network behind additional authentication, for example, OKTA or LDAP.
 Currently, the link-validator doesn't support such authentication, so any 401 responses are treated as successful.
 If you have such resources, you can explicitly list them in this variable so you know they are not validated.
 
 This option is also useful when you have resources that are simply not accessible from GitHub runners due to network limitations.
+
+#### LOOKUP_PATH
+Be careful with this option. It sets the folder to look for the documents in. It should be inside the repository, 
+otherwise it makes no sense and might not work, right? 
+
+So keep it relative to the repository root. 
+
+It is cancelled by `EXCLUDE`. So it you have:
+```yaml
+EXCLUDE=./docs
+LOOKUP_PATH=./docs
+```
+then you get a successfully passed validation with no files.
 
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:
