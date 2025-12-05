@@ -110,7 +110,7 @@ func readFromEnv() (*Config, error) {
 	if exclude := GetEnv("EXCLUDE", ""); exclude != "" {
 		cfg.Exclude = strings.Split(strings.TrimSuffix(exclude, ","), ",")
 	}
-	if lookupPath := GetEnv("LOOKUP_PATH", ""); lookupPath != "" {
+	if lookupPath := GetEnv("LOOKUP_PATH", "."); lookupPath != "" {
 		cfg.LookupPath = lookupPath
 	}
 	if timeoutStr := GetEnv("TIMEOUT", ""); timeoutStr != "" {
@@ -135,22 +135,26 @@ func readFromEnv() (*Config, error) {
 // merge merges this config with another config
 // if another config has empty values, then original values are not overwritten
 func (cfg *Config) merge(config *Config) {
+	defCfg := Default()
 	if config == nil {
 		return
 	}
-	if config.CorpGitHubUrl != "" {
+	if config.CorpGitHubUrl != defCfg.CorpGitHubUrl {
 		cfg.CorpGitHubUrl = config.CorpGitHubUrl
 	}
-	if config.CorpPAT != "" {
+	if config.CorpPAT != defCfg.CorpGitHubUrl {
 		cfg.CorpPAT = config.CorpPAT
 	}
-	if config.PAT != "" {
+	if config.PAT != defCfg.PAT {
 		cfg.PAT = config.PAT
 	}
-	if config.LogLevel != slog.LevelInfo {
+	if config.LogLevel != defCfg.LogLevel {
 		cfg.LogLevel = config.LogLevel
 	}
-	if config.Timeout != 0 {
+	if config.LookupPath != defCfg.LookupPath {
+		cfg.LookupPath = config.LookupPath
+	}
+	if config.Timeout != defCfg.Timeout {
 		cfg.Timeout = config.Timeout
 	}
 	if len(config.FileMasks) != 0 {
