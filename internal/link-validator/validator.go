@@ -75,7 +75,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 	stats := Stats{}
 
 	for _, fileName := range filesList {
-		slog.Debug("Processing file:", slog.String("fileName", fileName))
+		slog.Debug("Processing file", slog.String("fileName", fileName))
 		stats.Files++
 		f, err := os.Open(fileName)
 		if err != nil {
@@ -128,8 +128,8 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 		stats.Lines = stats.Lines + lines
 		stats.TotalLinks = stats.TotalLinks + linksFound
 
-		slog.Debug("Processed: ", slog.Int("lines", lines), slog.Int("links", linksFound), slog.String("fileName", fileName))
-		slog.Info("Processed: ", slog.String("fileName", fileName))
+		slog.Debug("Processed", slog.Int("lines", lines), slog.Int("links", linksFound), slog.String("fileName", fileName))
+		slog.Info("Processed", slog.String("fileName", fileName))
 	}
 	return stats
 }
