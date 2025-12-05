@@ -101,8 +101,11 @@ jobs:
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
       - name: Link validation
-        uses: your-ko/link-validator@PR
-        with:
-          log-level: 'info'
-          files: ${{ steps.changed-files.outputs.files}}
-          pat: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          docker run --rm \
+            -e 'LOG_LEVEL=debug' \
+            -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
+            -v "${{ github.workspace }}:/work" \
+            -w /work \
+            your-ko/link-validator:PR
