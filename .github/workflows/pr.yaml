@@ -60,7 +60,7 @@ jobs:
           tags: |
             type=sha,prefix=sha256-
             type=ref,event=branch,prefix=branch-
-          #            type=raw,value=PR
+            type=raw,value=PR
           labels: |
             org.opencontainers.image.title=Link Validator
             org.opencontainers.image.description=Validates GitHub links in documentation
@@ -82,8 +82,7 @@ jobs:
             VERSION=pr-${{ github.head_ref || github.ref_name }}
             BUILD_DATE=${{ steps.timestamp.outputs.BUILD_DATE }}
             GIT_COMMIT=${{ github.sha }}
-          provenance: false
-          push: false
+          load: true
 
       - name: Get changed files
         id: changed-files
@@ -106,7 +105,7 @@ jobs:
     name: Link Validator
     steps:
       - name: Link validation
-        uses: your-ko/link-validator@1.13.0
+        uses: your-ko/link-validator@PR
         with:
           log-level: 'info'
           files: ${{ steps.changed-files.outputs.files}}
