@@ -27,7 +27,6 @@ func (h *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h *CustomHandler) Handle(ctx context.Context, record slog.Record) error {
-	// Format level with colors
 	var levelStr string
 	switch record.Level {
 	case slog.LevelWarn:
@@ -64,7 +63,6 @@ func (h *CustomHandler) Handle(ctx context.Context, record slog.Record) error {
 
 func (h *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	// For simplicity, return the same handler
-	// In a full implementation, you'd store these attrs and include them in output
 	return h
 }
 
