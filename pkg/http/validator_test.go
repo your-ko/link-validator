@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"errors"
-	"fmt"
 	"link-validator/pkg/errs"
 	"net/http"
 	"net/http/httptest"
@@ -320,9 +319,8 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 				t.Fatalf("expected \n errors.Is(err, %v) to be true; \n got err=%v", tt.wantIs, err)
 			}
 
-			expected := fmt.Sprintf("%s. Incorrect link: '%s%s'", tt.wantIs, testServer.URL, tt.args.url)
-			if err.Error() != expected {
-				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), expected)
+			if err.Error() != tt.wantIs.Error() {
+				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), tt.wantIs.Error())
 			}
 		})
 	}
