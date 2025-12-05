@@ -1,35 +1,74 @@
 package link_validator
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"link-validator/pkg/config"
 	"log/slog"
 	"os"
 )
 
-func InitLogger(cfg *config.Config) *slog.TextHandler {
-	// Custom handler for clean, readable format
-	textHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: cfg.LogLevel,
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			// Remove timestamp completely
-			if a.Key == slog.TimeKey {
-				return slog.Attr{}
-			}
+type CustomHandler struct {
+	writer io.Writer
+	level  slog.Level
+}
 
-			if a.Key == slog.LevelKey {
-				switch a.Value.String() {
-				case "WARN":
-					return slog.Attr{Key: "", Value: slog.StringValue("::warning::")}
-				case "ERROR":
-					return slog.Attr{Key: "", Value: slog.StringValue("::error::")}
-				case "INFO":
-					return slog.Attr{Key: "", Value: slog.StringValue("INFO")}
-				case "DEBUG":
-					return slog.Attr{Key: "", Value: slog.StringValue("DEBUG")}
-				}
-			}
-			return a
-		},
+func InitLogger(cfg *config.Config) *CustomHandler {
+	return &CustomHandler{
+		writer: os.Stdout,
+		level:  cfg.LogLevel.Level(),
+	}
+}
+
+func (h *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return level >= h.level
+}
+
+func (h *CustomHandler) Handle(ctx context.Context, record slog.Record) error {
+	// Format level with colors
+	var levelStr string
+	switch record.Level {
+	case slog.LevelWarn:
+		levelStr = "::warning::"
+	case slog.LevelError:
+		levelStr = "::error::"
+	case slog.LevelInfo:
+		levelStr = "INFO"
+	case slog.LevelDebug:
+		levelStr = "DEBUG"
+	default:
+		levelStr = record.Level.String()
+	}
+
+	// Collect all attributes
+	attrs := make(map[string]any)
+	record.Attrs(func(a slog.Attr) bool {
+		attrs[a.Key] = a.Value.Any()
+		return true
 	})
-	return textHandler
+
+	// Format output: LEVEL\tMESSAGE\tJSON_ATTRS
+	var output string
+	if len(attrs) > 0 {
+		attrsJSON, _ := json.Marshal(attrs)
+		output = fmt.Sprintf("%s\t%s\t%s\n", levelStr, record.Message, string(attrsJSON))
+	} else {
+		output = fmt.Sprintf("%s\t%s\n", levelStr, record.Message)
+	}
+
+	_, err := h.writer.Write([]byte(output))
+	return err
+}
+
+func (h *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	// For simplicity, return the same handler
+	// In a full implementation, you'd store these attrs and include them in output
+	return h
+}
+
+func (h *CustomHandler) WithGroup(name string) slog.Handler {
+	// For simplicity, return the same handler
+	return h
 }
