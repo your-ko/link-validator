@@ -27,7 +27,7 @@ func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 			slog.Debug("redirecting", slog.String("to", req.URL.String()), slog.Int("hops", len(via)))
 			redirectLimit := 3
 			if len(via) > redirectLimit {
-				slog.Error("too many redirects", slog.Int("redirect limit", redirectLimit))
+				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit))
 			}
 			for k, vs := range via[0].Header {
 				if req.Header.Get(k) == "" {

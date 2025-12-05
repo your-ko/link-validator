@@ -134,7 +134,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 	entry, ok := handlers[gh.typ]
 	if !ok {
-		return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
+		return fmt.Errorf("unsupported GitHub request type %q. Report an issue", gh.typ)
 	}
 	slog.Debug("using", slog.String("handler", entry.name))
 
@@ -151,6 +151,7 @@ func parseUrl(link string) (*ghURL, error) {
 	}
 	if strings.HasSuffix(u.Hostname(), "api.github") ||
 		strings.HasPrefix(u.Hostname(), "uploads.github") {
+		// TODO: Improve
 		return nil, fmt.Errorf("API/uploads subdomain not supported")
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"link-validator/pkg/config"
 	"link-validator/pkg/errs"
@@ -35,20 +36,20 @@ type LinkValidador struct {
 	fileProcessor FileProcessorFunc
 }
 
-func New(cfg *config.Config) LinkValidador {
+func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
 	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
-		slog.Error("can't instantiate GitHub link validator: %s", slog.Any("error", err))
+		return nil, fmt.Errorf("can't instantiate GitHub link validator: %s", slog.Any("error", err))
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New())
 	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains))
 
 	if len(cfg.Files) != 0 {
-		return LinkValidador{processors, includeFilesPipeline(cfg)}
+		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
 	}
-	return LinkValidador{processors, walkFilesPipeline(cfg)}
+	return &LinkValidador{processors, walkFilesPipeline(cfg)}, nil
 }
 
 func includeFilesPipeline(cfg *config.Config) FileProcessorFunc {

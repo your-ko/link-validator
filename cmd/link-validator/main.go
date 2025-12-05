@@ -58,7 +58,11 @@ func main() {
 			slog.Duration("TIMEOUT", cfg.Timeout),
 		))
 
-	validator := link_validator.New(cfg)
+	validator, err := link_validator.New(cfg)
+	if err != nil {
+		slog.Error("can't start validation", slog.Any("err", err))
+		os.Exit(1)
+	}
 
 	filesList, err := validator.GetFiles()
 	if err != nil {
