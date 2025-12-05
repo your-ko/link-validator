@@ -142,7 +142,7 @@ func (cfg *Config) merge(config *Config) {
 	if config.CorpGitHubUrl != defCfg.CorpGitHubUrl {
 		cfg.CorpGitHubUrl = config.CorpGitHubUrl
 	}
-	if config.CorpPAT != defCfg.CorpGitHubUrl {
+	if config.CorpPAT != defCfg.CorpPAT {
 		cfg.CorpPAT = config.CorpPAT
 	}
 	if config.PAT != defCfg.PAT {
@@ -151,10 +151,10 @@ func (cfg *Config) merge(config *Config) {
 	if config.LogLevel != defCfg.LogLevel {
 		cfg.LogLevel = config.LogLevel
 	}
-	if config.LookupPath != defCfg.LookupPath {
+	if config.LookupPath != defCfg.LookupPath && config.LookupPath != "" {
 		cfg.LookupPath = config.LookupPath
 	}
-	if config.Timeout != defCfg.Timeout {
+	if config.Timeout != 0 {
 		cfg.Timeout = config.Timeout
 	}
 	if len(config.FileMasks) != 0 {
