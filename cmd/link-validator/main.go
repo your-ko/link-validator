@@ -25,7 +25,7 @@ func main() {
 	}
 	cfg, err := cfg.Load()
 	if err != nil {
-		slog.Error("can't initialise, exiting", slog.Any("error", err))
+		slog.With("error", err).Error("can't initialise, exiting")
 		os.Exit(1)
 	}
 
@@ -58,13 +58,13 @@ func main() {
 
 	validator, err := link_validator.New(cfg)
 	if err != nil {
-		slog.Error("can't start validation", slog.Any("err", err))
+		slog.With("error", err).Error("can't start validation")
 		os.Exit(1)
 	}
 
 	filesList, err := validator.GetFiles()
 	if err != nil {
-		slog.Error("Error generating file list", slog.Any("err", err))
+		slog.With("error", err).Error("Error generating file list")
 		os.Exit(1)
 	}
 	slog.Debug("Found files", slog.Any("files", filesList))
