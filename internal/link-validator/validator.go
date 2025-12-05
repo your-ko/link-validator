@@ -78,7 +78,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 		stats.Files++
 		f, err := os.Open(fileName)
 		if err != nil {
-			slog.Error("Error opening file", slog.String("file", fileName), slog.Any("error", err))
+			slog.With("error", err).Error("Error opening file", slog.String("file", fileName))
 			continue
 		}
 
