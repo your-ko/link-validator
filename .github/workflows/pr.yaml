@@ -13,9 +13,6 @@ permissions:
 env:
   DOCKER_IMAGE_NAME: your-ko/link-validator
 
-env:
-  DOCKER_IMAGE_NAME: your-ko/link-validator
-
 jobs:
   PR:
     name: PR
