@@ -16,17 +16,16 @@ func InitLogger(cfg *config.Config) *slog.TextHandler {
 				return slog.Attr{}
 			}
 
-			// Format log levels with colors and GitHub Actions support
 			if a.Key == slog.LevelKey {
 				switch a.Value.String() {
 				case "WARN":
-					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("::warning::")}
+					return slog.Attr{Key: "", Value: slog.StringValue("::warning::")}
 				case "ERROR":
-					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("::error::")}
+					return slog.Attr{Key: "", Value: slog.StringValue("::error::")}
 				case "INFO":
-					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("INFO")}
+					return slog.Attr{Key: "", Value: slog.StringValue("INFO")}
 				case "DEBUG":
-					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("DEBUG")}
+					return slog.Attr{Key: "", Value: slog.StringValue("DEBUG")}
 				}
 			}
 			return a
