@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/google/go-github/v74 v74.0.0
+	github.com/google/go-github/v80 v80.0.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
