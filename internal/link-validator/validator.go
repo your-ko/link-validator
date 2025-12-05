@@ -39,7 +39,7 @@ func New(cfg *config.Config) LinkValidador {
 	processors := make([]LinkProcessor, 0)
 	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
-		slog.Error("can't instantiate GitHub link validator: %s", err)
+		slog.Error("can't instantiate GitHub link validator: %s", slog.Any("error", err))
 	}
 	processors = append(processors, gh)
 	processors = append(processors, local_path.New())

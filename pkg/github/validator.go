@@ -136,7 +136,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	if !ok {
 		return fmt.Errorf("unsupported GitHub request type %q. Please open an issue", gh.typ)
 	}
-	slog.Debug("using:", slog.String("handler", entry.name))
+	slog.Debug("using", slog.String("handler", entry.name))
 
 	return mapGHError(url, entry.fn(ctx, client, gh.owner, gh.repo, gh.ref, gh.path, gh.anchor))
 }
