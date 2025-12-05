@@ -83,15 +83,15 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		slog.Info("ignoring the url validation due to problems on the remote server", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
-		// check just the first 10 KB of the body
-		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 10240))
+		// check just the first 1 KB of the body
+		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		if err != nil {
 			// we can't read body, something is off
 			return err
 		}
 		err = resp.Body.Close()
 		if err != nil {
-			slog.Info("error closing body: %s", err)
+			slog.Info("error closing body: %s", slog.Any("error", err))
 		}
 
 		if len(bodyBytes) == 0 {

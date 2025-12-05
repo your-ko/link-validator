@@ -14,8 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"go.uber.org/zap"
 )
 
 type LinkProcessor interface {
@@ -79,7 +77,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 		stats.Files++
 		f, err := os.Open(fileName)
 		if err != nil {
-			slog.Error("Error opening file", slog.String("file", fileName), "err", err)
+			slog.Error("Error opening file", slog.String("file", fileName), slog.Any("error", err))
 			continue
 		}
 
@@ -109,7 +107,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
 					stats.NotFoundLinks++
 				} else if errors.Is(err, errs.ErrEmptyBody) {
-					slog.Warn("link not found", zap.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
+					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
 					stats.NotFoundLinks++
 				} else {
 					stats.Errors++
