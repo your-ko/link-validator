@@ -39,13 +39,13 @@ func main() {
 				case "WARN":
 					// GitHub Actions warning command with color
 					if os.Getenv("GITHUB_ACTIONS") == "true" {
-						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("::warning::")}
+						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Warning:")}
 					}
 					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Warning")}
 				case "ERROR":
 					// GitHub Actions error command with color
 					if os.Getenv("GITHUB_ACTIONS") == "true" {
-						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("::error::")}
+						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Error:")}
 					}
 					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Error")}
 				}
