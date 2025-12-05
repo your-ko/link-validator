@@ -11,6 +11,9 @@ permissions:
   contents: read
 #  packages: write
 
+env:
+  DOCKER_IMAGE_NAME: your-ko/link-validator
+
 jobs:
   PR:
     name: PR
@@ -60,7 +63,7 @@ jobs:
           tags: |
             type=sha,prefix=sha256-
             type=ref,event=branch,prefix=branch-
-            type=raw,value=pr
+            type=raw,value=PR
           labels: |
             org.opencontainers.image.title=Link Validator
             org.opencontainers.image.description=Validates GitHub links in documentation
@@ -108,4 +111,4 @@ jobs:
             -e 'PAT=${{ secrets.GITHUB_TOKEN }}' \
             -v "${{ github.workspace }}:/work" \
             -w /work \
-            your-ko/link-validator:pr
+            ${{ env.DOCKER_IMAGE_NAME }}:PR
