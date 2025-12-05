@@ -1,63 +1,36 @@
 package link_validator
 
 import (
-	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"link-validator/pkg/config"
+	"log/slog"
 	"os"
-	"strings"
 )
 
-// Init Create a production encoder config (JSON, ISO8601 timestamps)
-func Init(logLevel zapcore.Level) *zap.Logger {
-	encoderCfg := zapcore.EncoderConfig{
-		TimeKey:        "", // omit timestamp, GitHub adds its own
-		LevelKey:       "level",
-		NameKey:        "",
-		CallerKey:      "", // hide caller for cleaner output
-		MessageKey:     "msg",
-		StacktraceKey:  "stack",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    ghActionsLevelEncoder, // GH annotations
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.StringDurationEncoder,
-	}
+func InitLogger(cfg *config.Config) *slog.TextHandler {
+	// Custom handler for GitHub Actions integration
+	textHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: cfg.LogLevel,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			// GitHub Actions workflow commands integration
+			if a.Key == slog.LevelKey {
+				switch a.Value.String() {
+				case "WARN":
+					// GitHub Actions warning command with color
+					if os.Getenv("GITHUB_ACTIONS") == "true" {
+						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Warning:")}
+					}
+					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Warning")}
+				case "ERROR":
+					// GitHub Actions error command with color
+					if os.Getenv("GITHUB_ACTIONS") == "true" {
+						return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Error:")}
+					}
+					return slog.Attr{Key: slog.LevelKey, Value: slog.StringValue("Error")}
+				}
+			}
+			return a
+		},
+	})
+	return textHandler
 
-	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderCfg),
-		zapcore.Lock(os.Stdout),
-		logLevel,
-	)
-
-	return zap.New(core, zap.AddStacktrace(zapcore.PanicLevel))
-}
-
-// LogLevel reads LOG_LEVEL and defaults to info.
-func LogLevel() zapcore.Level {
-	val := os.Getenv("LOG_LEVEL")
-	if val == "" {
-		return zapcore.InfoLevel
-	}
-	var lvl zapcore.Level
-	if err := lvl.Set(strings.ToLower(val)); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "invalid LOG_LEVEL=%q, using info\n", val)
-		return zapcore.InfoLevel
-	}
-	return lvl
-}
-
-// ghActionsLevelEncoder adds ::error:: / ::warning:: prefixes for GH Actions.
-func ghActionsLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-	switch l {
-	case zapcore.ErrorLevel, zapcore.DPanicLevel, zapcore.PanicLevel, zapcore.FatalLevel:
-		enc.AppendString("::error::")
-	case zapcore.WarnLevel:
-		enc.AppendString("::warning::")
-	case zapcore.InfoLevel:
-		enc.AppendString("INFO")
-	case zapcore.DebugLevel:
-		enc.AppendString("DEBUG")
-	default:
-		enc.AppendString(strings.ToUpper(l.String()))
-	}
 }
