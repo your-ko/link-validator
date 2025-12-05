@@ -50,7 +50,7 @@ func main() {
 			slog.Any("FILE_MASKS", cfg.FileMasks),
 			slog.Any("FILES", cfg.Files),
 			slog.Any("IGNORED_DOMAINS", cfg.IgnoredDomains),
-			//slog.String("LOOKUP_PATH", cfg.LookupPath), // not implemented yet
+			slog.String("LOOKUP_PATH", cfg.LookupPath),
 			slog.Any("EXCLUDE", cfg.Exclude),
 			slog.String("CORP_URL", cfg.CorpGitHubUrl),
 			slog.Duration("TIMEOUT", cfg.Timeout),
