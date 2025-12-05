@@ -100,10 +100,6 @@ jobs:
           FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
 
-  link-validator:
-    runs-on: ubuntu-24.04
-    name: Link Validator
-    steps:
       - name: Link validation
         uses: your-ko/link-validator@PR
         with:
