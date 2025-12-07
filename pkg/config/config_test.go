@@ -57,7 +57,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_overwrites_non_empty_values",
+			name: "merge_overwrites_non_empty_values but ignores tokens",
 			fields: fields{
 				cfg: &Config{
 					PAT:           "old-pat",
@@ -77,8 +77,8 @@ func TestConfig_merge(t *testing.T) {
 				},
 			},
 			want: &Config{
-				PAT:            "new-pat",
-				CorpPAT:        "old-corp-pat", // Not overwritten because merge config has empty value
+				PAT:            "old-pat",
+				CorpPAT:        "old-corp-pat",
 				CorpGitHubUrl:  "new-url",
 				FileMasks:      []string{"*.txt", "*.go"},
 				Timeout:        10 * time.Second,
@@ -86,7 +86,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_preserves_existing_when_merge_config_has_empty_values",
+			name: "merge preserves existing when merge config has empty values, but ignores tokens",
 			fields: fields{
 				cfg: &Config{
 					PAT:            "existing-pat",
@@ -104,7 +104,7 @@ func TestConfig_merge(t *testing.T) {
 				},
 			},
 			want: &Config{
-				PAT:            "new-pat",
+				PAT:            "existing-pat",
 				CorpPAT:        "existing-corp-pat",
 				CorpGitHubUrl:  "existing-url",
 				FileMasks:      []string{"*.md"},
@@ -114,7 +114,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_handles_zero_timeout_correctly",
+			name: "merge handles zero timeout correctly",
 			fields: fields{
 				cfg: &Config{
 					Timeout: 5 * time.Second,
@@ -122,32 +122,33 @@ func TestConfig_merge(t *testing.T) {
 			},
 			args: args{
 				config: &Config{
-					PAT:     "new-pat",
+					Exclude: []string{"README.md"},
 					Timeout: 0, // Zero timeout should not override
 				},
 			},
 			want: &Config{
-				PAT:     "new-pat",
+				Exclude: []string{"README.md"},
 				Timeout: 5 * time.Second, // Should remain unchanged
 			},
 		},
 		{
-			name: "merge_empty_slices_do_not_override",
+			name: "merge empty slices do not override",
 			fields: fields{
 				cfg: &Config{
+					Exclude:        []string{"README.md"},
 					FileMasks:      []string{"*.md", "*.txt"},
 					IgnoredDomains: []string{"example.com"},
 				},
 			},
 			args: args{
 				config: &Config{
-					PAT:            "new-pat",
+					Exclude:        []string{"README.md"},
 					FileMasks:      []string{}, // Empty slice should not override
 					IgnoredDomains: nil,        // nil slice should not override
 				},
 			},
 			want: &Config{
-				PAT:            "new-pat",
+				Exclude:        []string{"README.md"},
 				FileMasks:      []string{"*.md", "*.txt"}, // Should remain unchanged
 				IgnoredDomains: []string{"example.com"},   // Should remain unchanged
 			},
