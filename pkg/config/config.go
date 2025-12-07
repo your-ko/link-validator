@@ -150,6 +150,18 @@ func (cfg *Config) merge(config *Config) {
 	if config.CorpGitHubUrl != defCfg.CorpGitHubUrl {
 		cfg.CorpGitHubUrl = config.CorpGitHubUrl
 	}
+	if config.CorpPAT != defCfg.CorpPAT {
+		cfg.CorpPAT = config.CorpPAT
+	}
+	if config.PAT != defCfg.PAT {
+		cfg.PAT = config.PAT
+	}
+	if config.DDApiKey != "" {
+		cfg.DDApiKey = config.DDApiKey
+	}
+	if config.DDAppKey != "" {
+		cfg.DDAppKey = config.DDAppKey
+	}
 	if config.LogLevel != defCfg.LogLevel {
 		cfg.LogLevel = config.LogLevel
 	}
