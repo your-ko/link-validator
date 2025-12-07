@@ -142,12 +142,6 @@ func (cfg *Config) merge(config *Config) {
 	if config.CorpGitHubUrl != defCfg.CorpGitHubUrl {
 		cfg.CorpGitHubUrl = config.CorpGitHubUrl
 	}
-	if config.CorpPAT != defCfg.CorpPAT {
-		cfg.CorpPAT = config.CorpPAT
-	}
-	if config.PAT != defCfg.PAT {
-		cfg.PAT = config.PAT
-	}
 	if config.LogLevel != defCfg.LogLevel {
 		cfg.LogLevel = config.LogLevel
 	}
