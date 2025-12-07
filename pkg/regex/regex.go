@@ -17,3 +17,6 @@ var Url = regexp.MustCompile(`https://[a-zA-Z0-9.\[\]{}-]+(?:/[^\s)]*[a-zA-Z0-9/
 var LocalPath = regexp.MustCompile(`\[[^]]*]\(((?:\.{1,2}/)*[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:#[^)\s]*)?)\)`)
 
 var DotPattern = regexp.MustCompile(`\.{2,}`)
+
+// DataDog captures all app.datadoghq.com URLs including paths, query parameters, and fragments
+var DataDog = regexp.MustCompile(`(?i)https://app\.datadoghq\.com(?:/[^\s\x60\]~"\\]*[^\s.,:;!?()\[\]{}\x60~"\\])?`)

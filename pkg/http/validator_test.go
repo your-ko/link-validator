@@ -145,6 +145,23 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://example.org/docs/",
 			},
 		},
+		{
+			name: "ignores app datadog urls",
+			line: `test
+				https://app.datadoghq.com/metric/explorer?fromUser=false,
+				https://app.datadoghq.com/monitors/manage,
+				https://app.datadoghq.com/monitors/1234567890,
+				https://app.datadoghq.com/on-call/teams,
+				https://app.datadoghq.com/dashboard/somepath/somedashboard
+				https://github.com/DataDog/datadog-api-client-go/,
+				https://docs.datadoghq.com/,
+				https://google.com,
+				test`,
+			want: []string{
+				"https://docs.datadoghq.com/",
+				"https://google.com",
+			},
+		},
 	}
 
 	for _, tt := range tests {

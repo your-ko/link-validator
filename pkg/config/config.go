@@ -15,6 +15,8 @@ import (
 type Config struct {
 	PAT            string
 	CorpPAT        string
+	DDApiKey       string
+	DDAppKey       string
 	LogLevel       slog.Level    `yaml:"logLevel"`
 	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
 	FileMasks      []string      `yaml:"fileMasks"`
@@ -91,6 +93,12 @@ func readFromEnv() (*Config, error) {
 	if pat := GetEnv("PAT", ""); pat != "" {
 		cfg.PAT = pat
 	}
+	if ddApiKey := GetEnv("DD_API_KEY", ""); ddApiKey != "" {
+		cfg.DDApiKey = ddApiKey
+	}
+	if ddAppKey := GetEnv("DD_APP_KEY", ""); ddAppKey != "" {
+		cfg.DDAppKey = ddAppKey
+	}
 	if corpPAT := GetEnv("CORP_PAT", ""); corpPAT != "" {
 		cfg.CorpPAT = corpPAT
 	}
@@ -141,12 +149,6 @@ func (cfg *Config) merge(config *Config) {
 	}
 	if config.CorpGitHubUrl != defCfg.CorpGitHubUrl {
 		cfg.CorpGitHubUrl = config.CorpGitHubUrl
-	}
-	if config.CorpPAT != defCfg.CorpPAT {
-		cfg.CorpPAT = config.CorpPAT
-	}
-	if config.PAT != defCfg.PAT {
-		cfg.PAT = config.PAT
 	}
 	if config.LogLevel != defCfg.LogLevel {
 		cfg.LogLevel = config.LogLevel

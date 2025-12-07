@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"link-validator/pkg/config"
+	"link-validator/pkg/dd"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
 	"link-validator/pkg/http"
@@ -38,11 +39,16 @@ type LinkValidador struct {
 
 func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
-	gh, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
+	ghValidator, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
-		return nil, fmt.Errorf("can't instantiate GitHub link validator: %s", slog.Any("error", err))
+		return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
 	}
-	processors = append(processors, gh)
+	processors = append(processors, ghValidator)
+	ddValidator, err := dd.New(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("can't instantiate DataDog link validator: %w", err)
+	}
+	processors = append(processors, ddValidator)
 	processors = append(processors, local_path.New())
 	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains))
 
