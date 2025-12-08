@@ -43,6 +43,7 @@ var handlers = map[string]handlerEntry{
 	"label":      {name: "labels", fn: handleLabel},
 
 	// Generic lists  — we just validate the repo exists
+	"repo":         {name: "repo-exist", fn: handleRepoExist},
 	"pulls":        {name: "repo-exist", fn: handleRepoExist},
 	"labels":       {name: "repo-exist", fn: handleRepoExist},
 	"tags":         {name: "repo-exist", fn: handleRepoExist},
@@ -195,7 +196,11 @@ func parseUrl(link string) (*ghURL, error) {
 	switch gh.typ {
 	case "":
 		if gh.repo == "" {
-			gh.typ = "user"
+			if gh.owner != "" {
+				gh.typ = "user"
+			}
+		} else {
+			gh.typ = "repo"
 		}
 	case "branches", "settings", "tags", "labels", "packages",
 		"pulls", "milestones", "projects", "pkgs":
