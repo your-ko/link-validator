@@ -47,13 +47,13 @@ func main() {
 	slog.Debug("Running with",
 		slog.Group("config",
 			slog.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
+			slog.String("CORP_URL", cfg.CorpGitHubUrl),
+			slog.String("LOOKUP_PATH", cfg.LookupPath),
 			slog.Any("FILE_MASKS", cfg.FileMasks),
+			slog.Duration("TIMEOUT", cfg.Timeout),
+			slog.Any("EXCLUDE", cfg.Exclude),
 			slog.Any("FILES", cfg.Files),
 			slog.Any("IGNORED_DOMAINS", cfg.IgnoredDomains),
-			slog.String("LOOKUP_PATH", cfg.LookupPath),
-			slog.Any("EXCLUDE", cfg.Exclude),
-			slog.String("CORP_URL", cfg.CorpGitHubUrl),
-			slog.Duration("TIMEOUT", cfg.Timeout),
 		))
 
 	validator, err := link_validator.New(cfg)
