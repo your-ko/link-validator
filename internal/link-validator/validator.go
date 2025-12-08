@@ -97,7 +97,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 			}
 			links := v.processLine(line)
 			for link, processor := range links {
-				err := processor.Process(ctx, link, fileName)
+				err = processor.Process(ctx, link, fileName)
 				linksFound++
 				if err == nil {
 					slog.Debug("link validation successful", slog.String("link", link), slog.String("filename", fileName), slog.Int("line", lines))
@@ -105,14 +105,14 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 				}
 
 				if errors.Is(err, errs.ErrNotFound) {
-					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
+					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines+1))
 					stats.NotFoundLinks++
 				} else if errors.Is(err, errs.ErrEmptyBody) {
-					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines))
+					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines+1))
 					stats.NotFoundLinks++
 				} else {
 					stats.Errors++
-					slog.Warn("error validating link", slog.String("link", link), slog.String("filename", fileName), slog.Int("line", lines), "err", err)
+					slog.With("error", err).Error("error validating link", slog.String("link", link), slog.String("filename", fileName), slog.Int("line", lines+1))
 				}
 			}
 			lines++

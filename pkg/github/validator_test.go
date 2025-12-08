@@ -180,6 +180,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			url:  "https://github.com/your-ko/link-validator/",
 			want: &ghURL{
 				host:  "github.com",
+				typ:   "repo",
 				owner: "your-ko",
 				repo:  "link-validator",
 			},
