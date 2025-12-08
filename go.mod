@@ -3,7 +3,7 @@ module link-validator
 go 1.25.5
 
 require (
-	github.com/DataDog/datadog-api-client-go/v2 v2.50.0
+	github.com/DataDog/datadog-api-client-go/v2 v2.51.0
 	github.com/google/go-github/v76 v76.0.0
 	gopkg.in/yaml.v3 v3.0.1
 )
