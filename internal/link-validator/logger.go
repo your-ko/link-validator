@@ -3,7 +3,6 @@ package link_validator
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"link-validator/pkg/config"
 	"log/slog"
@@ -13,6 +12,7 @@ import (
 type CustomHandler struct {
 	writer io.Writer
 	level  slog.Level
+	attrs  []slog.Attr
 }
 
 func InitLogger(cfg *config.Config) *CustomHandler {
@@ -22,51 +22,64 @@ func InitLogger(cfg *config.Config) *CustomHandler {
 	}
 }
 
-func (h *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func (h *CustomHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 
-func (h *CustomHandler) Handle(ctx context.Context, record slog.Record) error {
-	var levelStr string
-	switch record.Level {
-	case slog.LevelWarn:
-		levelStr = "::warning::"
-	case slog.LevelError:
-		levelStr = "::error::"
-	case slog.LevelInfo:
-		levelStr = "INFO"
-	case slog.LevelDebug:
-		levelStr = "DEBUG"
-	default:
+func convertValue(v slog.Value) any {
+	if v.Kind() == slog.KindAny {
+		if err, ok := v.Any().(error); ok {
+			return err.Error()
+		}
+	}
+	return v.Any()
+}
+
+func (h *CustomHandler) Handle(_ context.Context, record slog.Record) error {
+	// Simplified level mapping
+	levelStr := map[slog.Level]string{
+		slog.LevelWarn:  "::warning::",
+		slog.LevelError: "::error::",
+		slog.LevelInfo:  "INFO",
+		slog.LevelDebug: "DEBUG",
+	}[record.Level]
+
+	if levelStr == "" {
 		levelStr = record.Level.String()
 	}
 
-	// Collect all attributes
-	attrs := make(map[string]any)
+	attrs := make(map[string]any, len(h.attrs)+record.NumAttrs())
+
+	for _, attr := range h.attrs {
+		attrs[attr.Key] = convertValue(attr.Value)
+	}
+
 	record.Attrs(func(a slog.Attr) bool {
-		attrs[a.Key] = a.Value.Any()
+		attrs[a.Key] = convertValue(a.Value)
 		return true
 	})
 
-	// Format output: LEVEL\tMESSAGE\tJSON_ATTRS
-	var output string
+	output := levelStr + "\t" + record.Message
 	if len(attrs) > 0 {
-		attrsJSON, _ := json.Marshal(attrs)
-		output = fmt.Sprintf("%s\t%s\t%s\n", levelStr, record.Message, string(attrsJSON))
-	} else {
-		output = fmt.Sprintf("%s\t%s\n", levelStr, record.Message)
+		if attrsJSON, err := json.Marshal(attrs); err == nil {
+			output += "\t" + string(attrsJSON)
+		}
 	}
+	output += "\n"
 
 	_, err := h.writer.Write([]byte(output))
 	return err
 }
 
 func (h *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	// For simplicity, return the same handler
-	return h
+	return &CustomHandler{
+		writer: h.writer,
+		level:  h.level,
+		attrs:  append(append([]slog.Attr(nil), h.attrs...), attrs...), // Safe copy + append
+	}
 }
 
-func (h *CustomHandler) WithGroup(name string) slog.Handler {
-	// For simplicity, return the same handler
+func (h *CustomHandler) WithGroup(_ string) slog.Handler {
+	// Groups not needed for your use case - return same handler
 	return h
 }
