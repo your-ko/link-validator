@@ -95,15 +95,18 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 // GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
 //
 //meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
-func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, fragment string) error {
-	n, err := strconv.Atoi(ref)
+func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid PR number %q", ref)
 	}
-	// presumably, if PR exists, then the files/commits tabs exist as well
-	if fragment == "" {
-		_, _, err = c.PullRequests.Get(ctx, owner, repo, n)
+	_, _, err = c.PullRequests.Get(ctx, owner, repo, prNumber)
+	if err != nil {
 		return err
+	}
+	if fragment == "" {
+		// presumably, if PR exists, then the files/commits tabs exist as well
+		return nil
 	}
 
 	// Handle fragments
@@ -123,6 +126,10 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, frag
 		}
 		_, _, err = c.PullRequests.GetComment(ctx, owner, repo, commentId)
 		return err
+	} else if strings.HasPrefix(fragment, "diff-") && path == "files" {
+		// unfortunately for url 'pull/XX/files#diff-xxxxxxx' I can't do much, the diff is not exposed via API.
+		// So just test the PR exist is sufficient, which is done above
+		return nil
 	}
 
 	return fmt.Errorf("unsupported PR fragment format: '%s'. Please report a bug", fragment)
