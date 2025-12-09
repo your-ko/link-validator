@@ -13,11 +13,12 @@ type CustomHandler struct {
 	writer io.Writer
 	level  slog.Level
 	attrs  []slog.Attr
+	group  string
 }
 
 func InitLogger(cfg *config.Config) *CustomHandler {
 	return &CustomHandler{
-		writer: os.Stdout,
+		writer: os.Stderr,
 		level:  cfg.LogLevel.Level(),
 	}
 }
@@ -26,17 +27,7 @@ func (h *CustomHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 
-func convertValue(v slog.Value) any {
-	if v.Kind() == slog.KindAny {
-		if err, ok := v.Any().(error); ok {
-			return err.Error()
-		}
-	}
-	return v.Any()
-}
-
 func (h *CustomHandler) Handle(_ context.Context, record slog.Record) error {
-	// Simplified level mapping
 	levelStr := map[slog.Level]string{
 		slog.LevelWarn:  "::warning::",
 		slog.LevelError: "::error::",
@@ -48,17 +39,20 @@ func (h *CustomHandler) Handle(_ context.Context, record slog.Record) error {
 		levelStr = record.Level.String()
 	}
 
-	attrs := make(map[string]any, len(h.attrs)+record.NumAttrs())
+	attrs := make(map[string]any)
 
+	// Add existing attributes
 	for _, attr := range h.attrs {
-		attrs[attr.Key] = convertValue(attr.Value)
+		attrs[attr.Key] = attr.Value.Any()
 	}
 
+	// Add record attributes
 	record.Attrs(func(a slog.Attr) bool {
-		attrs[a.Key] = convertValue(a.Value)
+		attrs[a.Key] = a.Value.Any()
 		return true
 	})
 
+	// Format output
 	output := levelStr + "\t" + record.Message
 	if len(attrs) > 0 {
 		if attrsJSON, err := json.Marshal(attrs); err == nil {
@@ -72,14 +66,23 @@ func (h *CustomHandler) Handle(_ context.Context, record slog.Record) error {
 }
 
 func (h *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	if len(attrs) == 0 {
+		return h
+	}
+
 	return &CustomHandler{
 		writer: h.writer,
 		level:  h.level,
-		attrs:  append(append([]slog.Attr(nil), h.attrs...), attrs...), // Safe copy + append
+		attrs:  append(append([]slog.Attr(nil), h.attrs...), attrs...),
+		group:  h.group,
 	}
 }
 
-func (h *CustomHandler) WithGroup(_ string) slog.Handler {
-	// Groups not needed for your use case - return same handler
-	return h
+func (h *CustomHandler) WithGroup(name string) slog.Handler {
+	return &CustomHandler{
+		writer: h.writer,
+		level:  h.level,
+		attrs:  h.attrs,
+		group:  name,
+	}
 }
