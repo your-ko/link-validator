@@ -13,7 +13,6 @@ type CustomHandler struct {
 	writer io.Writer
 	level  slog.Level
 	attrs  []slog.Attr
-	group  string
 }
 
 func InitLogger(cfg *config.Config) *CustomHandler {
@@ -43,12 +42,12 @@ func (h *CustomHandler) Handle(_ context.Context, record slog.Record) error {
 
 	// Add existing attributes
 	for _, attr := range h.attrs {
-		attrs[attr.Key] = attr.Value.Any()
+		attrs[attr.Key] = extractValue(attr.Value)
 	}
 
 	// Add record attributes
 	record.Attrs(func(a slog.Attr) bool {
-		attrs[a.Key] = a.Value.Any()
+		attrs[a.Key] = extractValue(a.Value)
 		return true
 	})
 
@@ -74,15 +73,20 @@ func (h *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 		writer: h.writer,
 		level:  h.level,
 		attrs:  append(append([]slog.Attr(nil), h.attrs...), attrs...),
-		group:  h.group,
 	}
 }
 
-func (h *CustomHandler) WithGroup(name string) slog.Handler {
-	return &CustomHandler{
-		writer: h.writer,
-		level:  h.level,
-		attrs:  h.attrs,
-		group:  name,
+func (h *CustomHandler) WithGroup(_ string) slog.Handler {
+	// groups are not used
+	return h
+}
+
+// extractValue gets the actual value, handling errors specially
+func extractValue(v slog.Value) any {
+	if v.Kind() == slog.KindAny {
+		if err, ok := v.Any().(error); ok {
+			return err.Error()
+		}
 	}
+	return v.Any()
 }
