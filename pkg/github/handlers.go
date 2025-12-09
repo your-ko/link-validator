@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"link-validator/pkg/errs"
+	"link-validator/pkg/regex"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -81,12 +82,29 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ 
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
-func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	parts := strings.Split(ref, "...")
-	if len(parts) < 2 {
+func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+	if ref == "" {
+		//	https://github.com/your-ko/link-validator/compare is a valid link
+		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	}
+	parts := regex.DotPattern.Split(ref, -1)
+	var left, right string
+	switch len(parts) {
+	case 2:
+		left = parts[0]
+		right = parts[1]
+	case 1:
+		right = parts[0]
+		repository, _, err := c.Repositories.Get(ctx, owner, repo)
+		if err != nil {
+			return err
+		}
+		left = *repository.DefaultBranch
+	default:
+		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, parts[0], parts[1], &github.ListOptions{})
+	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
 	return err
 }
 
