@@ -18,7 +18,7 @@ type CustomHandler struct {
 
 func InitLogger(cfg *config.Config) *CustomHandler {
 	return &CustomHandler{
-		writer: os.Stdout,
+		writer: os.Stderr,
 		level:  cfg.LogLevel.Level(),
 	}
 }
