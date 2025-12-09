@@ -274,7 +274,8 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if hostname == "github.blog" || // GitHub blog
 			strings.HasPrefix(hostname, "api.github") || // API endpoints
 			strings.HasPrefix(hostname, "uploads.github") || // Upload endpoints
-			strings.HasSuffix(hostname, ".githubusercontent.com") { // Raw content CDN
+			strings.HasSuffix(hostname, ".githubusercontent.com") || // Raw content CDN
+			strings.Contains(raw, "/assets/") {
 			continue
 		}
 
