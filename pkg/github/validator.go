@@ -57,6 +57,7 @@ var handlers = map[string]handlerEntry{
 	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
 	"security":     {name: "repo-exist", fn: handleRepoExist},
 	"packages":     {name: "repo-exist", fn: handleRepoExist},
+	"search":       {name: "repo-exist", fn: handleRepoExist},
 	"orgs":         {name: "org-exist", fn: handleOrgExist},
 }
 
@@ -203,7 +204,7 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.typ = "repo"
 		}
 	case "branches", "settings", "tags", "labels", "packages",
-		"pulls", "milestones", "projects", "pkgs":
+		"pulls", "milestones", "projects", "pkgs", "search":
 	// these above go to simple 'if repo exists' validation
 	case "blob", "tree", "blame", "raw":
 		gh.ref = parts[3]

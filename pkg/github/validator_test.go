@@ -561,6 +561,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			},
 		},
 		{
+			name: "branches: list",
+			url:  "https://github.com/your-ko/link-validator/search?q=blah",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "search",
+			},
+		},
+
+		{
 			name: "milestones: list",
 			url:  "https://github.com/your-ko/link-validator/milestones",
 			want: &ghURL{
