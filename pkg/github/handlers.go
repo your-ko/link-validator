@@ -100,10 +100,13 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 	if err != nil {
 		return fmt.Errorf("invalid PR number %q", ref)
 	}
-	// presumably, if PR exists, then the files/commits tabs exist as well
 	_, _, err = c.PullRequests.Get(ctx, owner, repo, prNumber)
 	if err != nil {
 		return err
+	}
+	if fragment == "" {
+		// presumably, if PR exists, then the files/commits tabs exist as well
+		return nil
 	}
 
 	// Handle fragments
