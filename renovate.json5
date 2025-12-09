@@ -11,7 +11,7 @@
         '**/.github/workflows/*.yaml',
       ],
       matchStrings: [
-        '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:\\w*VERSION|version):\\s*(?<currentValue>.+)',
+        '# renovate: datasource=(?<datasource>\S+) depName=(?<depName>\S+)(?: versioning=(?<versioning>\S+))?\s*\n\s*(?:\w*VERSION|version):\s*(?<currentValue>.+)',
       ],
     },
     {
@@ -20,7 +20,7 @@
         '/^Dockerfile.*$/',
       ],
       matchStrings: [
-        '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*[\\r\\n]+ARG\\s+\\w+_VERSION=(?<currentValue>\\S+)',
+        '#\s*renovate:\s*datasource=(?<datasource>\S+)\s+depName=(?<depName>\S+)(?:\s+versioning=(?<versioning>\S+))?\s*[\r\n]+ARG\s+\w+_VERSION=(?<currentValue>\S+)',
       ],
       versioningTemplate: '{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}',
     },
