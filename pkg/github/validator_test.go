@@ -675,6 +675,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			},
 		},
 		{
+			name: "compare branches (no default branch specified)",
+			url:  "https://github.com/your-ko/link-validator/compare/dev",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "compare",
+				ref:   "dev",
+			},
+		},
+		{
 			name: "workflows: list",
 			url:  "https://github.com/your-ko/link-validator/actions",
 			want: &ghURL{

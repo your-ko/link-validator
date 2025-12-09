@@ -83,10 +83,22 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ 
 //meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
 func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
 	parts := strings.Split(ref, "...")
-	if len(parts) < 2 {
+	var left, right string
+	switch len(parts) {
+	case 2:
+		left = parts[0]
+		right = parts[1]
+	case 1:
+		right = parts[0]
+		repository, _, err := c.Repositories.Get(ctx, owner, repo)
+		if err != nil {
+			return err
+		}
+		left = *repository.DefaultBranch
+	default:
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, parts[0], parts[1], &github.ListOptions{})
+	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
 	return err
 }
 

@@ -348,6 +348,14 @@ func Test_handleCompareCommits(t *testing.T) {
 			},
 		},
 		{
+			name: "compare branches dev (no default branch set)",
+			args: args{"your-ko", "link-validator", "dev", "", ""},
+			fields: fields{
+				status: http.StatusOK,
+				body:   `{"status": "ahead", "ahead_by": 5, "behind_by": 0, "commits": []}`,
+			},
+		},
+		{
 			name: "compare branch to commit hash",
 			args: args{"your-ko", "link-validator", "main...a96366f66ffacd461de10a1dd561ab5a598e9167", "", ""},
 			fields: fields{
