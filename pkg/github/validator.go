@@ -24,23 +24,23 @@ var handlers = map[string]handlerEntry{
 	"nope": {name: "nope", fn: handleNothing},
 	"":     {name: "nope", fn: handleNothing},
 
-	"blob":    {name: "contents", fn: handleContents},
-	"tree":    {name: "contents", fn: handleContents},
-	"raw":     {name: "contents", fn: handleContents},
-	"blame":   {name: "contents", fn: handleContents},
-	"compare": {name: "compareCommits", fn: handleCompareCommits},
-
-	// Single-object routes
-	"commit":     {name: "commit", fn: handleCommit},
-	"pull":       {name: "pull", fn: handlePull},
-	"milestone":  {name: "milestone", fn: handleMilestone},
-	"advisories": {name: "advisories", fn: handleSecurityAdvisories},
-	"commits":    {name: "commit", fn: handleCommit},
-	"actions":    {name: "actions", fn: handleWorkflow},
-	"user":       {name: "user", fn: handleUser},
-	"issues":     {name: "issues", fn: handleIssue},
-	"releases":   {name: "releases", fn: handleReleases},
-	"label":      {name: "labels", fn: handleLabel},
+	//"blob":    {name: "contents", fn: handleContents},
+	//"tree":    {name: "contents", fn: handleContents},
+	//"raw":     {name: "contents", fn: handleContents},
+	//"blame":   {name: "contents", fn: handleContents},
+	//"compare": {name: "compareCommits", fn: handleCompareCommits},
+	//
+	//// Single-object routes
+	//"commit":     {name: "commit", fn: handleCommit},
+	//"pull":       {name: "pull", fn: handlePull},
+	//"milestone":  {name: "milestone", fn: handleMilestone},
+	//"advisories": {name: "advisories", fn: handleSecurityAdvisories},
+	//"commits":    {name: "commit", fn: handleCommit},
+	//"actions":    {name: "actions", fn: handleWorkflow},
+	//"user":       {name: "user", fn: handleUser},
+	//"issues":     {name: "issues", fn: handleIssue},
+	//"releases":   {name: "releases", fn: handleReleases},
+	//"label":      {name: "labels", fn: handleLabel},
 
 	// Generic lists  — we just validate the repo exists
 	"repo":         {name: "repo-exist", fn: handleRepoExist},
@@ -52,19 +52,19 @@ var handlers = map[string]handlerEntry{
 	"milestones":   {name: "repo-exist", fn: handleRepoExist},
 	"discussions":  {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
 	"attestations": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
-	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
-	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
-	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
-	"security":     {name: "repo-exist", fn: handleRepoExist},
-	"packages":     {name: "repo-exist", fn: handleRepoExist},
-	"search":       {name: "repo-exist", fn: handleRepoExist},
-	"orgs":         {name: "org-exist", fn: handleOrgExist},
+	//"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
+	//"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
+	"projects": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"security": {name: "repo-exist", fn: handleRepoExist},
+	"packages": {name: "repo-exist", fn: handleRepoExist},
+	"search":   {name: "repo-exist", fn: handleRepoExist},
+	//"orgs":         {name: "org-exist", fn: handleOrgExist},
 }
 
 type LinkProcessor struct {
 	corpGitHubUrl string
-	corpClient    *github.Client
-	client        *github.Client
+	corpClient    Client
+	client        Client
 }
 
 func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*LinkProcessor, error) {
@@ -74,7 +74,7 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*Link
 	}
 	if corpGitHubUrl == "" {
 		return &LinkProcessor{
-			client: client,
+			client: &wrapper{client: client},
 		}, nil
 	}
 
@@ -98,8 +98,8 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*Link
 
 	return &LinkProcessor{
 		corpGitHubUrl: u.Hostname(),
-		corpClient:    corpClient,
-		client:        client,
+		corpClient:    &wrapper{client: corpClient},
+		client:        &wrapper{client: client},
 	}, nil
 }
 
