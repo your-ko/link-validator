@@ -33,11 +33,10 @@ func main() {
 	slog.SetDefault(sLogger)
 
 	slog.Info("Starting Link Validator",
-		slog.Group("version",
-			slog.String("v", Version),
-			slog.String("build date", BuildDate),
-			slog.String("git commit", GitCommit),
-		))
+		slog.String("version", Version),
+		slog.String("build date", BuildDate),
+		slog.String("git commit", GitCommit),
+	)
 
 	if cfg.CorpGitHubUrl != "" && cfg.CorpPAT == "" {
 		slog.Warn("it seems you set CORP_URL but didn't provide CORP_PAT. Expect false negatives because the " +
@@ -45,16 +44,15 @@ func main() {
 	}
 
 	slog.Debug("Running with",
-		slog.Group("config",
-			slog.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
-			slog.Any("FILE_MASKS", cfg.FileMasks),
-			slog.Any("FILES", cfg.Files),
-			slog.Any("IGNORED_DOMAINS", cfg.IgnoredDomains),
-			slog.String("LOOKUP_PATH", cfg.LookupPath),
-			slog.Any("EXCLUDE", cfg.Exclude),
-			slog.String("CORP_URL", cfg.CorpGitHubUrl),
-			slog.Duration("TIMEOUT", cfg.Timeout),
-		))
+		slog.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
+		slog.String("CORP_URL", cfg.CorpGitHubUrl),
+		slog.String("LOOKUP_PATH", cfg.LookupPath),
+		slog.Any("FILE_MASKS", cfg.FileMasks),
+		slog.Duration("TIMEOUT", cfg.Timeout),
+		slog.Any("EXCLUDE", cfg.Exclude),
+		slog.Any("FILES", cfg.Files),
+		slog.Any("IGNORED_DOMAINS", cfg.IgnoredDomains),
+	)
 
 	validator, err := link_validator.New(cfg)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"link-validator/pkg/errs"
+	"link-validator/pkg/regex"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -81,12 +82,29 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ 
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
-func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	parts := strings.Split(ref, "...")
-	if len(parts) < 2 {
+func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+	if ref == "" {
+		//	https://github.com/your-ko/link-validator/compare is a valid link
+		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	}
+	parts := regex.DotPattern.Split(ref, -1)
+	var left, right string
+	switch len(parts) {
+	case 2:
+		left = parts[0]
+		right = parts[1]
+	case 1:
+		right = parts[0]
+		repository, _, err := c.Repositories.Get(ctx, owner, repo)
+		if err != nil {
+			return err
+		}
+		left = *repository.DefaultBranch
+	default:
+		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, parts[0], parts[1], &github.ListOptions{})
+	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
 	return err
 }
 
@@ -95,15 +113,35 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 // GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
 //
 //meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
-func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, fragment string) error {
-	n, err := strconv.Atoi(ref)
+func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid PR number %q", ref)
 	}
-	// presumably, if PR exists, then the files/commits tabs exist as well
-	if fragment == "" {
-		_, _, err = c.PullRequests.Get(ctx, owner, repo, n)
+	_, _, err = c.PullRequests.Get(ctx, owner, repo, prNumber)
+	if err != nil {
 		return err
+	}
+	if fragment == "" && !strings.ContainsRune(path, '/') {
+		// presumably, if PR exists, then the list of files/commits/checks exist as well
+		return nil
+	}
+
+	if strings.HasPrefix(path, "commits") {
+		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa
+		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dR31
+		SHA := strings.Split(path, "/")[1]
+		commits, _, err := c.PullRequests.ListCommits(ctx, owner, repo, prNumber, nil)
+		if err != nil {
+			return err
+		}
+		for _, commit := range commits {
+			if commit.GetSHA() == SHA {
+				// unfortunately there is no API to find diff by SHA, so I ignore that bit
+				return nil
+			}
+		}
+		return fmt.Errorf("commit '%s' not found in PR '%s'", SHA, ref)
 	}
 
 	// Handle fragments
@@ -123,6 +161,11 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, _, frag
 		}
 		_, _, err = c.PullRequests.GetComment(ctx, owner, repo, commentId)
 		return err
+	} else if strings.HasPrefix(fragment, "diff-") {
+		// https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dL31
+		// https://github.com/your-ko/link-validator/pull/280/files#diff-48192d841d01a270fcd26b6e06f1e886333860b7f1ce32ae5758338d3c6551f7R10
+		// unfortunately there is no API to find diff by SHA, so I mark the URL as correct
+		return nil
 	}
 
 	return fmt.Errorf("unsupported PR fragment format: '%s'. Please report a bug", fragment)

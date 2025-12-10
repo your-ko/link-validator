@@ -145,6 +145,20 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			want: nil,
 		},
 		{
+			name: "correctly captures url from HTML",
+			line: `
+				<table>
+					<tr>
+						<td>your-ko</td>
+						<td>https://github.com/your-ko/link-validator</td>
+					  </tr>
+					</table>
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator",
+			},
+		},
+		{
 			name: "Captures correctly with new lines, tabs and quotes",
 			line: `
 				"test.\n\nhttps://github.com/your-ko/link-validator\n\nhttps://github.com/your-ko/link-validator"
@@ -561,6 +575,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			},
 		},
 		{
+			name: "branches: list",
+			url:  "https://github.com/your-ko/link-validator/search?q=blah",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "search",
+			},
+		},
+
+		{
 			name: "milestones: list",
 			url:  "https://github.com/your-ko/link-validator/milestones",
 			want: &ghURL{
@@ -661,6 +686,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "compare",
 				ref:   "main...dev",
+			},
+		},
+		{
+			name: "compare branches (no default branch specified)",
+			url:  "https://github.com/your-ko/link-validator/compare/dev",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "compare",
+				ref:   "dev",
 			},
 		},
 		{
