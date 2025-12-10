@@ -122,9 +122,26 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 	if err != nil {
 		return err
 	}
-	if fragment == "" {
-		// presumably, if PR exists, then the files/commits tabs exist as well
+	if fragment == "" && !strings.ContainsRune(path, '/') {
+		// presumably, if PR exists, then the list of files/commits/checks exist as well
 		return nil
+	}
+
+	if strings.HasPrefix(path, "commits") {
+		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa
+		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dR31
+		SHA := strings.Split(path, "/")[1]
+		commits, _, err := c.PullRequests.ListCommits(ctx, owner, repo, prNumber, nil)
+		if err != nil {
+			return err
+		}
+		for _, commit := range commits {
+			if commit.GetSHA() == SHA {
+				// unfortunately there is no API to find diff by SHA, so I ignore that bit
+				return nil
+			}
+		}
+		return fmt.Errorf("commit '%s' not found in PR '%s'", SHA, ref)
 	}
 
 	// Handle fragments
@@ -144,9 +161,10 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 		}
 		_, _, err = c.PullRequests.GetComment(ctx, owner, repo, commentId)
 		return err
-	} else if strings.HasPrefix(fragment, "diff-") && path == "files" {
-		// unfortunately for url 'pull/XX/files#diff-xxxxxxx' I can't do much, the diff is not exposed via API.
-		// So just test the PR exist is sufficient, which is done above
+	} else if strings.HasPrefix(fragment, "diff-") {
+		// https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dL31
+		// https://github.com/your-ko/link-validator/pull/280/files#diff-48192d841d01a270fcd26b6e06f1e886333860b7f1ce32ae5758338d3c6551f7R10
+		// unfortunately there is no API to find diff by SHA, so I mark the URL as correct
 		return nil
 	}
 
