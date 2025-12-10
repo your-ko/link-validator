@@ -2,11 +2,7 @@ package github
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-github/v77/github"
@@ -1654,31 +1650,31 @@ func Test_handleRepoExist(t *testing.T) {
 //	}
 //}
 
-func getTestServer(httpStatus int, base64enc bool, body string) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		//if tt.fields.loc != "" {
-		//	res.Header().Set("Location", tt.fields.loc)
-		//}
-		res.WriteHeader(httpStatus)
+//func getTestServer(httpStatus int, base64enc bool, body string) *httptest.Server {
+//	return httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+//		//if tt.fields.loc != "" {
+//		//	res.Header().Set("Location", tt.fields.loc)
+//		//}
+//		res.WriteHeader(httpStatus)
+//
+//		if base64enc {
+//			_ = json.NewEncoder(res).Encode(&githubContent{
+//				Type:     "file",
+//				Encoding: "base64",
+//				Content:  base64.StdEncoding.EncodeToString([]byte(body)),
+//			})
+//		} else {
+//			res.Header().Set("Content-Type", "application/json")
+//			_, _ = res.Write([]byte(body))
+//		}
+//	}))
+//}
 
-		if base64enc {
-			_ = json.NewEncoder(res).Encode(&githubContent{
-				Type:     "file",
-				Encoding: "base64",
-				Content:  base64.StdEncoding.EncodeToString([]byte(body)),
-			})
-		} else {
-			res.Header().Set("Content-Type", "application/json")
-			_, _ = res.Write([]byte(body))
-		}
-	}))
-}
-
-type githubContent struct {
-	Type     string `json:"type"`     // "file" or "dir"
-	Encoding string `json:"encoding"` // "base64" for file
-	Content  string `json:"content"`  // base64-encoded file body
-}
+//type githubContent struct {
+//	Type     string `json:"type"`     // "file" or "dir"
+//	Encoding string `json:"encoding"` // "base64" for file
+//	Content  string `json:"content"`  // base64-encoded file body
+//}
 
 // mockValidator creates a validator instance with mock GitHub clients
 //func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
