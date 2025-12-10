@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v76/github"
+	"github.com/google/go-github/v77/github"
 )
 
 func Test_handleNothing(t *testing.T) {
