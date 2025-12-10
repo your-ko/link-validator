@@ -122,7 +122,7 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 	if err != nil {
 		return err
 	}
-	if !(fragment != "" || strings.ContainsRune(path, '/')) {
+	if fragment == "" && !strings.ContainsRune(path, '/') {
 		// presumably, if PR exists, then the list of files/commits/checks exist as well
 		return nil
 	}
