@@ -145,6 +145,20 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			want: nil,
 		},
 		{
+			name: "correctly captures url from HTML",
+			line: `
+				<table>
+					<tr>
+						<td>your-ko</td>
+						<td>https://github.com/your-ko/link-validator</td>
+					  </tr>
+					</table>
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator",
+			},
+		},
+		{
 			name: "Captures correctly with new lines, tabs and quotes",
 			line: `
 				"test.\n\nhttps://github.com/your-ko/link-validator\n\nhttps://github.com/your-ko/link-validator"
