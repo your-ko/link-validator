@@ -176,12 +176,12 @@ func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment 
 // GitHub API docs: https://docs.github.com/rest/issues/milestones#get-a-milestone
 //
 //meta:operation GET /repos/{owner}/{repo}/milestones/{milestone_number}
-func handleMilestone(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+func handleMilestone(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid milestone number %q", ref)
 	}
-	_, _, err = c.Issues.GetMilestone(ctx, owner, repo, n)
+	_, _, err = c.GetMilestone(ctx, owner, repo, n)
 	return err
 }
 

@@ -15,6 +15,7 @@ type Client interface {
 	ListCommits(ctx context.Context, owner, repo string, number int, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error)
 	GetPRComment(ctx context.Context, owner, repo string, commentID int64) (*github.PullRequestComment, *github.Response, error)
 	GetIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error)
+	GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error)
 }
 
 type wrapper struct {
@@ -51,4 +52,8 @@ func (w *wrapper) GetPRComment(ctx context.Context, owner, repo string, commentI
 
 func (w *wrapper) GetIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error) {
 	return w.client.Issues.GetComment(ctx, owner, repo, commentID)
+}
+
+func (w *wrapper) GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error) {
+	return w.client.Issues.GetMilestone(ctx, owner, repo, number)
 }
