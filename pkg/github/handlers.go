@@ -327,8 +327,8 @@ func handleReleases(ctx context.Context, c Client, owner, repo, ref, path, fragm
 // GitHub API docs: https://docs.github.com/rest/issues/labels#list-labels-for-a-repository
 //
 //meta:operation GET /repos/{owner}/{repo}/labels
-func handleLabel(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	labels, _, err := c.Issues.ListLabels(ctx, owner, repo, &github.ListOptions{})
+func handleLabel(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
+	labels, _, err := c.ListLabels(ctx, owner, repo, &github.ListOptions{})
 	if err != nil {
 		return err
 	}
