@@ -21,6 +21,8 @@ type Client interface {
 	GetWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error)
 	ListWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)
 	GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error)
+	GetUsers(ctx context.Context, user string) (*github.User, *github.Response, error)
+	Get(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error)
 }
 
 type wrapper struct {
@@ -80,5 +82,13 @@ func (w *wrapper) ListWorkflowJobsAttempt(ctx context.Context, owner, repo strin
 }
 
 func (w *wrapper) GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error) {
-	w.client.Actions.GetWorkflowRunByID(ctx, owner, repo, runID)
+	return w.client.Actions.GetWorkflowRunByID(ctx, owner, repo, runID)
+}
+
+func (w *wrapper) GetUsers(ctx context.Context, user string) (*github.User, *github.Response, error) {
+	return w.client.Users.Get(ctx, user)
+}
+
+func (w *wrapper) GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error) {
+	return w.client.Issues.Get(ctx, owner, repo, number)
 }

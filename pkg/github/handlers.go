@@ -264,8 +264,8 @@ func handleWorkflow(ctx context.Context, c Client, owner, repo, ref, path, fragm
 //
 //meta:operation GET /user
 //meta:operation GET /users/{username}
-func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string) error {
-	_, _, err := c.Users.Get(ctx, owner)
+func handleUser(ctx context.Context, c Client, owner, _, _, _, _ string) error {
+	_, _, err := c.GetUsers(ctx, owner)
 	return err
 }
 
@@ -274,7 +274,7 @@ func handleUser(ctx context.Context, c *github.Client, owner, _, _, _, _ string)
 // GitHub API docs: https://docs.github.com/rest/issues/issues#get-an-issue
 //
 //meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
-func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+func handleIssue(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
 	if ref == "" {
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	}
@@ -282,7 +282,7 @@ func handleIssue(ctx context.Context, c *github.Client, owner, repo, ref, path, 
 	if err != nil {
 		return fmt.Errorf("invalid issue number %q", ref)
 	}
-	_, _, err = c.Issues.Get(ctx, owner, repo, n)
+	_, _, err = c.Get(ctx, owner, repo, n)
 	return err
 }
 
