@@ -17,7 +17,7 @@ import (
 
 type ghHandler func(
 	ctx context.Context,
-	c *github.Client,
+	c Client,
 	owner, repo, ref, path, fragment string,
 ) error
 
@@ -48,22 +48,22 @@ func handleNothing(_ context.Context, _ *github.Client, _, _, _, _, _ string) er
 // GitHub API docs: https://docs.github.com/rest/repos/repos#get-a-repository
 //
 //meta:operation GET /repos/{owner}/{repo}
-func handleRepoExist(ctx context.Context, c *github.Client, owner, repo, _, _, _ string) error {
-	_, _, err := c.Repositories.Get(ctx, owner, repo)
+func handleRepoExist(ctx context.Context, c Client, owner, repo, _, _, _ string) error {
+	_, _, err := c.Repositories(ctx, owner, repo)
 	return err
 }
 
 // handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
 //
 //meta:operation GET /repos/{owner}/{repo}/contents/{path}
-func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
+func handleContents(ctx context.Context, c Client, owner, repo, ref, path, _ string) error {
 	if strings.HasPrefix(path, "heads/") {
 		// extract the branch name
 		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
 		ref = parts[0]
 		path = parts[1]
 	}
-	_, _, _, err := c.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{Ref: ref})
+	_, _, _, err := c.GetContents(ctx, owner, repo, ref, path)
 	return err
 }
 
@@ -72,8 +72,8 @@ func handleContents(ctx context.Context, c *github.Client, owner, repo, ref, pat
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/commits/{ref}
-func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
-	_, _, err := c.Repositories.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
+func handleCommit(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
+	_, _, err := c.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
 	return err
 }
 
@@ -82,7 +82,7 @@ func handleCommit(ctx context.Context, c *github.Client, owner, repo, ref, _, _ 
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
-func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+func handleCompareCommits(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
 	if ref == "" {
 		//	https://github.com/your-ko/link-validator/compare is a valid link
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
@@ -95,7 +95,7 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 		right = parts[1]
 	case 1:
 		right = parts[0]
-		repository, _, err := c.Repositories.Get(ctx, owner, repo)
+		repository, _, err := c.Repositories(ctx, owner, repo)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.Repositories.CompareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
+	_, _, err := c.CompareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
 	return err
 }
 
@@ -113,12 +113,12 @@ func handleCompareCommits(ctx context.Context, c *github.Client, owner, repo, re
 // GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
 //
 //meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
-func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
 	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid PR number %q", ref)
 	}
-	_, _, err = c.PullRequests.Get(ctx, owner, repo, prNumber)
+	_, _, err = c.GetPR(ctx, owner, repo, prNumber)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa
 		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dR31
 		SHA := strings.Split(path, "/")[1]
-		commits, _, err := c.PullRequests.ListCommits(ctx, owner, repo, prNumber, nil)
+		commits, _, err := c.ListCommits(ctx, owner, repo, prNumber, nil)
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 		if err != nil {
 			return fmt.Errorf("invalid comment id: '%s'", fragment)
 		}
-		_, _, err = c.Issues.GetComment(ctx, owner, repo, commentId)
+		_, _, err = c.GetIssueComment(ctx, owner, repo, commentId)
 		return err
 	} else if strings.HasPrefix(fragment, "discussion_r") {
 		// Handle review comments: #discussion_r<id>
@@ -159,7 +159,7 @@ func handlePull(ctx context.Context, c *github.Client, owner, repo, ref, path, f
 		if err != nil {
 			return fmt.Errorf("invalid comment id: '%s'", fragment)
 		}
-		_, _, err = c.PullRequests.GetComment(ctx, owner, repo, commentId)
+		_, _, err = c.GetPRComment(ctx, owner, repo, commentId)
 		return err
 	} else if strings.HasPrefix(fragment, "diff-") {
 		// https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dL31
