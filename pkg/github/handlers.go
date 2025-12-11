@@ -191,13 +191,13 @@ func handleMilestone(ctx context.Context, c Client, owner, repo, ref, _, _ strin
 // GitHub API docs: https://docs.github.com/rest/security-advisories/repository-advisories
 //
 //meta:operation GET /repos/{owner}/{repo}/security-advisories
-func handleSecurityAdvisories(ctx context.Context, c *github.Client, owner, repo, ref, _, _ string) error {
+func handleSecurityAdvisories(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
 	if ref == "" {
 		return fmt.Errorf("security advisory ID is required")
 	}
 
 	// Since there's no direct GetRepositoryAdvisory method, I list all advisories
-	advisories, _, err := c.SecurityAdvisories.ListRepositorySecurityAdvisories(ctx, owner, repo, nil)
+	advisories, _, err := c.ListRepositorySecurityAdvisories(ctx, owner, repo, nil)
 	if err != nil {
 		return err
 	}

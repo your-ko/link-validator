@@ -16,6 +16,7 @@ type Client interface {
 	GetPRComment(ctx context.Context, owner, repo string, commentID int64) (*github.PullRequestComment, *github.Response, error)
 	GetIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error)
 	GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error)
+	ListRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error)
 }
 
 type wrapper struct {
@@ -56,4 +57,8 @@ func (w *wrapper) GetIssueComment(ctx context.Context, owner, repo string, comme
 
 func (w *wrapper) GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error) {
 	return w.client.Issues.GetMilestone(ctx, owner, repo, number)
+}
+
+func (w *wrapper) ListRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error) {
+	return w.client.SecurityAdvisories.ListRepositorySecurityAdvisories(ctx, owner, repo, opt)
 }
