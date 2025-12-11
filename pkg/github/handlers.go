@@ -282,7 +282,7 @@ func handleIssue(ctx context.Context, c Client, owner, repo, ref, path, fragment
 	if err != nil {
 		return fmt.Errorf("invalid issue number %q", ref)
 	}
-	_, _, err = c.Get(ctx, owner, repo, n)
+	_, _, err = c.GetIssue(ctx, owner, repo, n)
 	return err
 }
 
@@ -372,7 +372,7 @@ func handleWiki(ctx context.Context, c Client, owner, repo, _, _, _ string) erro
 //
 //meta:operation GET /user/packages/{package_type}/{package_name}
 //meta:operation GET /users/{username}/packages/{package_type}/{package_name}
-func handlePackages(ctx context.Context, c *github.Client, owner, repo, packageType, packageName, fragment string) error {
+func handlePackages(ctx context.Context, c Client, owner, repo, packageType, packageName, fragment string) error {
 	return handleRepoExist(ctx, c, owner, repo, packageType, packageName, fragment)
 	// Handle different package URL patterns:
 	// - /packages/{package_type}/{package_name} (specific package)
@@ -405,11 +405,11 @@ func handlePackages(ctx context.Context, c *github.Client, owner, repo, packageT
 // GitHub API docs: https://docs.github.com/rest/orgs/orgs#get-an-organization
 //
 //meta:operation GET /orgs/{org}
-func handleOrgExist(ctx context.Context, c *github.Client, owner, _, _, _, _ string) error {
+func handleOrgExist(ctx context.Context, c Client, owner, _, _, _, _ string) error {
 	if owner == "" {
 		return nil
 	}
-	_, _, err := c.Organizations.Get(ctx, owner)
+	_, _, err := c.GetOrganization(ctx, owner)
 	return err
 }
 

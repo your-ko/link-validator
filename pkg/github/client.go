@@ -27,6 +27,7 @@ type Client interface {
 	GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
 	GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
 	ListLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error)
+	GetOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error)
 }
 
 type wrapper struct {
@@ -111,4 +112,8 @@ func (w *wrapper) GetReleaseByTag(ctx context.Context, owner, repo, tag string) 
 
 func (w *wrapper) ListLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error) {
 	return w.client.Issues.ListLabels(ctx, owner, repo, opts)
+}
+
+func (w *wrapper) GetOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error) {
+	return w.client.Organizations.Get(ctx, org)
 }
