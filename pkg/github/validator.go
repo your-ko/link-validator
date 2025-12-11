@@ -63,8 +63,8 @@ var handlers = map[string]handlerEntry{
 
 type LinkProcessor struct {
 	corpGitHubUrl string
-	corpClient    wrapper
-	client        wrapper
+	corpClient    *wrapper
+	client        *wrapper
 }
 
 func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*LinkProcessor, error) {
@@ -74,7 +74,7 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*Link
 	}
 	if corpGitHubUrl == "" {
 		return &LinkProcessor{
-			client: wrapper{client},
+			client: &wrapper{client},
 		}, nil
 	}
 
@@ -98,8 +98,8 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*Link
 
 	return &LinkProcessor{
 		corpGitHubUrl: u.Hostname(),
-		corpClient:    wrapper{corpClient},
-		client:        wrapper{client},
+		corpClient:    &wrapper{corpClient},
+		client:        &wrapper{client},
 	}, nil
 }
 
