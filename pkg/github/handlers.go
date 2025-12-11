@@ -39,7 +39,7 @@ type handlerEntry struct {
 
 // handleNope does nothing (quite exciting, right?).
 // It always returns true. Useful for generic GitHub urls
-func handleNothing(_ context.Context, _ *github.Client, _, _, _, _, _ string) error {
+func handleNothing(_ context.Context, _ Client, _, _, _, _, _ string) error {
 	return nil
 }
 
