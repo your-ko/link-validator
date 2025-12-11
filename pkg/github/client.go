@@ -8,6 +8,7 @@ import (
 
 type Client interface {
 	Repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+	GetRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
 	GetContents(ctx context.Context, owner, repo, ref, path string) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error)
 	GetCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error)
 	CompareCommits(ctx context.Context, owner, repo, base, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error)
@@ -33,6 +34,10 @@ type wrapper struct {
 }
 
 func (w *wrapper) Repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
+	return w.client.Repositories.Get(ctx, owner, repo)
+}
+
+func (w *wrapper) GetRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
 	return w.client.Repositories.Get(ctx, owner, repo)
 }
 

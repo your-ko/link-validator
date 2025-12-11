@@ -348,8 +348,8 @@ func handleLabel(ctx context.Context, c Client, owner, repo, ref, _, _ string) e
 // Handles different wiki URL patterns:
 // - /wiki (wiki home page)
 // - /wiki/{page-name} (specific wiki page)
-func handleWiki(ctx context.Context, c *github.Client, owner, repo, _, _, _ string) error {
-	repository, _, err := c.Repositories.Get(ctx, owner, repo)
+func handleWiki(ctx context.Context, c Client, owner, repo, _, _, _ string) error {
+	repository, _, err := c.GetRepository(ctx, owner, repo)
 	if err != nil {
 		return err
 	}
