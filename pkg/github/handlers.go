@@ -216,14 +216,14 @@ func handleSecurityAdvisories(ctx context.Context, c Client, owner, repo, ref, _
 //   - /actions/workflows/<file>/badge.svg
 //
 // and I assume that if the workflow exists, then the badge exists too
-func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, path, fragment string) error {
+func handleWorkflow(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
 	switch {
 	case path == "":
 		// presumably if the repo exists then the actions list exists as well
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	case ref == "workflows":
 		path = strings.TrimSuffix(path, "/badge.svg")
-		_, _, err := c.Actions.GetWorkflowByFileName(ctx, owner, repo, path)
+		_, _, err := c.GetWorkflowByFileName(ctx, owner, repo, path)
 		return err
 	case ref == "runs":
 		parts := strings.Split(path, "/")
@@ -239,7 +239,7 @@ func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, pat
 			if err != nil {
 				return fmt.Errorf("invalid job id: '%s'", path)
 			}
-			_, _, err = c.Actions.GetWorkflowJobByID(ctx, owner, repo, jobId)
+			_, _, err = c.GetWorkflowJobByID(ctx, owner, repo, jobId)
 			return err
 		case strings.Contains(path, "attempts"):
 			attempts := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
@@ -247,10 +247,10 @@ func handleWorkflow(ctx context.Context, c *github.Client, owner, repo, ref, pat
 			if err != nil {
 				return fmt.Errorf("invalid attempt id: '%s'", path)
 			}
-			_, _, err = c.Actions.ListWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
+			_, _, err = c.ListWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
 			return err
 		default:
-			_, _, err = c.Actions.GetWorkflowRunByID(ctx, owner, repo, runId)
+			_, _, err = c.GetWorkflowRunByID(ctx, owner, repo, runId)
 			return err
 		}
 	}

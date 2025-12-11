@@ -17,6 +17,10 @@ type Client interface {
 	GetIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error)
 	GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error)
 	ListRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error)
+	GetWorkflowByFileName(ctx context.Context, owner, repo, workflowFileName string) (*github.Workflow, *github.Response, error)
+	GetWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error)
+	ListWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)
+	GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error)
 }
 
 type wrapper struct {
@@ -61,4 +65,20 @@ func (w *wrapper) GetMilestone(ctx context.Context, owner, repo string, number i
 
 func (w *wrapper) ListRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error) {
 	return w.client.SecurityAdvisories.ListRepositorySecurityAdvisories(ctx, owner, repo, opt)
+}
+
+func (w *wrapper) GetWorkflowByFileName(ctx context.Context, owner, repo, workflowFileName string) (*github.Workflow, *github.Response, error) {
+	return w.client.Actions.GetWorkflowByFileName(ctx, owner, repo, workflowFileName)
+}
+
+func (w *wrapper) GetWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error) {
+	return w.client.Actions.GetWorkflowJobByID(ctx, owner, repo, jobID)
+}
+
+func (w *wrapper) ListWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error) {
+	return w.client.Actions.ListWorkflowJobsAttempt(ctx, owner, repo, runID, attemptNumber, opts)
+}
+
+func (w *wrapper) GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error) {
+	w.client.Actions.GetWorkflowRunByID(ctx, owner, repo, runID)
 }
