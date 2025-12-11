@@ -22,7 +22,9 @@ type Client interface {
 	ListWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)
 	GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error)
 	GetUsers(ctx context.Context, user string) (*github.User, *github.Response, error)
-	Get(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error)
+	GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error)
+	GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
+	GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
 }
 
 type wrapper struct {
@@ -91,4 +93,12 @@ func (w *wrapper) GetUsers(ctx context.Context, user string) (*github.User, *git
 
 func (w *wrapper) GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error) {
 	return w.client.Issues.Get(ctx, owner, repo, number)
+}
+
+func (w *wrapper) GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error) {
+	return w.client.Repositories.GetLatestRelease(ctx, owner, repo)
+}
+
+func (w *wrapper) GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error) {
+	return w.client.Repositories.GetReleaseByTag(ctx, owner, repo, tag)
 }

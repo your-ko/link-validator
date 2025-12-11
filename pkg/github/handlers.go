@@ -291,24 +291,23 @@ func handleIssue(ctx context.Context, c Client, owner, repo, ref, path, fragment
 // /<owner>/<repo>/releases/tag/<tag>
 // /<owner>/<repo>/releases/latest
 // etc
-func handleReleases(ctx context.Context, c *github.Client, owner, repo, ref, path, _ string) error {
+func handleReleases(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
 	switch {
 	case path == "latest":
-		_, _, err := c.Repositories.GetLatestRelease(ctx, owner, repo)
+		_, _, err := c.GetLatestRelease(ctx, owner, repo)
 		return err
 	case path == "":
 		// presumably if the repo exists then the releases list exists as well
-		_, _, err := c.Repositories.Get(ctx, owner, repo)
-		return err
+		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	case ref == "tag":
-		_, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, path)
+		_, _, err := c.GetReleaseByTag(ctx, owner, repo, path)
 		return err
 	case ref == "download":
 		parts := strings.Split(path, "/")
 		if len(parts) != 2 {
 			return fmt.Errorf("incorrect download path '%s' in the release url", path)
 		}
-		r, _, err := c.Repositories.GetReleaseByTag(ctx, owner, repo, parts[0])
+		r, _, err := c.GetReleaseByTag(ctx, owner, repo, parts[0])
 		if err != nil {
 			return err
 		}
