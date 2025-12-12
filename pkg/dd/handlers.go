@@ -35,10 +35,10 @@ func (proc *LinkProcessor) handleConnection(ctx context.Context, resource ddReso
 
 func (proc *LinkProcessor) handleMonitors(ctx context.Context, resource ddResource) error {
 	monitorsApi := datadogV1.NewMonitorsApi(proc.client)
-	authCtx := proc.withAuth(ctx)
+	ctx = proc.withAuth(ctx)
 
 	if resource.ID == "" {
-		_, _, err := monitorsApi.ListMonitors(authCtx)
+		_, _, err := monitorsApi.ListMonitors(ctx)
 		return err
 	}
 	monitorId, err := strconv.ParseInt(resource.ID, 10, 64)
@@ -46,7 +46,7 @@ func (proc *LinkProcessor) handleMonitors(ctx context.Context, resource ddResour
 		return fmt.Errorf("invalid monitor id: '%s'", resource.ID)
 	}
 
-	_, _, err = monitorsApi.GetMonitor(authCtx, monitorId)
+	_, _, err = monitorsApi.GetMonitor(ctx, monitorId)
 	if err != nil {
 		return err
 	}
@@ -55,13 +55,13 @@ func (proc *LinkProcessor) handleMonitors(ctx context.Context, resource ddResour
 
 func (proc *LinkProcessor) handleDashboards(ctx context.Context, resource ddResource) error {
 	dashboardApi := datadogV1.NewDashboardsApi(proc.client)
-	authCtx := proc.withAuth(ctx)
+	ctx = proc.withAuth(ctx)
 
 	if resource.ID == "" {
-		_, _, err := dashboardApi.ListDashboards(authCtx)
+		_, _, err := dashboardApi.ListDashboards(ctx)
 		return err
 	}
-	_, _, err := dashboardApi.GetDashboard(authCtx, resource.ID)
+	_, _, err := dashboardApi.GetDashboard(ctx, resource.ID)
 	if err != nil {
 		return err
 	}

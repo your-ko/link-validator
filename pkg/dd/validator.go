@@ -7,7 +7,6 @@ import (
 	"link-validator/pkg/regex"
 	"log/slog"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
@@ -33,28 +32,7 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 	if cfg.DDApiKey == "" || cfg.DDAppKey == "" {
 		return nil, fmt.Errorf("can't initialise DataDog client, DD_API_KEY/DD_APP_KEY are not set")
 	}
-	ctx := context.WithValue(
-		context.Background(),
-		datadog.ContextAPIKeys,
-		map[string]datadog.APIKey{
-			"apiKeyAuth": {
-				Key: os.Getenv("DD_CLIENT_API_KEY"),
-			},
-			"appKeyAuth": {
-				Key: os.Getenv("DD_CLIENT_APP_KEY"),
-			},
-		},
-	)
 	configuration := datadog.NewConfiguration()
-	configuration.DefaultContext = context.WithValue(
-		context.Background(),
-		datadog.ContextAPIKeys,
-		map[string]datadog.APIKey{
-			"apiKeyAuth": {Key: cfg.DDApiKey},
-			"appKeyAuth": {Key: cfg.DDAppKey},
-		},
-	)
-
 	apiClient := datadog.NewAPIClient(configuration)
 
 	proc := &LinkProcessor{
@@ -64,6 +42,15 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 		routes: make(map[string]ddHandler),
 	}
 	return proc.registerDefaultHandlers(), nil
+}
+
+// withAuth creates a new context with DataDog API authentication from the request context
+func (proc *LinkProcessor) withAuth(ctx context.Context) context.Context {
+	authCtx := datadog.NewDefaultContext(ctx)
+	return context.WithValue(authCtx, datadog.ContextAPIKeys, map[string]datadog.APIKey{
+		"apiKeyAuth": {Key: proc.apiKey},
+		"appKeyAuth": {Key: proc.appKey},
+	})
 }
 
 func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
