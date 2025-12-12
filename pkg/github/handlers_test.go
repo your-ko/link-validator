@@ -1651,8 +1651,8 @@ func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
 		c := github.NewClient(ts.Client())
 		c.BaseURL = base
 		c.UploadURL = base
-		p.client = c
-		p.corpClient = c
+		p.client = &wrapper{c}
+		p.corpClient = &wrapper{c}
 	}
 	return p
 }
