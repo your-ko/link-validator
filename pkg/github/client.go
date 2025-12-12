@@ -6,114 +6,114 @@ import (
 	"github.com/google/go-github/v77/github"
 )
 
-type Client interface {
-	Repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
-	GetRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
-	GetContents(ctx context.Context, owner, repo, ref, path string) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error)
-	GetCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error)
-	CompareCommits(ctx context.Context, owner, repo, base, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error)
-	GetPR(ctx context.Context, owner, repo string, number int) (*github.PullRequest, *github.Response, error)
-	ListCommits(ctx context.Context, owner, repo string, number int, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error)
-	GetPRComment(ctx context.Context, owner, repo string, commentID int64) (*github.PullRequestComment, *github.Response, error)
-	GetIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error)
-	GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error)
-	ListRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error)
-	GetWorkflowByFileName(ctx context.Context, owner, repo, workflowFileName string) (*github.Workflow, *github.Response, error)
-	GetWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error)
-	ListWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)
-	GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error)
-	GetUsers(ctx context.Context, user string) (*github.User, *github.Response, error)
-	GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error)
-	GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
-	GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
-	ListLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error)
-	GetOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error)
+type client interface {
+	repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+	getRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
+	getContents(ctx context.Context, owner, repo, ref, path string) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error)
+	getCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error)
+	compareCommits(ctx context.Context, owner, repo, base, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error)
+	getPR(ctx context.Context, owner, repo string, number int) (*github.PullRequest, *github.Response, error)
+	listCommits(ctx context.Context, owner, repo string, number int, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error)
+	getPRComment(ctx context.Context, owner, repo string, commentID int64) (*github.PullRequestComment, *github.Response, error)
+	getIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error)
+	getMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error)
+	listRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error)
+	getWorkflowByFileName(ctx context.Context, owner, repo, workflowFileName string) (*github.Workflow, *github.Response, error)
+	getWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error)
+	listWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)
+	getWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error)
+	getUsers(ctx context.Context, user string) (*github.User, *github.Response, error)
+	getIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error)
+	getLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
+	getReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
+	listLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error)
+	getOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error)
 }
 
 type wrapper struct {
 	client *github.Client
 }
 
-func (w *wrapper) Repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
+func (w *wrapper) repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
 	return w.client.Repositories.Get(ctx, owner, repo)
 }
 
-func (w *wrapper) GetRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
+func (w *wrapper) getRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
 	return w.client.Repositories.Get(ctx, owner, repo)
 }
 
-func (w *wrapper) GetContents(ctx context.Context, owner, repo, ref, path string) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
+func (w *wrapper) getContents(ctx context.Context, owner, repo, ref, path string) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error) {
 	return w.client.Repositories.GetContents(ctx, owner, repo, path, &github.RepositoryContentGetOptions{Ref: ref})
 }
 
-func (w *wrapper) GetCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error) {
+func (w *wrapper) getCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error) {
 	return w.client.Repositories.GetCommit(ctx, owner, repo, sha, opts)
 }
 
-func (w *wrapper) CompareCommits(ctx context.Context, owner, repo, base, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error) {
+func (w *wrapper) compareCommits(ctx context.Context, owner, repo, base, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error) {
 	return w.client.Repositories.CompareCommits(ctx, owner, repo, base, head, opts)
 }
 
-func (w *wrapper) ListCommits(ctx context.Context, owner, repo string, number int, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error) {
+func (w *wrapper) listCommits(ctx context.Context, owner, repo string, number int, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error) {
 	return w.client.PullRequests.ListCommits(ctx, owner, repo, number, opts)
 }
 
-func (w *wrapper) GetPR(ctx context.Context, owner, repo string, number int) (*github.PullRequest, *github.Response, error) {
+func (w *wrapper) getPR(ctx context.Context, owner, repo string, number int) (*github.PullRequest, *github.Response, error) {
 	return w.client.PullRequests.Get(ctx, owner, repo, number)
 }
 
-func (w *wrapper) GetPRComment(ctx context.Context, owner, repo string, commentID int64) (*github.PullRequestComment, *github.Response, error) {
+func (w *wrapper) getPRComment(ctx context.Context, owner, repo string, commentID int64) (*github.PullRequestComment, *github.Response, error) {
 	return w.client.PullRequests.GetComment(ctx, owner, repo, commentID)
 }
 
-func (w *wrapper) GetIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error) {
+func (w *wrapper) getIssueComment(ctx context.Context, owner, repo string, commentID int64) (*github.IssueComment, *github.Response, error) {
 	return w.client.Issues.GetComment(ctx, owner, repo, commentID)
 }
 
-func (w *wrapper) GetMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error) {
+func (w *wrapper) getMilestone(ctx context.Context, owner, repo string, number int) (*github.Milestone, *github.Response, error) {
 	return w.client.Issues.GetMilestone(ctx, owner, repo, number)
 }
 
-func (w *wrapper) ListRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error) {
+func (w *wrapper) listRepositorySecurityAdvisories(ctx context.Context, owner, repo string, opt *github.ListRepositorySecurityAdvisoriesOptions) ([]*github.SecurityAdvisory, *github.Response, error) {
 	return w.client.SecurityAdvisories.ListRepositorySecurityAdvisories(ctx, owner, repo, opt)
 }
 
-func (w *wrapper) GetWorkflowByFileName(ctx context.Context, owner, repo, workflowFileName string) (*github.Workflow, *github.Response, error) {
+func (w *wrapper) getWorkflowByFileName(ctx context.Context, owner, repo, workflowFileName string) (*github.Workflow, *github.Response, error) {
 	return w.client.Actions.GetWorkflowByFileName(ctx, owner, repo, workflowFileName)
 }
 
-func (w *wrapper) GetWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error) {
+func (w *wrapper) getWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error) {
 	return w.client.Actions.GetWorkflowJobByID(ctx, owner, repo, jobID)
 }
 
-func (w *wrapper) ListWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error) {
+func (w *wrapper) listWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error) {
 	return w.client.Actions.ListWorkflowJobsAttempt(ctx, owner, repo, runID, attemptNumber, opts)
 }
 
-func (w *wrapper) GetWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error) {
+func (w *wrapper) getWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error) {
 	return w.client.Actions.GetWorkflowRunByID(ctx, owner, repo, runID)
 }
 
-func (w *wrapper) GetUsers(ctx context.Context, user string) (*github.User, *github.Response, error) {
+func (w *wrapper) getUsers(ctx context.Context, user string) (*github.User, *github.Response, error) {
 	return w.client.Users.Get(ctx, user)
 }
 
-func (w *wrapper) GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error) {
+func (w *wrapper) getIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error) {
 	return w.client.Issues.Get(ctx, owner, repo, number)
 }
 
-func (w *wrapper) GetLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error) {
+func (w *wrapper) getLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error) {
 	return w.client.Repositories.GetLatestRelease(ctx, owner, repo)
 }
 
-func (w *wrapper) GetReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error) {
+func (w *wrapper) getReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error) {
 	return w.client.Repositories.GetReleaseByTag(ctx, owner, repo, tag)
 }
 
-func (w *wrapper) ListLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error) {
+func (w *wrapper) listLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error) {
 	return w.client.Issues.ListLabels(ctx, owner, repo, opts)
 }
 
-func (w *wrapper) GetOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error) {
+func (w *wrapper) getOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error) {
 	return w.client.Organizations.Get(ctx, org)
 }

@@ -17,7 +17,7 @@ import (
 
 type ghHandler func(
 	ctx context.Context,
-	c Client,
+	c client,
 	owner, repo, ref, path, fragment string,
 ) error
 
@@ -39,7 +39,7 @@ type handlerEntry struct {
 
 // handleNope does nothing (quite exciting, right?).
 // It always returns true. Useful for generic GitHub urls
-func handleNothing(_ context.Context, _ Client, _, _, _, _, _ string) error {
+func handleNothing(_ context.Context, _ client, _, _, _, _, _ string) error {
 	return nil
 }
 
@@ -48,22 +48,22 @@ func handleNothing(_ context.Context, _ Client, _, _, _, _, _ string) error {
 // GitHub API docs: https://docs.github.com/rest/repos/repos#get-a-repository
 //
 //meta:operation GET /repos/{owner}/{repo}
-func handleRepoExist(ctx context.Context, c Client, owner, repo, _, _, _ string) error {
-	_, _, err := c.Repositories(ctx, owner, repo)
+func handleRepoExist(ctx context.Context, c client, owner, repo, _, _, _ string) error {
+	_, _, err := c.repositories(ctx, owner, repo)
 	return err
 }
 
 // handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
 //
 //meta:operation GET /repos/{owner}/{repo}/contents/{path}
-func handleContents(ctx context.Context, c Client, owner, repo, ref, path, _ string) error {
+func handleContents(ctx context.Context, c client, owner, repo, ref, path, _ string) error {
 	if strings.HasPrefix(path, "heads/") {
 		// extract the branch name
 		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
 		ref = parts[0]
 		path = parts[1]
 	}
-	_, _, _, err := c.GetContents(ctx, owner, repo, ref, path)
+	_, _, _, err := c.getContents(ctx, owner, repo, ref, path)
 	return err
 }
 
@@ -72,8 +72,8 @@ func handleContents(ctx context.Context, c Client, owner, repo, ref, path, _ str
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/commits/{ref}
-func handleCommit(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
-	_, _, err := c.GetCommit(ctx, owner, repo, ref, &github.ListOptions{})
+func handleCommit(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
+	_, _, err := c.getCommit(ctx, owner, repo, ref, &github.ListOptions{})
 	return err
 }
 
@@ -82,7 +82,7 @@ func handleCommit(ctx context.Context, c Client, owner, repo, ref, _, _ string) 
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
-func handleCompareCommits(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
+func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	if ref == "" {
 		//	https://github.com/your-ko/link-validator/compare is a valid link
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
@@ -95,7 +95,7 @@ func handleCompareCommits(ctx context.Context, c Client, owner, repo, ref, path,
 		right = parts[1]
 	case 1:
 		right = parts[0]
-		repository, _, err := c.Repositories(ctx, owner, repo)
+		repository, _, err := c.repositories(ctx, owner, repo)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func handleCompareCommits(ctx context.Context, c Client, owner, repo, ref, path,
 		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.CompareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
+	_, _, err := c.compareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
 	return err
 }
 
@@ -113,12 +113,12 @@ func handleCompareCommits(ctx context.Context, c Client, owner, repo, ref, path,
 // GitHub API docs: https://docs.github.com/rest/pulls/pulls#get-a-pull-request
 //
 //meta:operation GET /repos/{owner}/{repo}/pulls/{pull_number}
-func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
+func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid PR number %q", ref)
 	}
-	_, _, err = c.GetPR(ctx, owner, repo, prNumber)
+	_, _, err = c.getPR(ctx, owner, repo, prNumber)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment 
 		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa
 		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dR31
 		SHA := strings.Split(path, "/")[1]
-		commits, _, err := c.ListCommits(ctx, owner, repo, prNumber, nil)
+		commits, _, err := c.listCommits(ctx, owner, repo, prNumber, nil)
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment 
 		if err != nil {
 			return fmt.Errorf("invalid comment id: '%s'", fragment)
 		}
-		_, _, err = c.GetIssueComment(ctx, owner, repo, commentId)
+		_, _, err = c.getIssueComment(ctx, owner, repo, commentId)
 		return err
 	} else if strings.HasPrefix(fragment, "discussion_r") {
 		// Handle review comments: #discussion_r<id>
@@ -159,7 +159,7 @@ func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment 
 		if err != nil {
 			return fmt.Errorf("invalid comment id: '%s'", fragment)
 		}
-		_, _, err = c.GetPRComment(ctx, owner, repo, commentId)
+		_, _, err = c.getPRComment(ctx, owner, repo, commentId)
 		return err
 	} else if strings.HasPrefix(fragment, "diff-") {
 		// https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dL31
@@ -176,12 +176,12 @@ func handlePull(ctx context.Context, c Client, owner, repo, ref, path, fragment 
 // GitHub API docs: https://docs.github.com/rest/issues/milestones#get-a-milestone
 //
 //meta:operation GET /repos/{owner}/{repo}/milestones/{milestone_number}
-func handleMilestone(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
+func handleMilestone(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
 	n, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid milestone number %q", ref)
 	}
-	_, _, err = c.GetMilestone(ctx, owner, repo, n)
+	_, _, err = c.getMilestone(ctx, owner, repo, n)
 	return err
 }
 
@@ -191,13 +191,13 @@ func handleMilestone(ctx context.Context, c Client, owner, repo, ref, _, _ strin
 // GitHub API docs: https://docs.github.com/rest/security-advisories/repository-advisories
 //
 //meta:operation GET /repos/{owner}/{repo}/security-advisories
-func handleSecurityAdvisories(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
+func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
 	if ref == "" {
 		return fmt.Errorf("security advisory ID is required")
 	}
 
 	// Since there's no direct GetRepositoryAdvisory method, I list all advisories
-	advisories, _, err := c.ListRepositorySecurityAdvisories(ctx, owner, repo, nil)
+	advisories, _, err := c.listRepositorySecurityAdvisories(ctx, owner, repo, nil)
 	if err != nil {
 		return err
 	}
@@ -216,14 +216,14 @@ func handleSecurityAdvisories(ctx context.Context, c Client, owner, repo, ref, _
 //   - /actions/workflows/<file>/badge.svg
 //
 // and I assume that if the workflow exists, then the badge exists too
-func handleWorkflow(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
+func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	switch {
 	case path == "":
 		// presumably if the repo exists then the actions list exists as well
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	case ref == "workflows":
 		path = strings.TrimSuffix(path, "/badge.svg")
-		_, _, err := c.GetWorkflowByFileName(ctx, owner, repo, path)
+		_, _, err := c.getWorkflowByFileName(ctx, owner, repo, path)
 		return err
 	case ref == "runs":
 		parts := strings.Split(path, "/")
@@ -239,7 +239,7 @@ func handleWorkflow(ctx context.Context, c Client, owner, repo, ref, path, fragm
 			if err != nil {
 				return fmt.Errorf("invalid job id: '%s'", path)
 			}
-			_, _, err = c.GetWorkflowJobByID(ctx, owner, repo, jobId)
+			_, _, err = c.getWorkflowJobByID(ctx, owner, repo, jobId)
 			return err
 		case strings.Contains(path, "attempts"):
 			attempts := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
@@ -247,10 +247,10 @@ func handleWorkflow(ctx context.Context, c Client, owner, repo, ref, path, fragm
 			if err != nil {
 				return fmt.Errorf("invalid attempt id: '%s'", path)
 			}
-			_, _, err = c.ListWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
+			_, _, err = c.listWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
 			return err
 		default:
-			_, _, err = c.GetWorkflowRunByID(ctx, owner, repo, runId)
+			_, _, err = c.getWorkflowRunByID(ctx, owner, repo, runId)
 			return err
 		}
 	}
@@ -264,8 +264,8 @@ func handleWorkflow(ctx context.Context, c Client, owner, repo, ref, path, fragm
 //
 //meta:operation GET /user
 //meta:operation GET /users/{username}
-func handleUser(ctx context.Context, c Client, owner, _, _, _, _ string) error {
-	_, _, err := c.GetUsers(ctx, owner)
+func handleUser(ctx context.Context, c client, owner, _, _, _, _ string) error {
+	_, _, err := c.getUsers(ctx, owner)
 	return err
 }
 
@@ -274,7 +274,7 @@ func handleUser(ctx context.Context, c Client, owner, _, _, _, _ string) error {
 // GitHub API docs: https://docs.github.com/rest/issues/issues#get-an-issue
 //
 //meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
-func handleIssue(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
+func handleIssue(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	if ref == "" {
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	}
@@ -282,7 +282,7 @@ func handleIssue(ctx context.Context, c Client, owner, repo, ref, path, fragment
 	if err != nil {
 		return fmt.Errorf("invalid issue number %q", ref)
 	}
-	_, _, err = c.GetIssue(ctx, owner, repo, n)
+	_, _, err = c.getIssue(ctx, owner, repo, n)
 	return err
 }
 
@@ -291,23 +291,23 @@ func handleIssue(ctx context.Context, c Client, owner, repo, ref, path, fragment
 // /<owner>/<repo>/releases/tag/<tag>
 // /<owner>/<repo>/releases/latest
 // etc
-func handleReleases(ctx context.Context, c Client, owner, repo, ref, path, fragment string) error {
+func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	switch {
 	case path == "latest":
-		_, _, err := c.GetLatestRelease(ctx, owner, repo)
+		_, _, err := c.getLatestRelease(ctx, owner, repo)
 		return err
 	case path == "":
 		// presumably if the repo exists then the releases list exists as well
 		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	case ref == "tag":
-		_, _, err := c.GetReleaseByTag(ctx, owner, repo, path)
+		_, _, err := c.getReleaseByTag(ctx, owner, repo, path)
 		return err
 	case ref == "download":
 		parts := strings.Split(path, "/")
 		if len(parts) != 2 {
 			return fmt.Errorf("incorrect download path '%s' in the release url", path)
 		}
-		r, _, err := c.GetReleaseByTag(ctx, owner, repo, parts[0])
+		r, _, err := c.getReleaseByTag(ctx, owner, repo, parts[0])
 		if err != nil {
 			return err
 		}
@@ -327,8 +327,8 @@ func handleReleases(ctx context.Context, c Client, owner, repo, ref, path, fragm
 // GitHub API docs: https://docs.github.com/rest/issues/labels#list-labels-for-a-repository
 //
 //meta:operation GET /repos/{owner}/{repo}/labels
-func handleLabel(ctx context.Context, c Client, owner, repo, ref, _, _ string) error {
-	labels, _, err := c.ListLabels(ctx, owner, repo, &github.ListOptions{})
+func handleLabel(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
+	labels, _, err := c.listLabels(ctx, owner, repo, &github.ListOptions{})
 	if err != nil {
 		return err
 	}
@@ -348,8 +348,8 @@ func handleLabel(ctx context.Context, c Client, owner, repo, ref, _, _ string) e
 // Handles different wiki URL patterns:
 // - /wiki (wiki home page)
 // - /wiki/{page-name} (specific wiki page)
-func handleWiki(ctx context.Context, c Client, owner, repo, _, _, _ string) error {
-	repository, _, err := c.GetRepository(ctx, owner, repo)
+func handleWiki(ctx context.Context, c client, owner, repo, _, _, _ string) error {
+	repository, _, err := c.getRepository(ctx, owner, repo)
 	if err != nil {
 		return err
 	}
@@ -372,7 +372,7 @@ func handleWiki(ctx context.Context, c Client, owner, repo, _, _, _ string) erro
 //
 //meta:operation GET /user/packages/{package_type}/{package_name}
 //meta:operation GET /users/{username}/packages/{package_type}/{package_name}
-func handlePackages(ctx context.Context, c Client, owner, repo, packageType, packageName, fragment string) error {
+func handlePackages(ctx context.Context, c client, owner, repo, packageType, packageName, fragment string) error {
 	return handleRepoExist(ctx, c, owner, repo, packageType, packageName, fragment)
 	// Handle different package URL patterns:
 	// - /packages/{package_type}/{package_name} (specific package)
@@ -405,11 +405,11 @@ func handlePackages(ctx context.Context, c Client, owner, repo, packageType, pac
 // GitHub API docs: https://docs.github.com/rest/orgs/orgs#get-an-organization
 //
 //meta:operation GET /orgs/{org}
-func handleOrgExist(ctx context.Context, c Client, owner, _, _, _, _ string) error {
+func handleOrgExist(ctx context.Context, c client, owner, _, _, _, _ string) error {
 	if owner == "" {
 		return nil
 	}
-	_, _, err := c.GetOrganization(ctx, owner)
+	_, _, err := c.getOrganization(ctx, owner)
 	return err
 }
 
