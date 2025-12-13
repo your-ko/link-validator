@@ -104,7 +104,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.compareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
+	_, _, err := c.compareCommits(ctx, owner, repo, left, right, nil)
 	return err
 }
 

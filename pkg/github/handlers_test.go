@@ -377,131 +377,123 @@ func Test_handleCompareCommits(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
 			name: "compare branches main...dev",
 			args: args{"your-ko", "link-validator", "main...dev", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"status": "ahead", "ahead_by": 5, "behind_by": 0, "commits": []}`,
+			setupMock: func(m *mockclient) {
+				compare := &github.CommitsComparison{}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "dev", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
 		},
-		// will be fixed after https://github.com/your-ko/link-validator/issues/286, I'm too lazy to invent a wheel.
-		//{
-		//	name: "compare branches dev (no default branch set)",
-		//	args: args{"your-ko", "link-validator", "dev", "", ""},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{"status": "ahead", "ahead_by": 5, "behind_by": 0, "commits": []}`,
-		//	},
-		//},
+		{
+			name: "compare branches dev (no default branch set)",
+			args: args{"your-ko", "link-validator", "dev", "", ""},
+			setupMock: func(m *mockclient) {
+				compare := &github.CommitsComparison{}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{
+					ID:            github.Ptr(int64(123)),
+					Name:          github.Ptr("link-validator"),
+					DefaultBranch: github.Ptr("main"),
+				}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "dev", (*github.ListOptions)(nil)).Return(compare, resp, nil)
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+		},
 		{
 			name: "compare branch to commit hash",
 			args: args{"your-ko", "link-validator", "main...a96366f66ffacd461de10a1dd561ab5a598e9167", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"status": "ahead", "ahead_by": 3, "behind_by": 1, "commits": []}`,
+			setupMock: func(m *mockclient) {
+				compare := &github.CommitsComparison{}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "a96366f66ffacd461de10a1dd561ab5a598e9167", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
 		},
 		{
 			name: "compare commit hashes",
 			args: args{"your-ko", "link-validator", "abc123...def456", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"status": "identical", "ahead_by": 0, "behind_by": 0, "commits": []}`,
+			setupMock: func(m *mockclient) {
+				compare := &github.CommitsComparison{}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "abc123", "def456", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
 		},
 		{
-			name: "compare with tags",
-			args: args{"your-ko", "link-validator", "v1.0.0...v1.1.0", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"status": "ahead", "ahead_by": 10, "behind_by": 0, "commits": []}`,
+			name: "compare ref - two dot",
+			args: args{"your-ko", "link-validator", "1.15.0..main", "", ""},
+			setupMock: func(m *mockclient) {
+				compare := &github.CommitsComparison{}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "1.15.0", "main", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
-		},
-		{
-			name: "compare feature branches",
-			args: args{"your-ko", "link-validator", "feature-a...feature-b", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"status": "diverged", "ahead_by": 2, "behind_by": 3, "commits": []}`,
-			},
-		},
-		{
-			name: "invalid compare ref - two dot",
-			args: args{"your-ko", "link-validator", "main..dev", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr: false,
 		},
 		{
 			name: "invalid compare ref - empty ref",
 			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{
+					ID:   github.Ptr(int64(123)),
+					Name: github.Ptr("link-validator"),
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
-			wantErr: false,
 		},
 		{
 			name: "compare ref - only base with empty head",
 			args: args{"your-ko", "link-validator", "main...", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"status": "identical", "ahead_by": 0, "behind_by": 0, "commits": []}`,
+			setupMock: func(m *mockclient) {
+				compare := &github.CommitsComparison{}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
-			wantErr: false, // This passes validation but GitHub API might handle it
 		},
-
-		// GitHub API error cases
 		{
 			name: "repository not found - 404",
-			args: args{"your-ko", "nonexistent-repo", "main...dev", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			args: args{"your-ko", "link-validator", "main...dev", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "dev", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{Message: "404 Not found"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleCompareCommits(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
-			}
-			if !tt.wantErr {
+			err := handleCompareCommits(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
+			mockClient.AssertExpectations(t)
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
