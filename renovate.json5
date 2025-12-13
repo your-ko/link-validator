@@ -9,6 +9,7 @@
       customType: 'regex',
       managerFilePatterns: [
         '**/.github/workflows/*.yaml',
+        '**/Makefile',
       ],
       matchStrings: [
         '(?:^|\\n)\\s*# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:.*VERSION.*|version):\\s*(?<currentValue>\\S+)',

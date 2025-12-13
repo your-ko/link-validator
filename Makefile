@@ -1,3 +1,6 @@
+# renovate: datasource=github-releases depName=vektra/mockery versioning=semver
+MOCKERY_VERSION = v3.6.1
+
 download:
 	go mod download
 
@@ -19,3 +22,6 @@ build: download
 
 docker-build:
 	docker build . -t link-validator
+
+generate-mocks:
+	docker run --rm -v "$$PWD:/src" -w /src/pkg/github vektra/mockery:${MOCKERY_VERSION}
