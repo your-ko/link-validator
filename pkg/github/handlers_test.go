@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v77/github"
+	"github.com/stretchr/testify/mock"
 )
 
 func Test_handleNothing(t *testing.T) {
@@ -48,15 +49,10 @@ func Test_handleRepoExist(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
 		name             string
-		fields           fields
 		args             args
+		setupMock        func(*mockclient)
 		wantErr          bool
 		wantIs           error
 		wantErrorMessage string
@@ -64,45 +60,72 @@ func Test_handleRepoExist(t *testing.T) {
 		{
 			name: "public repository exists",
 			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 123, "name": "link-validator", "full_name": "your-ko/link-validator", "private": false, "owner": {"login": "your-ko"}}`,
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{
+					ID:       github.Ptr(int64(123)),
+					Name:     github.Ptr("link-validator"),
+					FullName: github.Ptr("your-ko/link-validator"),
+					Private:  github.Ptr(false),
+					Owner: &github.User{
+						Login: github.Ptr("your-ko"),
+					},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().repositories(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
 			name: "fork repository exists",
 			args: args{"contributor", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 999, "name": "link-validator", "full_name": "contributor/link-validator", "fork": true, "private": false, "owner": {"login": "contributor"}}`,
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{
+					ID:       github.Ptr(int64(123)),
+					Name:     github.Ptr("link-validator"),
+					FullName: github.Ptr("contributor/link-validator"),
+					Fork:     github.Ptr(true),
+					Private:  github.Ptr(false),
+					Owner: &github.User{
+						Login: github.Ptr("contributor"),
+					},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().repositories(mock.Anything, "contributor", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
 			name: "repository not found - 404",
 			args: args{"your-ko", "nonexistent-repo", "", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				m.EXPECT().repositories(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
 			wantErr: true,
 		},
 		{
 			name: "user does not exist - 404",
 			args: args{"nonexistent-user", "some-repo", "", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				m.EXPECT().repositories(mock.Anything, "nonexistent-user", "some-repo").Return(nil, resp, err)
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleRepoExist(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			err := handleRepoExist(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			mockClient.AssertExpectations(t)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
@@ -110,6 +133,8 @@ func Test_handleRepoExist(t *testing.T) {
 				return
 			}
 
+			// TODO: Not sure if I really need to validate error below.
+			// TODO: check the other test-cases
 			if tt.wantIs != nil {
 				if !errors.Is(err, tt.wantIs) {
 					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
