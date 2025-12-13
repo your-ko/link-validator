@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+var gotGitHubErr *github.ErrorResponse
+
 func Test_handleNothing(t *testing.T) {
 	type args struct {
 		owner, repo, ref, path, fragment string
@@ -151,18 +153,12 @@ func Test_handleRepoExist(t *testing.T) {
 				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			// Validate error type and message
 			if tt.wantErr.Error() != err.Error() {
 				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
 
-			// For GitHub errors, validate they're the same type
-			var wantGitHubErr *github.ErrorResponse
-			var gotGitHubErr *github.ErrorResponse
-			if errors.As(tt.wantErr, &wantGitHubErr) {
-				if !errors.As(err, &gotGitHubErr) {
-					t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
-				}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
@@ -273,18 +269,12 @@ func Test_handleContents(t *testing.T) {
 				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			// Validate error type and message
 			if tt.wantErr.Error() != err.Error() {
 				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
 
-			// For GitHub errors, validate they're the same type
-			var wantGitHubErr *github.ErrorResponse
-			var gotGitHubErr *github.ErrorResponse
-			if errors.As(tt.wantErr, &wantGitHubErr) {
-				if !errors.As(err, &gotGitHubErr) {
-					t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
-				}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
@@ -357,8 +347,11 @@ func Test_handleCommit(t *testing.T) {
 			err := handleCommit(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 
 			mockClient.AssertExpectations(t)
-			if tt.wantErr == nil && err != nil {
-				t.Fatalf("expected no error, got %s", err)
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
 			}
 
 			if err == nil {
@@ -367,6 +360,10 @@ func Test_handleCommit(t *testing.T) {
 
 			if tt.wantErr.Error() != err.Error() {
 				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
