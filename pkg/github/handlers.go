@@ -49,7 +49,7 @@ func handleNothing(_ context.Context, _ client, _, _, _, _, _ string) error {
 //
 //meta:operation GET /repos/{owner}/{repo}
 func handleRepoExist(ctx context.Context, c client, owner, repo, _, _, _ string) error {
-	_, _, err := c.repositories(ctx, owner, repo)
+	_, _, err := c.getRepository(ctx, owner, repo)
 	return err
 }
 
@@ -95,7 +95,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 		right = parts[1]
 	case 1:
 		right = parts[0]
-		repository, _, err := c.repositories(ctx, owner, repo)
+		repository, _, err := c.getRepository(ctx, owner, repo)
 		if err != nil {
 			return err
 		}

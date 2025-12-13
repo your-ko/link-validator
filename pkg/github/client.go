@@ -7,7 +7,6 @@ import (
 )
 
 type client interface {
-	repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
 	getRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error)
 	getContents(ctx context.Context, owner, repo, ref, path string) (*github.RepositoryContent, []*github.RepositoryContent, *github.Response, error)
 	getCommit(ctx context.Context, owner, repo, sha string, opts *github.ListOptions) (*github.RepositoryCommit, *github.Response, error)
@@ -32,10 +31,6 @@ type client interface {
 
 type wrapper struct {
 	client *github.Client
-}
-
-func (w *wrapper) repositories(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {
-	return w.client.Repositories.Get(ctx, owner, repo)
 }
 
 func (w *wrapper) getRepository(ctx context.Context, owner, repo string) (*github.Repository, *github.Response, error) {

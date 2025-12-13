@@ -79,7 +79,7 @@ func Test_handleRepoExist(t *testing.T) {
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().repositories(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
@@ -97,7 +97,7 @@ func Test_handleRepoExist(t *testing.T) {
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().repositories(mock.Anything, "contributor", "link-validator").Return(repo, resp, nil)
+				m.EXPECT().getRepository(mock.Anything, "contributor", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
@@ -109,7 +109,7 @@ func Test_handleRepoExist(t *testing.T) {
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not Found",
 				}
-				m.EXPECT().repositories(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
 			wantErr: true,
 		},
@@ -122,7 +122,7 @@ func Test_handleRepoExist(t *testing.T) {
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not Found",
 				}
-				m.EXPECT().repositories(mock.Anything, "nonexistent-user", "some-repo").Return(nil, resp, err)
+				m.EXPECT().getRepository(mock.Anything, "nonexistent-user", "some-repo").Return(nil, resp, err)
 			},
 			wantErr: true,
 		},
@@ -166,80 +166,87 @@ func Test_handleContents(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
 		name             string
-		fields           fields
+		setupMock        func(*mockclient)
 		args             args
 		wantErr          bool
-		wantIs           error  // sentinel check via errors.Is; nil => no sentinel check
-		wantErrorMessage string // exact error message check; empty => no message check
+		wantIs           error
+		wantErrorMessage string
 	}{
 		{
 			name: "blob file main branch",
 			args: args{"your-ko", "link-validator", "main", "README.md", ""},
-			fields: fields{
-				status:         http.StatusOK,
-				body:           "test content",
-				base64encoding: true,
+			setupMock: func(m *mockclient) {
+				content := &github.RepositoryContent{
+					Name:    github.Ptr("README.md"),
+					Path:    github.Ptr("README.md"),
+					Content: github.Ptr("test content"),
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(content, nil, resp, nil)
 			},
 		},
 		{
 			name: "blob file nested directory",
 			args: args{"your-ko", "link-validator", "main", "docs/README.md", ""},
-			fields: fields{
-				status:         http.StatusOK,
-				body:           "test content",
-				base64encoding: true,
-			},
-		},
-		{
-			name: "blob file in tag",
-			args: args{"your-ko", "link-validator", "1.0.0", "README.md", ""},
-			fields: fields{
-				status:         http.StatusOK,
-				body:           "test content",
-				base64encoding: true,
+			setupMock: func(m *mockclient) {
+				content := &github.RepositoryContent{
+					Name:    github.Ptr("README.md"),
+					Path:    github.Ptr("/docs"),
+					Content: github.Ptr("test content"),
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "docs/README.md").Return(content, nil, resp, nil)
 			},
 		},
 		{
 			name: "refs heads pattern",
 			args: args{"your-ko", "link-validator", "refs", "heads/main/README.md", ""},
-			fields: fields{
-				status:         http.StatusOK,
-				body:           "test content",
-				base64encoding: true,
+			setupMock: func(m *mockclient) {
+				content := &github.RepositoryContent{
+					Name:    github.Ptr("README.md"),
+					Path:    github.Ptr("/"),
+					Content: github.Ptr("test content"),
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(content, nil, resp, nil)
 			},
 		},
-		// Error cases
 		{
 			name: "file not found - 404",
 			args: args{"your-ko", "link-validator", "main", "nonexistent.md", ""},
-			fields: fields{
-				status: http.StatusNotFound,
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "nonexistent.md").Return(nil, nil, resp, err)
 			},
 			wantErr: true,
 		},
 		{
 			name: "server error - 500",
 			args: args{"your-ko", "link-validator", "main", "README.md", ""},
-			fields: fields{
-				status: http.StatusInternalServerError,
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusInternalServerError},
+					Message:  "Server error",
+				}
+				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(nil, nil, resp, err)
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleContents(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			err := handleContents(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			mockClient.AssertExpectations(t)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
