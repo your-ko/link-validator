@@ -26,15 +26,23 @@ func Test_handleNothing(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "test nothing",
+			name:    "does nothing and makes no client calls",
+			args:    args{owner: "test-owner", repo: "test-repo", ref: "test-ref", path: "test-path", fragment: "test-fragment"},
+			wantErr: false,
+		},
+		{
+			name:    "does nothing with empty args",
 			args:    args{},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proc := mockValidator(getTestServer(0, false, ""), "")
-			if err := handleNothing(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment); (err != nil) != tt.wantErr {
+			mockClient := newMockclient(t)
+			err := handleNothing(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			mockClient.AssertExpectations(t)
+
+			if (err != nil) != tt.wantErr {
 				t.Errorf("handleNothing() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
