@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"link-validator/pkg/errs"
 	"net/http"
 	"net/http/httptest"
@@ -58,12 +59,10 @@ func Test_handleRepoExist(t *testing.T) {
 		fragment string
 	}
 	tests := []struct {
-		name             string
-		args             args
-		setupMock        func(*mockclient)
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
 	}{
 		{
 			name: "public repository exists",
@@ -104,27 +103,33 @@ func Test_handleRepoExist(t *testing.T) {
 			name: "repository not found - 404",
 			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not Found",
 				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 		{
 			name: "user does not exist - 404",
 			args: args{"nonexistent-user", "some-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not Found",
 				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				m.EXPECT().getRepository(mock.Anything, "nonexistent-user", "some-repo").Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -133,25 +138,30 @@ func Test_handleRepoExist(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			err := handleRepoExist(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
 			mockClient.AssertExpectations(t)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
-			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			// TODO: Not sure if I really need to validate error below.
-			// TODO: check the other test-cases
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
+			// Validate error type and message
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			// For GitHub errors, validate they're the same type
+			var wantGitHubErr *github.ErrorResponse
+			var gotGitHubErr *github.ErrorResponse
+			if errors.As(tt.wantErr, &wantGitHubErr) {
+				if !errors.As(err, &gotGitHubErr) {
+					t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 				}
 			}
 		})
@@ -167,12 +177,10 @@ func Test_handleContents(t *testing.T) {
 		fragment string
 	}
 	tests := []struct {
-		name             string
-		setupMock        func(*mockclient)
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
 			name: "blob file main branch",
@@ -217,27 +225,33 @@ func Test_handleContents(t *testing.T) {
 			name: "file not found - 404",
 			args: args{"your-ko", "link-validator", "main", "nonexistent.md", ""},
 			setupMock: func(m *mockclient) {
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not Found",
 				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "nonexistent.md").Return(nil, nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 		{
 			name: "server error - 500",
 			args: args{"your-ko", "link-validator", "main", "README.md", ""},
 			setupMock: func(m *mockclient) {
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusInternalServerError},
 					Message:  "Server error",
 				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(nil, nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusInternalServerError},
+				Message:  "Server error",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -246,28 +260,32 @@ func Test_handleContents(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			err := handleContents(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
 			mockClient.AssertExpectations(t)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
-			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			// Check error type with errors.Is (for wrapped/sentinel errors like errs.ErrNotFound)
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			// Check exact error message (for fmt.Errorf() messages)
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			// Validate error type and message
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
 
+			// For GitHub errors, validate they're the same type
+			var wantGitHubErr *github.ErrorResponse
+			var gotGitHubErr *github.ErrorResponse
+			if errors.As(tt.wantErr, &wantGitHubErr) {
+				if !errors.As(err, &gotGitHubErr) {
+					t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+				}
+			}
 		})
 	}
 }
@@ -281,12 +299,10 @@ func Test_handleCommit(t *testing.T) {
 		fragment string
 	}
 	tests := []struct {
-		name             string
-		setupMock        func(*mockclient)
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
 			name: "commits list - repository exists",
@@ -317,10 +333,10 @@ func Test_handleCommit(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				m.EXPECT().getCommit(mock.Anything, "your-ko", "nonexistent-repo", "a96366", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{Message: "404 Not found"},
 		},
 		{
-			name: "commit not found - 404",
+			name: "commit not found - 422",
 			args: args{"your-ko", "link-validator", "nonexistent-commit-hash", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
@@ -330,7 +346,7 @@ func Test_handleCommit(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusUnprocessableEntity}}
 				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "nonexistent-commit-hash", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{Message: fmt.Sprintf("%v No commit found for SHA: nonexistent-commit-hash", http.StatusUnprocessableEntity)},
 		},
 	}
 	for _, tt := range tests {
@@ -341,23 +357,16 @@ func Test_handleCommit(t *testing.T) {
 			err := handleCommit(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 
 			mockClient.AssertExpectations(t)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
-			}
-			if !tt.wantErr {
-				return
+			if tt.wantErr == nil && err != nil {
+				t.Fatalf("expected no error, got %s", err)
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
 		})
 	}
