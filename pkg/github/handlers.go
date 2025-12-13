@@ -73,7 +73,7 @@ func handleContents(ctx context.Context, c client, owner, repo, ref, path, _ str
 //
 //meta:operation GET /repos/{owner}/{repo}/commits/{ref}
 func handleCommit(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
-	_, _, err := c.getCommit(ctx, owner, repo, ref, &github.ListOptions{})
+	_, _, err := c.getCommit(ctx, owner, repo, ref, nil)
 	return err
 }
 

@@ -280,62 +280,67 @@ func Test_handleCommit(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
 		name             string
-		fields           fields
+		setupMock        func(*mockclient)
 		args             args
 		wantErr          bool
 		wantIs           error
 		wantErrorMessage string
 	}{
-		// Success cases - commits list (empty ref)
 		{
 			name: "commits list - repository exists",
 			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 123, "name": "link-validator"}`,
+			setupMock: func(m *mockclient) {
+				commit := &github.RepositoryCommit{SHA: github.Ptr("1234567890")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "", (*github.ListOptions)(nil)).Return(commit, resp, nil)
 			},
 		},
 		{
 			name: "specific commit hash",
 			args: args{"your-ko", "link-validator", "a96366f66ffacd461de10a1dd561ab5a598e9167", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"sha": "a96366f66ffacd461de10a1dd561ab5a598e9167", "commit": {"message": "test commit"}}`,
+			setupMock: func(m *mockclient) {
+				commit := &github.RepositoryCommit{SHA: github.Ptr("a96366f66ffacd461de10a1dd561ab5a598e9167")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "a96366f66ffacd461de10a1dd561ab5a598e9167", (*github.ListOptions)(nil)).Return(commit, resp, nil)
 			},
 		},
 		{
 			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getCommit(mock.Anything, "your-ko", "nonexistent-repo", "a96366", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
 			wantErr: true,
 		},
 		{
 			name: "commit not found - 404",
 			args: args{"your-ko", "link-validator", "nonexistent-commit-hash", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+					Message:  "No commit found for SHA: nonexistent-commit-hash",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusUnprocessableEntity}}
+				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "nonexistent-commit-hash", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleCommit(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			err := handleCommit(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
+			mockClient.AssertExpectations(t)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("got unexpected error %s", err)
 			}
