@@ -651,7 +651,6 @@ func Test_handlePull(t *testing.T) {
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
 		},
-
 		{
 			name: "repository not found",
 			args: args{"your-ko", "nonexistent-repo", "1", "", ""},
@@ -708,90 +707,91 @@ func Test_handleMilestone(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
 			name: "particular milestone by number",
 			args: args{"your-ko", "link-validator", "1", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"number": 1, "title": "v1.0.0 Release", "state": "open"}`,
+			setupMock: func(m *mockclient) {
+				milestone := &github.Milestone{Title: github.Ptr("great milestone")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getMilestone(mock.Anything, "your-ko", "link-validator", 1).Return(milestone, resp, nil)
 			},
 		},
 		{
-			name: "invalid milestone number",
-			args: args{"your-ko", "link-validator", "test", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: `invalid milestone number "test"`,
+			name:      "invalid milestone number",
+			args:      args{"your-ko", "link-validator", "test", "", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   fmt.Errorf("invalid milestone number \"test\""),
 		},
 		{
-			name: "invalid milestone number - empty",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: `invalid milestone number ""`,
+			name:      "invalid milestone number - empty",
+			args:      args{"your-ko", "link-validator", "", "", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   fmt.Errorf("invalid milestone number \"\""),
 		},
 		{
 			name: "milestone not found - 404",
 			args: args{"your-ko", "link-validator", "1", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getMilestone(mock.Anything, "your-ko", "link-validator", 1).Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not found",
+			},
 		},
 		{
 			name: "repository not found",
 			args: args{"your-ko", "nonexistent-repo", "1", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getMilestone(mock.Anything, "your-ko", "nonexistent-repo", 1).Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleMilestone(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
+			err := handleMilestone(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
+			if !mockClient.AssertExpectations(t) {
+				return
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
-
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
