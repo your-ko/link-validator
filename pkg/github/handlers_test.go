@@ -805,94 +805,99 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
-		// Success cases
 		{
 			name: "specific advisory found - GHSA format",
-			args: args{"your-ko", "link-validator", "GHSA-xxxx-xxxx-xxxx", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[{"ghsa_id": "GHSA-xxxx-xxxx-xxxx", "summary": "Test security advisory", "severity": "high"}]`,
+			args: args{"your-ko", "link-validator", "GHSA-1234-5678-9012", "", ""},
+			setupMock: func(m *mockclient) {
+				sa := []*github.SecurityAdvisory{{
+					GHSAID:  github.Ptr("GHSA-1234-5678-9012"),
+					Summary: github.Ptr("be secure"),
+				}}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "link-validator", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(sa, resp, nil)
 			},
 		},
 		{
-			name: "empty advisory ID",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[]`,
-			},
-			wantErr:          true,
-			wantErrorMessage: "security advisory ID is required",
+			name:      "empty advisory ID",
+			args:      args{"your-ko", "link-validator", "", "", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("security advisory ID is required"),
 		},
 		{
 			name: "advisory not found - empty list",
 			args: args{"your-ko", "link-validator", "GHSA-nonexistent-id", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[]`,
+			setupMock: func(m *mockclient) {
+				sa := []*github.SecurityAdvisory{{
+					GHSAID:  github.Ptr("GHSA-1234-5678-9012"),
+					Summary: github.Ptr("be secure"),
+				}}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "link-validator", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(sa, resp, nil)
 			},
-			wantErr:          true,
-			wantIs:           errs.ErrNotFound,
-			wantErrorMessage: `security advisory "GHSA-nonexistent-id" not found`,
+			wantErr: errors.New("security advisory \"GHSA-nonexistent-id\" not found"),
 		},
 		{
 			name: "advisory not found - different advisories in list",
-			args: args{"your-ko", "link-validator", "GHSA-missing-xxxx-xxxx", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[{"ghsa_id": "GHSA-1111-2222-3333", "summary": "First advisory"}, {"ghsa_id": "GHSA-4444-5555-6666", "summary": "Second advisory"}]`,
+			args: args{"your-ko", "link-validator", "GHSA-1234-5678-9012", "", ""},
+			setupMock: func(m *mockclient) {
+				sa := []*github.SecurityAdvisory{{
+					GHSAID:  github.Ptr("GHSA-0000-0000-0000"),
+					Summary: github.Ptr("be secure"),
+				}}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "link-validator", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(sa, resp, nil)
 			},
-			wantErr:          true,
-			wantIs:           errs.ErrNotFound,
-			wantErrorMessage: `security advisory "GHSA-missing-xxxx-xxxx" not found`,
+			wantErr: errors.New("security advisory \"GHSA-1234-5678-9012\" not found"),
 		},
 		{
 			name: "repository not found",
-			args: args{"your-ko", "nonexistent-repo", "GHSA-xxxx-xxxx-xxxx", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			args: args{"your-ko", "nonexistent-repo", "1", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "nonexistent-repo", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleSecurityAdvisories(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
+			err := handleSecurityAdvisories(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if !mockClient.AssertExpectations(t) {
+				return
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
 
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}

@@ -208,7 +208,7 @@ func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, _
 		}
 	}
 
-	return errs.NewNotFoundMessage(fmt.Sprintf("security advisory %q not found", ref))
+	return fmt.Errorf("security advisory %q not found", ref)
 }
 
 // handleWorkflow validates the two UI forms:
