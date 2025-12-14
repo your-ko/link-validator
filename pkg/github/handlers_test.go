@@ -43,7 +43,9 @@ func Test_handleNothing(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := newMockclient(t)
 			err := handleNothing(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			mockClient.AssertExpectations(t)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("handleNothing() error = %v, wantErr %v", err, tt.wantErr)
@@ -141,7 +143,9 @@ func Test_handleRepoExist(t *testing.T) {
 
 			err := handleRepoExist(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 
-			mockClient.AssertExpectations(t)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
 			if tt.wantErr == nil {
 				if err != nil {
 					t.Fatalf("expected no error, got %s", err)
@@ -257,7 +261,9 @@ func Test_handleContents(t *testing.T) {
 
 			err := handleContents(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 
-			mockClient.AssertExpectations(t)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
 			if tt.wantErr == nil {
 				if err != nil {
 					t.Fatalf("expected no error, got %s", err)
@@ -346,7 +352,9 @@ func Test_handleCommit(t *testing.T) {
 
 			err := handleCommit(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 
-			mockClient.AssertExpectations(t)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
 			if tt.wantErr == nil {
 				if err != nil {
 					t.Fatalf("expected no error, got %s", err)
@@ -476,7 +484,9 @@ func Test_handleCompareCommits(t *testing.T) {
 
 			err := handleCompareCommits(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 
-			mockClient.AssertExpectations(t)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
 			if tt.wantErr == nil {
 				if err != nil {
 					t.Fatalf("expected no error, got %s", err)
@@ -522,75 +532,6 @@ func Test_handlePull(t *testing.T) {
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
 		},
-		//{
-		//	name: "PR with issue comment",
-		//	args: args{"your-ko", "link-validator", "1", "", "issuecomment-123456"},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{"id": 123456, "body": "This is a comment", "user": {"login": "user"}}`,
-		//	},
-		//},
-		//{
-		//	name: "PR with discussion comment",
-		//	args: args{"your-ko", "link-validator", "1", "", "discussion_r123456"},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{"id": 123456, "body": "Review comment", "user": {"login": "reviewer"}}`,
-		//	},
-		//},
-		{
-			name: "invalid PR number - non-numeric",
-			args: args{"your-ko", "link-validator", "abc", "", ""},
-			setupMock: func(m *mockclient) {
-				err := &github.ErrorResponse{
-					Response: &http.Response{StatusCode: http.StatusNotFound},
-					Message:  "Not Found",
-				}
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(nil, resp, err)
-			},
-			wantErr: errors.New("invalid PR number \"abc\""),
-		},
-		//{
-		//	name: "invalid PR number - empty",
-		//	args: args{"your-ko", "link-validator", "", "", ""},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{}`,
-		//	},
-		//	wantErr:          true,
-		//	wantErrorMessage: `invalid PR number ""`,
-		//},
-		//{
-		//	name: "invalid fragment - bad issue comment ID",
-		//	args: args{"your-ko", "link-validator", "1", "", "issuecomment-abc"},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{}`,
-		//	},
-		//	wantErr:          true,
-		//	wantErrorMessage: "invalid comment id: 'issuecomment-abc'",
-		//},
-		//{
-		//	name: "invalid fragment - bad discussion comment ID",
-		//	args: args{"your-ko", "link-validator", "1", "", "discussion_rabc"},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{}`,
-		//	},
-		//	wantErr:          true,
-		//	wantErrorMessage: "invalid comment id: 'discussion_rabc'",
-		//},
-		//{
-		//	name: "unsupported fragment format",
-		//	args: args{"your-ko", "link-validator", "1", "", "unsupported-fragment"},
-		//	fields: fields{
-		//		status: http.StatusOK,
-		//		body:   `{}`,
-		//	},
-		//	wantErr:          true,
-		//	wantErrorMessage: "unsupported PR fragment format: 'unsupported-fragment'. Please report a bug",
-		//},
 		{
 			name: "PR not found - 404",
 			args: args{"your-ko", "link-validator", "1", "", ""},
@@ -607,6 +548,110 @@ func Test_handlePull(t *testing.T) {
 				Message:  "Not Found",
 			},
 		},
+		{
+			name:      "invalid PR number - non-numeric (or empty)",
+			args:      args{"your-ko", "link-validator", "abc", "", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid PR number '\"abc\"'"),
+		},
+		{
+			name: "PR with issue comment",
+			args: args{"your-ko", "link-validator", "1", "", "issuecomment-123456"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				comment := &github.IssueComment{Body: github.Ptr("comment")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+				m.EXPECT().getIssueComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(comment, resp, nil)
+			},
+		},
+		{
+			name: "PR with not existing issue comment",
+			args: args{"your-ko", "link-validator", "1", "", "issuecomment-123456"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+				m.EXPECT().getIssueComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not found",
+			},
+		},
+		{
+			name: "PR with malformed issue comment",
+			args: args{"your-ko", "link-validator", "1", "", "issuecomment-aaa"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+			},
+			wantErr: errors.New("invalid comment id: 'issuecomment-aaa'"),
+		},
+		{
+			name: "PR with discussion comment",
+			args: args{"your-ko", "link-validator", "1", "", "discussion_r123456"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				comment := &github.PullRequestComment{Body: github.Ptr("comment")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+				m.EXPECT().getPRComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(comment, resp, nil)
+			},
+		},
+		{
+			name: "PR with non existing discussion comment",
+			args: args{"your-ko", "link-validator", "1", "", "discussion_r123456"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+				m.EXPECT().getPRComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not found",
+			},
+		},
+		{
+			name: "PR with malformed discussion comment",
+			args: args{"your-ko", "link-validator", "1", "", "discussion_raaaaa"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+			},
+			wantErr: errors.New("invalid discussion id: 'discussion_raaaaa'"),
+		},
+		{
+			name: "unsupported fragment format",
+			args: args{"your-ko", "link-validator", "1", "", "unsupported-fragment"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+			},
+			wantErr: errors.New("unsupported PR fragment format: 'unsupported-fragment'. Please report a bug"),
+		},
+		{
+			name: "PR with diff",
+			args: args{"your-ko", "link-validator", "1", "", "diff-aaa"},
+			setupMock: func(m *mockclient) {
+				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
+			},
+		},
+
 		{
 			name: "repository not found",
 			args: args{"your-ko", "nonexistent-repo", "1", "", ""},
@@ -630,7 +675,9 @@ func Test_handlePull(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			err := handlePull(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			mockClient.AssertExpectations(t)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
 			if tt.wantErr == nil {
 				if err != nil {
 					t.Fatalf("expected no error, got %s", err)

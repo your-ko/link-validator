@@ -116,7 +116,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid PR number %q", ref)
+		return fmt.Errorf("invalid PR number '%q'", ref)
 	}
 	_, _, err = c.getPR(ctx, owner, repo, prNumber)
 	if err != nil {
@@ -157,7 +157,7 @@ func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment 
 		// Handle review comments: #discussion_r<id>
 		commentId, err := strconv.ParseInt(strings.TrimPrefix(fragment, "discussion_r"), 10, 64)
 		if err != nil {
-			return fmt.Errorf("invalid comment id: '%s'", fragment)
+			return fmt.Errorf("invalid discussion id: '%s'", fragment)
 		}
 		_, _, err = c.getPRComment(ctx, owner, repo, commentId)
 		return err
