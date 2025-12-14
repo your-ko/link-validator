@@ -519,7 +519,7 @@ func Test_handlePull(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				pr := &github.PullRequest{Title: github.Ptr("great PR")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", "1").Return(pr, resp, nil)
+				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
 		},
 		//{
