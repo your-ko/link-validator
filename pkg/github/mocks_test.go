@@ -1102,12 +1102,12 @@ func (_c *mockclient_getRepository_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
-// getUsers provides a mock function for the type mockclient
-func (_mock *mockclient) getUsers(ctx context.Context, user string) (*github.User, *github.Response, error) {
+// getUser provides a mock function for the type mockclient
+func (_mock *mockclient) getUser(ctx context.Context, user string) (*github.User, *github.Response, error) {
 	ret := _mock.Called(ctx, user)
 
 	if len(ret) == 0 {
-		panic("no return value specified for getUsers")
+		panic("no return value specified for getUser")
 	}
 
 	var r0 *github.User
@@ -1138,19 +1138,19 @@ func (_mock *mockclient) getUsers(ctx context.Context, user string) (*github.Use
 	return r0, r1, r2
 }
 
-// mockclient_getUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getUsers'
-type mockclient_getUsers_Call struct {
+// mockclient_getUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getUser'
+type mockclient_getUser_Call struct {
 	*mock.Call
 }
 
-// getUsers is a helper method to define mock.On call
+// getUser is a helper method to define mock.On call
 //   - ctx context.Context
 //   - user string
-func (_e *mockclient_Expecter) getUsers(ctx interface{}, user interface{}) *mockclient_getUsers_Call {
-	return &mockclient_getUsers_Call{Call: _e.mock.On("getUsers", ctx, user)}
+func (_e *mockclient_Expecter) getUser(ctx interface{}, user interface{}) *mockclient_getUser_Call {
+	return &mockclient_getUser_Call{Call: _e.mock.On("getUser", ctx, user)}
 }
 
-func (_c *mockclient_getUsers_Call) Run(run func(ctx context.Context, user string)) *mockclient_getUsers_Call {
+func (_c *mockclient_getUser_Call) Run(run func(ctx context.Context, user string)) *mockclient_getUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1168,12 +1168,12 @@ func (_c *mockclient_getUsers_Call) Run(run func(ctx context.Context, user strin
 	return _c
 }
 
-func (_c *mockclient_getUsers_Call) Return(user1 *github.User, response *github.Response, err error) *mockclient_getUsers_Call {
+func (_c *mockclient_getUser_Call) Return(user1 *github.User, response *github.Response, err error) *mockclient_getUser_Call {
 	_c.Call.Return(user1, response, err)
 	return _c
 }
 
-func (_c *mockclient_getUsers_Call) RunAndReturn(run func(ctx context.Context, user string) (*github.User, *github.Response, error)) *mockclient_getUsers_Call {
+func (_c *mockclient_getUser_Call) RunAndReturn(run func(ctx context.Context, user string) (*github.User, *github.Response, error)) *mockclient_getUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1808,88 +1808,6 @@ func (_c *mockclient_listWorkflowJobsAttempt_Call) Return(jobs *github.Jobs, res
 }
 
 func (_c *mockclient_listWorkflowJobsAttempt_Call) RunAndReturn(run func(ctx context.Context, owner string, repo string, runID int64, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)) *mockclient_listWorkflowJobsAttempt_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// repositories provides a mock function for the type mockclient
-func (_mock *mockclient) repositories(ctx context.Context, owner string, repo string) (*github.Repository, *github.Response, error) {
-	ret := _mock.Called(ctx, owner, repo)
-
-	if len(ret) == 0 {
-		panic("no return value specified for repositories")
-	}
-
-	var r0 *github.Repository
-	var r1 *github.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*github.Repository, *github.Response, error)); ok {
-		return returnFunc(ctx, owner, repo)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *github.Repository); ok {
-		r0 = returnFunc(ctx, owner, repo)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*github.Repository)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) *github.Response); ok {
-		r1 = returnFunc(ctx, owner, repo)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*github.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
-		r2 = returnFunc(ctx, owner, repo)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_repositories_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'repositories'
-type mockclient_repositories_Call struct {
-	*mock.Call
-}
-
-// repositories is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repo string
-func (_e *mockclient_Expecter) repositories(ctx interface{}, owner interface{}, repo interface{}) *mockclient_repositories_Call {
-	return &mockclient_repositories_Call{Call: _e.mock.On("repositories", ctx, owner, repo)}
-}
-
-func (_c *mockclient_repositories_Call) Run(run func(ctx context.Context, owner string, repo string)) *mockclient_repositories_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_repositories_Call) Return(repository *github.Repository, response *github.Response, err error) *mockclient_repositories_Call {
-	_c.Call.Return(repository, response, err)
-	return _c
-}
-
-func (_c *mockclient_repositories_Call) RunAndReturn(run func(ctx context.Context, owner string, repo string) (*github.Repository, *github.Response, error)) *mockclient_repositories_Call {
 	_c.Call.Return(run)
 	return _c
 }

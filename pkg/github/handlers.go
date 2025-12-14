@@ -271,7 +271,7 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 //meta:operation GET /user
 //meta:operation GET /users/{username}
 func handleUser(ctx context.Context, c client, owner, _, _, _, _ string) error {
-	_, _, err := c.getUsers(ctx, owner)
+	_, _, err := c.getUser(ctx, owner)
 	return err
 }
 

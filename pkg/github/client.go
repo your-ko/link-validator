@@ -21,7 +21,7 @@ type client interface {
 	getWorkflowJobByID(ctx context.Context, owner, repo string, jobID int64) (*github.WorkflowJob, *github.Response, error)
 	listWorkflowJobsAttempt(ctx context.Context, owner, repo string, runID, attemptNumber int64, opts *github.ListOptions) (*github.Jobs, *github.Response, error)
 	getWorkflowRunByID(ctx context.Context, owner, repo string, runID int64) (*github.WorkflowRun, *github.Response, error)
-	getUsers(ctx context.Context, user string) (*github.User, *github.Response, error)
+	getUser(ctx context.Context, user string) (*github.User, *github.Response, error)
 	getIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, *github.Response, error)
 	getLatestRelease(ctx context.Context, owner, repo string) (*github.RepositoryRelease, *github.Response, error)
 	getReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
@@ -89,7 +89,7 @@ func (w *wrapper) getWorkflowRunByID(ctx context.Context, owner, repo string, ru
 	return w.client.Actions.GetWorkflowRunByID(ctx, owner, repo, runID)
 }
 
-func (w *wrapper) getUsers(ctx context.Context, user string) (*github.User, *github.Response, error) {
+func (w *wrapper) getUser(ctx context.Context, user string) (*github.User, *github.Response, error) {
 	return w.client.Users.Get(ctx, user)
 }
 
