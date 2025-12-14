@@ -891,11 +891,9 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			if err == nil {
 				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
-
 			if tt.wantErr.Error() != err.Error() {
 				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
-
 			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
 				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
@@ -911,150 +909,194 @@ func Test_handleWorkflow(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
 			name: "actions list - repository exists",
 			args: args{"your-ko", "link-validator", "actions", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 123, "name": "link-validator"}`,
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{
+					Name: github.Ptr("link-validator"),
+					Owner: &github.User{
+						Login: github.Ptr("your-ko"),
+					},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
 			name: "specific workflow file",
 			args: args{"your-ko", "link-validator", "workflows", "pr.yaml", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 12345, "name": "PR", "path": ".github/workflows/pr.yml", "state": "active"}`,
+			setupMock: func(m *mockclient) {
+				workflow := &github.Workflow{Name: github.Ptr("pr.yaml")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowByFileName(mock.Anything, "your-ko", "link-validator", "pr.yaml").Return(workflow, resp, nil)
 			},
 		},
 		{
-			name: "workflow badge",
-			args: args{"your-ko", "link-validator", "workflows", "build.yml/badge.svg", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 67890, "name": "Build", "path": ".github/workflows/build.yml", "state": "active"}`,
+			name: "specific workflow file with badge",
+			args: args{"your-ko", "link-validator", "workflows", "pr.yaml/badge.svg", ""},
+			setupMock: func(m *mockclient) {
+				workflow := &github.Workflow{Name: github.Ptr("pr.yaml")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowByFileName(mock.Anything, "your-ko", "link-validator", "pr.yaml").Return(workflow, resp, nil)
+			},
+		},
+		{
+			name:      "invalid workflow run ID - non-numeric",
+			args:      args{"your-ko", "link-validator", "runs", "invalid-run-id", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid workflow id: 'invalid-run-id'"),
+		},
+		{
+			name: "workflow not found - 404",
+			args: args{"your-ko", "link-validator", "workflows", "nonexistent.yaml", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowByFileName(mock.Anything, "your-ko", "link-validator", "nonexistent.yaml").Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
 			},
 		},
 		{
 			name: "specific workflow run",
 			args: args{"your-ko", "link-validator", "runs", "1234567890", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 1234567890, "run_number": 42, "status": "completed", "conclusion": "success"}`,
+			setupMock: func(m *mockclient) {
+				workflow := &github.WorkflowRun{Name: github.Ptr("pr.yaml")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowRunByID(mock.Anything, "your-ko", "link-validator", int64(1234567890)).Return(workflow, resp, nil)
 			},
 		},
 		{
-			name: "workflow run job",
+			name: "specific not-existing workflow run",
+			args: args{"your-ko", "link-validator", "runs", "1234567890", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowRunByID(mock.Anything, "your-ko", "link-validator", int64(1234567890)).Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
+		},
+		{
+			name: "workflow run job by id",
 			args: args{"your-ko", "link-validator", "runs", "1234567890/job/9876543210", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 9876543210, "run_id": 1234567890, "name": "build", "status": "completed"}`,
+			setupMock: func(m *mockclient) {
+				job := &github.WorkflowJob{Name: github.Ptr("pr.yaml")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowJobByID(mock.Anything, "your-ko", "link-validator", int64(9876543210)).Return(job, resp, nil)
+			},
+		},
+		{
+			name:      "malformed workflow run job id",
+			args:      args{"your-ko", "link-validator", "runs", "1234567890/job/qwerty", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid job id: '1234567890/job/qwerty'"),
+		},
+		{
+			name: "workflow run job by id not found",
+			args: args{"your-ko", "link-validator", "runs", "1234567890/job/9876543210", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getWorkflowJobByID(mock.Anything, "your-ko", "link-validator", int64(9876543210)).Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
 			},
 		},
 		{
 			name: "workflow run attempt",
 			args: args{"your-ko", "link-validator", "runs", "1234567890/attempts/2", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"total_count": 3, "jobs": [{"id": 1, "name": "job1"}, {"id": 2, "name": "job2"}]}`,
+			setupMock: func(m *mockclient) {
+				jobs := &github.Jobs{TotalCount: github.Ptr(5)}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listWorkflowJobsAttempt(mock.Anything, "your-ko", "link-validator", int64(1234567890), int64(2), (*github.ListOptions)(nil)).Return(jobs, resp, nil)
 			},
 		},
 		{
-			name: "invalid workflow run ID - non-numeric",
-			args: args{"your-ko", "link-validator", "runs", "invalid-run-id", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
+			name: "workflow run not existing attempt",
+			args: args{"your-ko", "link-validator", "runs", "1234567890/attempts/2", ""},
+			setupMock: func(m *mockclient) {
+				jobs := &github.Jobs{TotalCount: github.Ptr(1)}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listWorkflowJobsAttempt(mock.Anything, "your-ko", "link-validator", int64(1234567890), int64(2), (*github.ListOptions)(nil)).Return(jobs, resp, nil)
 			},
-			wantErr:          true,
-			wantErrorMessage: "invalid workflow id: 'invalid-run-id'",
+			wantErr: errors.New("job attempt '2' not found"),
 		},
 		{
-			name: "invalid job ID - non-numeric",
-			args: args{"your-ko", "link-validator", "runs", "123456/job/invalid-job", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: "invalid job id: '123456/job/invalid-job'",
+			name:      "invalid attempt ID - non-numeric",
+			args:      args{"your-ko", "link-validator", "runs", "123456/attempts/invalid-attempt", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid attempt id: '123456/attempts/invalid-attempt'"),
 		},
 		{
-			name: "invalid attempt ID - non-numeric",
-			args: args{"your-ko", "link-validator", "runs", "123456/attempts/invalid-attempt", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: "invalid attempt id: '123456/attempts/invalid-attempt'",
+			name:      "unsupported ref type",
+			args:      args{"your-ko", "link-validator", "unsupported", "some-path", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("unsupported ref found, please report a bug"),
 		},
 		{
-			name: "unsupported ref type",
-			args: args{"your-ko", "link-validator", "unsupported", "some-path", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
+			name: "repository not found",
+			args: args{"your-ko", "nonexistent-repo", "1", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
-			wantErr:          true,
-			wantErrorMessage: "unsupported ref found, please report a bug",
-		},
-		{
-			name: "repository not found - actions list",
-			args: args{"your-ko", "nonexistent-repo", "actions", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
 			},
-			wantErr: true,
-		},
-		{
-			name: "workflow not found - 404",
-			args: args{"your-ko", "link-validator", "workflows", "nonexistent.yaml", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
-			},
-			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleWorkflow(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
+			err := handleWorkflow(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if !mockClient.AssertExpectations(t) {
+				return
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
-
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}

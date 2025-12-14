@@ -242,13 +242,16 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 			_, _, err = c.getWorkflowJobByID(ctx, owner, repo, jobId)
 			return err
 		case strings.Contains(path, "attempts"):
-			attempts := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
-			attemptId, err := strconv.ParseInt(attempts, 10, 64)
+			attemptStr := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
+			attemptId, err := strconv.ParseInt(attemptStr, 10, 64)
 			if err != nil {
 				return fmt.Errorf("invalid attempt id: '%s'", path)
 			}
-			_, _, err = c.listWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
-			return err
+			attempts, _, err := c.listWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, nil)
+			if attempts != nil && attemptId < int64(*attempts.TotalCount) {
+				return nil
+			}
+			return fmt.Errorf("job attempt '%s' not found", attemptStr)
 		default:
 			_, _, err = c.getWorkflowRunByID(ctx, owner, repo, runId)
 			return err
