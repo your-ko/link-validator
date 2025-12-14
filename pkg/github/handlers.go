@@ -248,6 +248,9 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 				return fmt.Errorf("invalid attempt id: '%s'", path)
 			}
 			attempts, _, err := c.listWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, nil)
+			if err != nil {
+				return err
+			}
 			if attempts != nil && attemptId < int64(*attempts.TotalCount) {
 				return nil
 			}
