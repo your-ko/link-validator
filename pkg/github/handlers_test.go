@@ -1279,135 +1279,155 @@ func Test_handleReleases(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
 			name: "latest release exists",
 			args: args{"your-ko", "link-validator", "", "latest", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 12345, "tag_name": "v1.0.0", "name": "Release v1.0.0", "draft": false, "prerelease": false}`,
+			setupMock: func(m *mockclient) {
+				release := &github.RepositoryRelease{Name: github.Ptr("cool release")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getLatestRelease(mock.Anything, "your-ko", "link-validator").Return(release, resp, nil)
 			},
 		},
 		{
 			name: "releases list - repository exists",
 			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 123, "name": "link-validator"}`,
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
 			name: "specific release by tag",
 			args: args{"your-ko", "link-validator", "tag", "v1.0.0", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 67890, "tag_name": "v1.0.0", "name": "First Release", "draft": false}`,
+			setupMock: func(m *mockclient) {
+				release := &github.RepositoryRelease{Name: github.Ptr("cool release")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(release, resp, nil)
+			},
+		},
+		{
+			name: "specific release by tag not found",
+			args: args{"your-ko", "link-validator", "tag", "v1.0.0", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
 			},
 		},
 		{
 			name: "download asset - asset exists",
 			args: args{"your-ko", "link-validator", "download", "v1.0.0/sbom.spdx.json", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 11111, "tag_name": "v1.0.0", "assets": [{"name": "sbom.spdx.json", "download_count": 100}, {"name": "source.zip", "download_count": 50}]}`,
+			setupMock: func(m *mockclient) {
+				release := &github.RepositoryRelease{
+					Name:   github.Ptr("cool release"),
+					Assets: []*github.ReleaseAsset{{Name: github.Ptr("sbom.spdx.json")}},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(release, resp, nil)
 			},
 		},
 		{
-			name: "download - incorrect path format (missing slash)",
-			args: args{"your-ko", "link-validator", "download", "v1.0.0-binary.tar.gz", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: "incorrect download path 'v1.0.0-binary.tar.gz' in the release url",
+			name:      "download - incorrect path format (missing slash)",
+			args:      args{"your-ko", "link-validator", "download", "v1.0.0-binary.tar.gz", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("incorrect download path 'v1.0.0-binary.tar.gz' in the release url"),
 		},
 		{
-			name: "download - incorrect path format (too many parts)",
-			args: args{"your-ko", "link-validator", "download", "v1.0.0/assets/binary.tar.gz", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: "incorrect download path 'v1.0.0/assets/binary.tar.gz' in the release url",
+			name:      "download - incorrect path format (too many parts)",
+			args:      args{"your-ko", "link-validator", "download", "v1.0.0/assets/binary.tar.gz", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("incorrect download path 'v1.0.0/assets/binary.tar.gz' in the release url"),
 		},
 		{
 			name: "download - asset not found in release",
 			args: args{"your-ko", "link-validator", "download", "v1.0.0/nonexistent.zip", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 33333, "tag_name": "v1.0.0", "assets": [{"name": "existing.tar.gz"}, {"name": "another.zip"}]}`,
+			setupMock: func(m *mockclient) {
+				release := &github.RepositoryRelease{
+					Name:   github.Ptr("cool release"),
+					Assets: []*github.ReleaseAsset{{Name: github.Ptr("sbom.spdx.json")}},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(release, resp, nil)
 			},
-			wantErr:          true,
-			wantIs:           errs.ErrNotFound,
-			wantErrorMessage: "asset 'nonexistent.zip' wasn't found in the release assets",
+			wantErr: errors.New("asset 'nonexistent.zip' wasn't found in the release assets"),
 		},
 		{
-			name: "unexpected release path",
-			args: args{"your-ko", "link-validator", "unknown", "some-path", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{}`,
-			},
-			wantErr:          true,
-			wantErrorMessage: "unexpected release path 'some-path' found. Please report a bug",
+			name:      "unexpected release path",
+			args:      args{"your-ko", "link-validator", "unknown", "some-path", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("unexpected release path 'some-path' found. Please report a bug"),
 		},
 		{
 			name: "latest release not found - 404",
 			args: args{"your-ko", "link-validator", "", "latest", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getLatestRelease(mock.Anything, "your-ko", "link-validator").Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 		{
 			name: "repository not found - releases list",
 			args: args{"your-ko", "nonexistent-repo", "", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleReleases(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
+			err := handleReleases(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if !mockClient.AssertExpectations(t) {
+				return
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
-
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}

@@ -323,7 +323,7 @@ func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragm
 				return nil
 			}
 		}
-		return errs.NewNotFoundMessage(fmt.Sprintf("asset '%s' wasn't found in the release assets", parts[1]))
+		return fmt.Errorf("asset '%s' wasn't found in the release assets", parts[1])
 	}
 	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
 }
