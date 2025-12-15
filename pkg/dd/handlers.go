@@ -10,6 +10,7 @@ import (
 
 type ddHandler func(
 	ctx context.Context,
+	c client,
 	resource ddResource,
 ) error
 
@@ -18,10 +19,9 @@ type handlerEntry struct {
 	fn   ddHandler
 }
 
-func (proc *LinkProcessor) handleConnection(ctx context.Context, resource ddResource) error {
-	authApi := datadogV1.NewAuthenticationApi(proc.client)
-	authCtx := proc.withAuth(ctx)
-	validation, _, err := authApi.Validate(authCtx)
+func handleConnection(ctx context.Context, c client, resource ddResource) error {
+	authApi := datadogV1.NewAuthenticationApi(c.getDDClient())
+	validation, _, err := authApi.Validate(ctx)
 	if err != nil {
 		return fmt.Errorf("DataDog API connection failed: %w", err)
 	}
@@ -33,12 +33,9 @@ func (proc *LinkProcessor) handleConnection(ctx context.Context, resource ddReso
 	return nil
 }
 
-func (proc *LinkProcessor) handleMonitors(ctx context.Context, resource ddResource) error {
-	monitorsApi := datadogV1.NewMonitorsApi(proc.client)
-	ctx = proc.withAuth(ctx)
-
+func handleMonitors(ctx context.Context, c client, resource ddResource) error {
 	if resource.ID == "" {
-		_, _, err := monitorsApi.ListMonitors(ctx)
+		_, _, err := c.ListMonitors(ctx)
 		return err
 	}
 	monitorId, err := strconv.ParseInt(resource.ID, 10, 64)
@@ -46,22 +43,19 @@ func (proc *LinkProcessor) handleMonitors(ctx context.Context, resource ddResour
 		return fmt.Errorf("invalid monitor id: '%s'", resource.ID)
 	}
 
-	_, _, err = monitorsApi.GetMonitor(ctx, monitorId)
+	_, _, err = c.GetMonitor(ctx, monitorId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (proc *LinkProcessor) handleDashboards(ctx context.Context, resource ddResource) error {
-	dashboardApi := datadogV1.NewDashboardsApi(proc.client)
-	ctx = proc.withAuth(ctx)
-
+func handleDashboards(ctx context.Context, c client, resource ddResource) error {
 	if resource.ID == "" {
-		_, _, err := dashboardApi.ListDashboards(ctx)
+		_, _, err := c.ListDashboards(ctx)
 		return err
 	}
-	_, _, err := dashboardApi.GetDashboard(ctx, resource.ID)
+	_, _, err := c.GetDashboard(ctx, resource.ID)
 	if err != nil {
 		return err
 	}

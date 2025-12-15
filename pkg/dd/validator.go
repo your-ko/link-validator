@@ -13,9 +13,7 @@ import (
 )
 
 type LinkProcessor struct {
-	client *datadog.APIClient
-	apiKey string
-	appKey string
+	client *wrapper
 	routes map[string]ddHandler
 }
 
@@ -36,28 +34,21 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 	apiClient := datadog.NewAPIClient(configuration)
 
 	proc := &LinkProcessor{
-		client: apiClient,
-		apiKey: cfg.DDApiKey,
-		appKey: cfg.DDAppKey,
+		client: &wrapper{
+			client: apiClient,
+			apiKey: cfg.DDApiKey,
+			appKey: cfg.DDAppKey,
+		},
 		routes: make(map[string]ddHandler),
 	}
 	return proc.registerDefaultHandlers(), nil
 }
 
-// withAuth creates a new context with DataDog API authentication from the request context
-func (proc *LinkProcessor) withAuth(ctx context.Context) context.Context {
-	authCtx := datadog.NewDefaultContext(ctx)
-	return context.WithValue(authCtx, datadog.ContextAPIKeys, map[string]datadog.APIKey{
-		"apiKeyAuth": {Key: proc.apiKey},
-		"appKeyAuth": {Key: proc.appKey},
-	})
-}
-
 func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 	return proc.
-		Route("", proc.handleConnection).
-		Route("monitors", proc.handleMonitors).
-		Route("dashboard", proc.handleDashboards)
+		Route("", handleConnection).
+		Route("monitors", handleMonitors).
+		Route("dashboard", handleDashboards)
 	//Route("logs", proc.validateConnection).
 	//Route("apm", proc.validateConnection).
 	//Route("infrastructure", proc.validateConnection).
@@ -86,7 +77,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) e
 
 	// Find handler
 	if handler, exists := proc.routes[resource.Type]; exists {
-		return handler(ctx, *resource)
+		return handler(ctx, proc.client, *resource)
 	}
 	return fmt.Errorf("unsupported DataDog URL type: '%s'", resource.Type)
 }
