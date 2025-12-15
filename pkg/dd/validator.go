@@ -57,15 +57,6 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 	//Route("organization-settings", proc.validateConnection)
 }
 
-// withAuth creates a new context with DataDog API authentication from the request context
-//func (proc *LinkProcessor) withAuth(ctx context.Context) context.Context {
-//	authCtx := datadog.NewDefaultContext(ctx)
-//	return context.WithValue(authCtx, datadog.ContextAPIKeys, map[string]datadog.APIKey{
-//		"apiKeyAuth": {Key: proc.apiKey},
-//		"appKeyAuth": {Key: proc.appKey},
-//	})
-//}
-
 func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) error {
 	slog.Debug("Validating DataDog URL", slog.String("url", link))
 
@@ -75,7 +66,6 @@ func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) e
 		return err
 	}
 
-	// Find handler
 	if handler, exists := proc.routes[resource.Type]; exists {
 		return handler(ctx, proc.client, *resource)
 	}

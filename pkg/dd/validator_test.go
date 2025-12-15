@@ -146,7 +146,7 @@ func TestLinkProcessor_Process(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			proc := &LinkProcessor{
-				client: tt.fields.client,
+				//client: tt.fields.client,
 			}
 			if err := proc.Process(tt.args.ctx, tt.args.link, tt.args.in2); (err != nil) != tt.wantErr {
 				t.Errorf("Process() error = %v, wantErr %v", err, tt.wantErr)
