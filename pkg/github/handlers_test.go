@@ -2,15 +2,10 @@ package github
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-	neturl "net/url"
 	"testing"
-	"time"
 
 	"github.com/google/go-github/v77/github"
 	"github.com/stretchr/testify/mock"
@@ -1692,120 +1687,65 @@ func Test_handlePackages(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
-			name: "public repository exists",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 123, "name": "link-validator", "full_name": "your-ko/link-validator", "private": false, "owner": {"login": "your-ko"}}`,
-			},
-		},
-		{
-			name: "fork repository exists",
-			args: args{"contributor", "link-validator", "", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `{"id": 999, "name": "link-validator", "full_name": "contributor/link-validator", "fork": true, "private": false, "owner": {"login": "contributor"}}`,
-			},
-		},
-		{
-			name: "repository not found - 404",
+			name: "repository  found",
 			args: args{"your-ko", "nonexistent-repo", "", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(repo, resp, nil)
 			},
-			wantErr: true,
 		},
+
 		{
-			name: "user does not exist - 404",
-			args: args{"nonexistent-user", "some-repo", "", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
+			name: "repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
-			wantErr: true,
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handlePackages(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
+			err := handlePackages(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
+			if !mockClient.AssertExpectations(t) {
+				return
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
-
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
-}
-
-func getTestServer(httpStatus int, base64enc bool, body string) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		//if tt.fields.loc != "" {
-		//	res.Header().Set("Location", tt.fields.loc)
-		//}
-		res.WriteHeader(httpStatus)
-
-		if base64enc {
-			_ = json.NewEncoder(res).Encode(&githubContent{
-				Type:     "file",
-				Encoding: "base64",
-				Content:  base64.StdEncoding.EncodeToString([]byte(body)),
-			})
-		} else {
-			res.Header().Set("Content-Type", "application/json")
-			_, _ = res.Write([]byte(body))
-		}
-	}))
-}
-
-type githubContent struct {
-	Type     string `json:"type"`     // "file" or "dir"
-	Encoding string `json:"encoding"` // "base64" for file
-	Content  string `json:"content"`  // base64-encoded file body
-}
-
-// mockValidator creates a validator instance with mock GitHub clients
-func mockValidator(ts *httptest.Server, corp string) *LinkProcessor {
-	p, _ := New(corp, "", "", time.Second)
-
-	if ts != nil {
-		base, _ := neturl.Parse(ts.URL + "/")
-		c := github.NewClient(ts.Client())
-		c.BaseURL = base
-		c.UploadURL = base
-		p.client = &wrapper{c}
-		p.corpClient = &wrapper{c}
-	}
-	return p
 }

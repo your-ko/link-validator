@@ -369,7 +369,7 @@ func handleWiki(ctx context.Context, c client, owner, repo, _, _, _ string) erro
 }
 
 // handlePackages validates existence of GitHub packages.
-// Since GetPackage requires user authentication, it is not suitable for link-validator,
+// Since GetPackage requires user authentication, it is not suitable for link-validator current approach,
 // that's why it always returns true
 //
 // For the URL pattern: /packages/{package_type}/{package_name}
