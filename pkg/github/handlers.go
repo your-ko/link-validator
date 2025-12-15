@@ -50,20 +50,31 @@ func handleNothing(_ context.Context, _ client, _, _, _, _, _ string) error {
 //meta:operation GET /repos/{owner}/{repo}
 func handleRepoExist(ctx context.Context, c client, owner, repo, _, _, _ string) error {
 	_, _, err := c.getRepository(ctx, owner, repo)
+
+	var gitHubErr *github.ErrorResponse
+	if errors.As(err, &gitHubErr) {
+		if gitHubErr.Response.StatusCode == http.StatusNotFound {
+			return fmt.Errorf("repository '%s' not found", repo)
+		}
+	}
 	return err
 }
 
 // handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
 //
 //meta:operation GET /repos/{owner}/{repo}/contents/{path}
-func handleContents(ctx context.Context, c client, owner, repo, ref, path, _ string) error {
+func handleContents(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
 	if strings.HasPrefix(path, "heads/") {
 		// extract the branch name
 		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
 		ref = parts[0]
 		path = parts[1]
 	}
-	_, _, _, err := c.getContents(ctx, owner, repo, ref, path)
+	_, _, _, err = c.getContents(ctx, owner, repo, ref, path)
 	return err
 }
 
@@ -72,8 +83,12 @@ func handleContents(ctx context.Context, c client, owner, repo, ref, path, _ str
 // GitHub API docs: https://docs.github.com/rest/commits/commits#get-a-commit
 //
 //meta:operation GET /repos/{owner}/{repo}/commits/{ref}
-func handleCommit(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
-	_, _, err := c.getCommit(ctx, owner, repo, ref, nil)
+func handleCommit(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+	_, _, err = c.getCommit(ctx, owner, repo, ref, nil)
 	return err
 }
 
@@ -83,9 +98,14 @@ func handleCommit(ctx context.Context, c client, owner, repo, ref, _, _ string) 
 //
 //meta:operation GET /repos/{owner}/{repo}/compare/{basehead}
 func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+
 	if ref == "" {
 		//	https://github.com/your-ko/link-validator/compare is a valid link
-		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+		return nil
 	}
 	parts := regex.DotPattern.Split(ref, -1)
 	var left, right string
@@ -104,7 +124,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.compareCommits(ctx, owner, repo, left, right, nil)
+	_, _, err = c.compareCommits(ctx, owner, repo, left, right, nil)
 	return err
 }
 
@@ -117,6 +137,11 @@ func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment 
 	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid PR number '%q'", ref)
+	}
+
+	err = handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
 	}
 	_, _, err = c.getPR(ctx, owner, repo, prNumber)
 	if err != nil {
@@ -176,11 +201,21 @@ func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment 
 // GitHub API docs: https://docs.github.com/rest/issues/milestones#get-a-milestone
 //
 //meta:operation GET /repos/{owner}/{repo}/milestones/{milestone_number}
-func handleMilestone(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
+func handleMilestone(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+	if ref == "" {
+		// list of milestones always exists
+		return nil
+	}
+
 	n, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid milestone number %q", ref)
 	}
+
 	_, _, err = c.getMilestone(ctx, owner, repo, n)
 	return err
 }
@@ -191,9 +226,15 @@ func handleMilestone(ctx context.Context, c client, owner, repo, ref, _, _ strin
 // GitHub API docs: https://docs.github.com/rest/security-advisories/repository-advisories
 //
 //meta:operation GET /repos/{owner}/{repo}/security-advisories
-func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
+func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	//https://github.com/your-ko/link-validator/security/advisories is validated in handleRepoExist
 	if ref == "" {
 		return fmt.Errorf("security advisory ID is required")
+	}
+
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
 	}
 
 	// Since there's no direct GetRepositoryAdvisory method, I list all advisories
@@ -217,6 +258,11 @@ func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, _
 //
 // and I assume that if the workflow exists, then the badge exists too
 func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+
 	switch {
 	case path == "":
 		// presumably if the repo exists then the actions list exists as well
@@ -281,13 +327,19 @@ func handleUser(ctx context.Context, c client, owner, _, _, _, _ string) error {
 //
 //meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
 func handleIssue(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
-	if ref == "" {
-		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
 	}
+	if ref == "" {
+		return nil
+	}
+
 	n, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid issue number %q", ref)
 	}
+
 	_, _, err = c.getIssue(ctx, owner, repo, n)
 	return err
 }
@@ -298,6 +350,10 @@ func handleIssue(ctx context.Context, c client, owner, repo, ref, path, fragment
 // /<owner>/<repo>/releases/latest
 // etc
 func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
 	switch {
 	case path == "latest":
 		_, _, err := c.getLatestRelease(ctx, owner, repo)
@@ -333,7 +389,11 @@ func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragm
 // GitHub API docs: https://docs.github.com/rest/issues/labels#list-labels-for-a-repository
 //
 //meta:operation GET /repos/{owner}/{repo}/labels
-func handleLabel(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
+func handleLabel(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
 	labels, _, err := c.listLabels(ctx, owner, repo, nil)
 	if err != nil {
 		return err
@@ -357,7 +417,12 @@ func handleLabel(ctx context.Context, c client, owner, repo, ref, _, _ string) e
 func handleWiki(ctx context.Context, c client, owner, repo, _, _, _ string) error {
 	repository, _, err := c.getRepository(ctx, owner, repo)
 	if err != nil {
-		return err
+		var gitHubErr *github.ErrorResponse
+		if errors.As(err, &gitHubErr) {
+			if gitHubErr.Response.StatusCode == http.StatusNotFound {
+				return fmt.Errorf("repository '%s' not found", repo)
+			}
+		}
 	}
 
 	// Check if wiki is enabled for this repository
