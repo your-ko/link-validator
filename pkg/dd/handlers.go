@@ -14,11 +14,6 @@ type ddHandler func(
 	resource ddResource,
 ) error
 
-type handlerEntry struct {
-	name string
-	fn   ddHandler
-}
-
 func handleConnection(ctx context.Context, c client, resource ddResource) error {
 	authApi := datadogV1.NewAuthenticationApi(c.getDDClient())
 	validation, _, err := authApi.Validate(ctx)
