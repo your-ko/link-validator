@@ -2,9 +2,11 @@ package dd
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
+	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,6 +34,47 @@ func Test_handleMonitors(t *testing.T) {
 				monitors := []datadogV1.Monitor{{Name: Ptr("test")}}
 				resp := &http.Response{StatusCode: http.StatusOK}
 				m.EXPECT().ListMonitors(mock.Anything).Return(monitors, resp, nil)
+			},
+		},
+		{
+			name: "Particular monitor",
+			args: args{resource: ddResource{
+				Type: "monitors",
+				ID:   "1234567890",
+			}},
+			setupMock: func(m *mockclient) {
+				monitor := datadogV1.Monitor{Name: Ptr("test"), Id: Ptr(int64(1234567890))}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().GetMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, nil)
+			},
+		},
+		{
+			name: "Particular monitor incorrect id",
+			args: args{resource: ddResource{
+				Type: "monitors",
+				ID:   "qwerty",
+			}},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid monitor id: 'qwerty'"),
+		},
+		{
+			name: "monitor not found",
+			args: args{resource: ddResource{
+				Type: "monitors",
+				ID:   "1234567890",
+			}},
+			setupMock: func(m *mockclient) {
+				monitor := datadogV1.Monitor{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "404 Not Found",
+					ErrorModel:   []string{"Monitor not found"},
+				}
+				resp := &http.Response{StatusCode: http.StatusNotFound}
+				m.EXPECT().GetMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "404 Not Found",
+				ErrorModel:   []string{"Monitor not found"},
 			},
 		},
 	}

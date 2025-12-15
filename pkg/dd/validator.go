@@ -88,14 +88,22 @@ func parseDataDogURL(link string) (*ddResource, error) {
 		Query:     u.Query(),
 		Fragments: u.Fragment,
 	}
+	if len(pathSegments) == 0 {
+		return resource, nil
+	}
+	growTo := 5 // some arbitrary number more than 5 to prevent 'len out of range' during parsing below
+	if len(pathSegments) < growTo {
+		diff := growTo - len(pathSegments)
+		pathSegments = append(pathSegments, make([]string, diff)...)[:growTo]
+	}
 
-	if len(pathSegments) > 0 {
-		resource.Type = pathSegments[0]
-	}
-	if len(pathSegments) > 1 {
+	resource.Type = pathSegments[0]
+	switch resource.Type {
+	case "monitors":
 		resource.ID = pathSegments[1]
-	}
-	if len(pathSegments) > 2 {
+		resource.Action = pathSegments[2]
+	case "dashboards":
+		resource.ID = pathSegments[1]
 		resource.Action = pathSegments[2]
 	}
 
