@@ -881,17 +881,10 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			wantErr: errors.New("security advisory \"GHSA-1234-5678-9012\" not found"),
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
-			setupMock: func(m *mockclient) {
-				err := &github.ErrorResponse{
-					Response: &http.Response{StatusCode: http.StatusNotFound},
-					Message:  "Not found",
-				}
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
-			},
-			wantErr: errors.New("repository 'nonexistent-repo' not found"),
+			name:      "advisories list - repository not found",
+			args:      args{"your-ko", "nonexistent-repo", "", "", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("security advisory ID is required"),
 		},
 	}
 	for _, tt := range tests {
@@ -1113,8 +1106,8 @@ func Test_handleWorkflow(t *testing.T) {
 			wantErr: errors.New("unsupported ref found, please report a bug"),
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			name: "workflows - repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
@@ -1562,8 +1555,8 @@ func Test_handleLabel(t *testing.T) {
 			wantErr: errors.New("label 'Bug' not found"),
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			name: "labels list - repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
@@ -1645,8 +1638,8 @@ func Test_handleWiki(t *testing.T) {
 			wantErr: errors.New("wiki is not enabled for repository your-ko/link-validator"),
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			name: "wiki: repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
@@ -1789,8 +1782,8 @@ func Test_handlePackages(t *testing.T) {
 			},
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			name: "packages list - repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},

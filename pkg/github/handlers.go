@@ -227,6 +227,7 @@ func handleMilestone(ctx context.Context, c client, owner, repo, ref, path, frag
 //
 //meta:operation GET /repos/{owner}/{repo}/security-advisories
 func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	//https://github.com/your-ko/link-validator/security/advisories is validated in handleRepoExist
 	if ref == "" {
 		return fmt.Errorf("security advisory ID is required")
 	}
