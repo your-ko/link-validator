@@ -745,16 +745,14 @@ func Test_handleMilestone(t *testing.T) {
 			},
 		},
 		{
-			name:      "invalid milestone number",
-			args:      args{"your-ko", "link-validator", "test", "", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   fmt.Errorf("invalid milestone number \"test\""),
-		},
-		{
-			name:      "invalid milestone number - empty",
-			args:      args{"your-ko", "link-validator", "", "", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   fmt.Errorf("invalid milestone number \"\""),
+			name: "invalid milestone number",
+			args: args{"your-ko", "link-validator", "test", "", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: fmt.Errorf("invalid milestone number \"test\""),
 		},
 		{
 			name: "milestone not found",
@@ -775,8 +773,8 @@ func Test_handleMilestone(t *testing.T) {
 			},
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			name: "milestones list - repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
@@ -847,10 +845,14 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			},
 		},
 		{
-			name:      "empty advisory ID",
-			args:      args{"your-ko", "link-validator", "", "", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("security advisory ID is required"),
+			name: "empty advisory ID",
+			args: args{"your-ko", "link-validator", "", "", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("security advisory ID is required"),
 		},
 		{
 			name: "advisory not found - empty list",
@@ -976,10 +978,14 @@ func Test_handleWorkflow(t *testing.T) {
 			},
 		},
 		{
-			name:      "invalid workflow run ID - non-numeric",
-			args:      args{"your-ko", "link-validator", "runs", "invalid-run-id", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("invalid workflow id: 'invalid-run-id'"),
+			name: "invalid workflow run ID - non-numeric",
+			args: args{"your-ko", "link-validator", "runs", "invalid-run-id", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("invalid workflow id: 'invalid-run-id'"),
 		},
 		{
 			name: "workflow not found - 404",
@@ -1040,10 +1046,14 @@ func Test_handleWorkflow(t *testing.T) {
 			},
 		},
 		{
-			name:      "malformed workflow run job id",
-			args:      args{"your-ko", "link-validator", "runs", "1234567890/job/qwerty", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("invalid job id: '1234567890/job/qwerty'"),
+			name: "malformed workflow run job id",
+			args: args{"your-ko", "link-validator", "runs", "1234567890/job/qwerty", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("invalid job id: '1234567890/job/qwerty'"),
 		},
 		{
 			name: "workflow run job by id not found",
@@ -1087,16 +1097,24 @@ func Test_handleWorkflow(t *testing.T) {
 			wantErr: errors.New("job attempt '2' not found"),
 		},
 		{
-			name:      "invalid attempt ID - non-numeric",
-			args:      args{"your-ko", "link-validator", "runs", "123456/attempts/invalid-attempt", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("invalid attempt id: '123456/attempts/invalid-attempt'"),
+			name: "invalid attempt ID - non-numeric",
+			args: args{"your-ko", "link-validator", "runs", "123456/attempts/invalid-attempt", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("invalid attempt id: '123456/attempts/invalid-attempt'"),
 		},
 		{
-			name:      "unsupported ref type",
-			args:      args{"your-ko", "link-validator", "unsupported", "some-path", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("unsupported ref found, please report a bug"),
+			name: "unsupported ref type",
+			args: args{"your-ko", "link-validator", "unsupported", "some-path", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("unsupported ref found, please report a bug"),
 		},
 		{
 			name: "commits list - repository not found",
@@ -1231,7 +1249,6 @@ func Test_handleIssue(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
@@ -1270,8 +1287,8 @@ func Test_handleIssue(t *testing.T) {
 			},
 		},
 		{
-			name: "commits list - repository not found",
-			args: args{"your-ko", "nonexistent-repo", "a96366", "", ""},
+			name: "issues list - repository not found",
+			args: args{"your-ko", "nonexistent-repo", "", "", ""},
 			setupMock: func(m *mockclient) {
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},

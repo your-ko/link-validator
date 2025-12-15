@@ -202,14 +202,18 @@ func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment 
 //
 //meta:operation GET /repos/{owner}/{repo}/milestones/{milestone_number}
 func handleMilestone(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+	if ref == "" {
+		// list of milestones always exists
+		return nil
+	}
+
 	n, err := strconv.Atoi(ref)
 	if err != nil {
 		return fmt.Errorf("invalid milestone number %q", ref)
-	}
-
-	err = handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
-	if err != nil {
-		return err
 	}
 
 	_, _, err = c.getMilestone(ctx, owner, repo, n)
