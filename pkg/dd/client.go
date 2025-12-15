@@ -34,22 +34,22 @@ func (w wrapper) withAuth(ctx context.Context) context.Context {
 
 func (w wrapper) ListMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error) {
 	monitorsApi := datadogV1.NewMonitorsApi(w.client)
-	return monitorsApi.ListMonitors(ctx, o...)
+	return monitorsApi.ListMonitors(w.withAuth(ctx), o...)
 }
 
 func (w wrapper) GetMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
 	monitorsApi := datadogV1.NewMonitorsApi(w.client)
-	return monitorsApi.GetMonitor(ctx, monitorId, o...)
+	return monitorsApi.GetMonitor(w.withAuth(ctx), monitorId, o...)
 }
 
 func (w wrapper) ListDashboards(ctx context.Context, o ...datadogV1.ListDashboardsOptionalParameters) (datadogV1.DashboardSummary, *http.Response, error) {
 	dashboardApi := datadogV1.NewDashboardsApi(w.client)
-	return dashboardApi.ListDashboards(ctx, o...)
+	return dashboardApi.ListDashboards(w.withAuth(ctx), o...)
 }
 
 func (w wrapper) GetDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
 	dashboardApi := datadogV1.NewDashboardsApi(w.client)
-	return dashboardApi.GetDashboard(ctx, dashboardId)
+	return dashboardApi.GetDashboard(w.withAuth(ctx), dashboardId)
 }
 
 func (w wrapper) getDDClient() *datadog.APIClient {
