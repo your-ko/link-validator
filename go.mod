@@ -1,6 +1,6 @@
 module link-validator
 
-go 1.25.5
+go 1.25.4
 
 require (
 	github.com/google/go-github/v78 v78.0.0
