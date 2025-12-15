@@ -49,7 +49,7 @@ func handleNothing(_ context.Context, _ client, _, _, _, _, _ string) error {
 //
 //meta:operation GET /repos/{owner}/{repo}
 func handleRepoExist(ctx context.Context, c client, owner, repo, _, _, _ string) error {
-	_, _, err := c.repositories(ctx, owner, repo)
+	_, _, err := c.getRepository(ctx, owner, repo)
 	return err
 }
 
@@ -73,7 +73,7 @@ func handleContents(ctx context.Context, c client, owner, repo, ref, path, _ str
 //
 //meta:operation GET /repos/{owner}/{repo}/commits/{ref}
 func handleCommit(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
-	_, _, err := c.getCommit(ctx, owner, repo, ref, &github.ListOptions{})
+	_, _, err := c.getCommit(ctx, owner, repo, ref, nil)
 	return err
 }
 
@@ -95,7 +95,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 		right = parts[1]
 	case 1:
 		right = parts[0]
-		repository, _, err := c.repositories(ctx, owner, repo)
+		repository, _, err := c.getRepository(ctx, owner, repo)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 		// should not happen
 		return fmt.Errorf("incorrect GitHub compare URL, expected '/repos/{owner}/{repo}/compare/{basehead}'")
 	}
-	_, _, err := c.compareCommits(ctx, owner, repo, left, right, &github.ListOptions{})
+	_, _, err := c.compareCommits(ctx, owner, repo, left, right, nil)
 	return err
 }
 
@@ -116,7 +116,7 @@ func handleCompareCommits(ctx context.Context, c client, owner, repo, ref, path,
 func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	prNumber, err := strconv.Atoi(ref)
 	if err != nil {
-		return fmt.Errorf("invalid PR number %q", ref)
+		return fmt.Errorf("invalid PR number '%q'", ref)
 	}
 	_, _, err = c.getPR(ctx, owner, repo, prNumber)
 	if err != nil {
@@ -157,7 +157,7 @@ func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment 
 		// Handle review comments: #discussion_r<id>
 		commentId, err := strconv.ParseInt(strings.TrimPrefix(fragment, "discussion_r"), 10, 64)
 		if err != nil {
-			return fmt.Errorf("invalid comment id: '%s'", fragment)
+			return fmt.Errorf("invalid discussion id: '%s'", fragment)
 		}
 		_, _, err = c.getPRComment(ctx, owner, repo, commentId)
 		return err
@@ -208,7 +208,7 @@ func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, _
 		}
 	}
 
-	return errs.NewNotFoundMessage(fmt.Sprintf("security advisory %q not found", ref))
+	return fmt.Errorf("security advisory %q not found", ref)
 }
 
 // handleWorkflow validates the two UI forms:
@@ -242,13 +242,19 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 			_, _, err = c.getWorkflowJobByID(ctx, owner, repo, jobId)
 			return err
 		case strings.Contains(path, "attempts"):
-			attempts := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
-			attemptId, err := strconv.ParseInt(attempts, 10, 64)
+			attemptStr := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
+			attemptId, err := strconv.ParseInt(attemptStr, 10, 64)
 			if err != nil {
 				return fmt.Errorf("invalid attempt id: '%s'", path)
 			}
-			_, _, err = c.listWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, &github.ListOptions{})
-			return err
+			attempts, _, err := c.listWorkflowJobsAttempt(ctx, owner, repo, runId, attemptId, nil)
+			if err != nil {
+				return err
+			}
+			if attempts != nil && attemptId < int64(*attempts.TotalCount) {
+				return nil
+			}
+			return fmt.Errorf("job attempt '%s' not found", attemptStr)
 		default:
 			_, _, err = c.getWorkflowRunByID(ctx, owner, repo, runId)
 			return err
@@ -265,7 +271,7 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 //meta:operation GET /user
 //meta:operation GET /users/{username}
 func handleUser(ctx context.Context, c client, owner, _, _, _, _ string) error {
-	_, _, err := c.getUsers(ctx, owner)
+	_, _, err := c.getUser(ctx, owner)
 	return err
 }
 
@@ -317,7 +323,7 @@ func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragm
 				return nil
 			}
 		}
-		return errs.NewNotFoundMessage(fmt.Sprintf("asset '%s' wasn't found in the release assets", parts[1]))
+		return fmt.Errorf("asset '%s' wasn't found in the release assets", parts[1])
 	}
 	return fmt.Errorf("unexpected release path '%s' found. Please report a bug", path)
 }
@@ -328,7 +334,7 @@ func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragm
 //
 //meta:operation GET /repos/{owner}/{repo}/labels
 func handleLabel(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
-	labels, _, err := c.listLabels(ctx, owner, repo, &github.ListOptions{})
+	labels, _, err := c.listLabels(ctx, owner, repo, nil)
 	if err != nil {
 		return err
 	}
@@ -363,7 +369,7 @@ func handleWiki(ctx context.Context, c client, owner, repo, _, _, _ string) erro
 }
 
 // handlePackages validates existence of GitHub packages.
-// Since GetPackage requires user authentication, it is not suitable for link-validator,
+// Since GetPackage requires user authentication, it is not suitable for link-validator current approach,
 // that's why it always returns true
 //
 // For the URL pattern: /packages/{package_type}/{package_name}
