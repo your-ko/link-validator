@@ -227,13 +227,13 @@ func handleMilestone(ctx context.Context, c client, owner, repo, ref, path, frag
 //
 //meta:operation GET /repos/{owner}/{repo}/security-advisories
 func handleSecurityAdvisories(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	if ref == "" {
+		return fmt.Errorf("security advisory ID is required")
+	}
+
 	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	if err != nil {
 		return err
-	}
-
-	if ref == "" {
-		return fmt.Errorf("security advisory ID is required")
 	}
 
 	// Since there's no direct GetRepositoryAdvisory method, I list all advisories

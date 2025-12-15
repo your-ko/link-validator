@@ -845,14 +845,10 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			},
 		},
 		{
-			name: "empty advisory ID",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			setupMock: func(m *mockclient) {
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-			},
-			wantErr: errors.New("security advisory ID is required"),
+			name:      "empty advisory ID",
+			args:      args{"your-ko", "link-validator", "", "", ""},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("security advisory ID is required"),
 		},
 		{
 			name: "advisory not found - empty list",
