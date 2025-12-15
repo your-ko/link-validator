@@ -1263,10 +1263,14 @@ func Test_handleIssue(t *testing.T) {
 			},
 		},
 		{
-			name:      "invalid issue number - non-numeric",
-			args:      args{"your-ko", "link-validator", "abc", "", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("invalid issue number \"abc\""),
+			name: "invalid issue number - non-numeric",
+			args: args{"your-ko", "link-validator", "abc", "", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("invalid issue number \"abc\""),
 		},
 		{
 			name: "issue not found - 404",
@@ -1407,16 +1411,24 @@ func Test_handleReleases(t *testing.T) {
 			},
 		},
 		{
-			name:      "download - incorrect path format (missing slash)",
-			args:      args{"your-ko", "link-validator", "download", "v1.0.0-binary.tar.gz", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("incorrect download path 'v1.0.0-binary.tar.gz' in the release url"),
+			name: "download - incorrect path format (missing slash)",
+			args: args{"your-ko", "link-validator", "download", "v1.0.0-binary.tar.gz", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("incorrect download path 'v1.0.0-binary.tar.gz' in the release url"),
 		},
 		{
-			name:      "download - incorrect path format (too many parts)",
-			args:      args{"your-ko", "link-validator", "download", "v1.0.0/assets/binary.tar.gz", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("incorrect download path 'v1.0.0/assets/binary.tar.gz' in the release url"),
+			name: "download - incorrect path format (too many parts)",
+			args: args{"your-ko", "link-validator", "download", "v1.0.0/assets/binary.tar.gz", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("incorrect download path 'v1.0.0/assets/binary.tar.gz' in the release url"),
 		},
 		{
 			name: "download - asset not found in release",
@@ -1434,10 +1446,14 @@ func Test_handleReleases(t *testing.T) {
 			wantErr: errors.New("asset 'nonexistent.zip' wasn't found in the release assets"),
 		},
 		{
-			name:      "unexpected release path",
-			args:      args{"your-ko", "link-validator", "unknown", "some-path", ""},
-			setupMock: func(m *mockclient) {},
-			wantErr:   errors.New("unexpected release path 'some-path' found. Please report a bug"),
+			name: "unexpected release path",
+			args: args{"your-ko", "link-validator", "unknown", "some-path", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("unexpected release path 'some-path' found. Please report a bug"),
 		},
 		{
 			name: "latest release not found - 404",

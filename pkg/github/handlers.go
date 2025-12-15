@@ -326,18 +326,19 @@ func handleUser(ctx context.Context, c client, owner, _, _, _, _ string) error {
 //
 //meta:operation GET /repos/{owner}/{repo}/issues/{issue_number}
 func handleIssue(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
-	n, err := strconv.Atoi(ref)
-	if err != nil {
-		return fmt.Errorf("invalid issue number %q", ref)
-	}
-
-	err = handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	if err != nil {
 		return err
 	}
 	if ref == "" {
 		return nil
 	}
+
+	n, err := strconv.Atoi(ref)
+	if err != nil {
+		return fmt.Errorf("invalid issue number %q", ref)
+	}
+
 	_, _, err = c.getIssue(ctx, owner, repo, n)
 	return err
 }
