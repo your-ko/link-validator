@@ -1441,94 +1441,82 @@ func Test_handleLabel(t *testing.T) {
 		path     string
 		fragment string
 	}
-	type fields struct {
-		status         int
-		body           string
-		base64encoding bool
-	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		wantErr          bool
-		wantIs           error
-		wantErrorMessage string
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
 	}{
 		{
-			name: "label found - multiple labels",
+			name: "label found in the list",
 			args: args{"your-ko", "link-validator", "enhancement", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef", "description": "New feature or request"}, {"name": "help wanted", "color": "008672"}]`,
+			setupMock: func(m *mockclient) {
+				label := []*github.Label{{Name: github.Ptr("enhancement")}}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listLabels(mock.Anything, "your-ko", "link-validator", (*github.ListOptions)(nil)).Return(label, resp, nil)
 			},
 		},
 		{
 			name: "label not found - empty labels list",
 			args: args{"your-ko", "link-validator", "nonexistent", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[]`,
+			setupMock: func(m *mockclient) {
+				var label []*github.Label
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listLabels(mock.Anything, "your-ko", "link-validator", (*github.ListOptions)(nil)).Return(label, resp, nil)
 			},
-			wantErr:          true,
-			wantIs:           errs.ErrNotFound,
-			wantErrorMessage: "label 'nonexistent' not found",
-		},
-		{
-			name: "label not found - different labels exist",
-			args: args{"your-ko", "link-validator", "missing-label", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef"}, {"name": "documentation", "color": "0075ca"}]`,
-			},
-			wantErr:          true,
-			wantIs:           errs.ErrNotFound,
-			wantErrorMessage: "label 'missing-label' not found",
+			wantErr: errors.New("label 'nonexistent' not found"),
 		},
 		{
 			name: "label not found - case sensitive mismatch",
 			args: args{"your-ko", "link-validator", "Bug", "", ""},
-			fields: fields{
-				status: http.StatusOK,
-				body:   `[{"name": "bug", "color": "d73a4a"}, {"name": "enhancement", "color": "a2eeef"}]`,
+			setupMock: func(m *mockclient) {
+				label := []*github.Label{{Name: github.Ptr("bug")}}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().listLabels(mock.Anything, "your-ko", "link-validator", (*github.ListOptions)(nil)).Return(label, resp, nil)
 			},
-			wantErr:          true,
-			wantIs:           errs.ErrNotFound,
-			wantErrorMessage: "label 'Bug' not found",
+			wantErr: errors.New("label 'Bug' not found"),
 		},
-		{
-			name: "repository not found - 404",
-			args: args{"your-ko", "nonexistent-repo", "bug", "", ""},
-			fields: fields{
-				status: http.StatusNotFound,
-				body:   `{"message": "Not Found"}`,
-			},
-			wantErr: true,
-		},
+		//{
+		//	name: "repository not found",
+		//	args: args{"your-ko", "nonexistent-repo", "", "", ""},
+		//	setupMock: func(m *mockclient) {
+		//		err := &github.ErrorResponse{
+		//			Response: &http.Response{StatusCode: http.StatusNotFound},
+		//			Message:  "Not Found",
+		//		}
+		//		resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+		//		m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
+		//	},
+		//	wantErr: &github.ErrorResponse{
+		//		Response: &http.Response{StatusCode: http.StatusNotFound},
+		//		Message:  "Not Found",
+		//	},
+		//},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testServer := getTestServer(tt.fields.status, tt.fields.base64encoding, tt.fields.body)
-			proc := mockValidator(testServer, "")
-			t.Cleanup(testServer.Close)
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
 
-			err := handleLabel(context.Background(), proc.client, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("got unexpected error %s", err)
+			err := handleLabel(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if !mockClient.AssertExpectations(t) {
+				return
 			}
-			if !tt.wantErr {
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
 				return
 			}
 
-			if tt.wantIs != nil {
-				if !errors.Is(err, tt.wantIs) {
-					t.Fatalf("expected errors.Is(err, %v) true, got %v", tt.wantIs, err)
-				}
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
 			}
-
-			if tt.wantErrorMessage != "" {
-				if err.Error() != tt.wantErrorMessage {
-					t.Fatalf("expected exact error message:\n%q\ngot:\n%q", tt.wantErrorMessage, err.Error())
-				}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}

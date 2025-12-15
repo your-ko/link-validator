@@ -334,7 +334,7 @@ func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragm
 //
 //meta:operation GET /repos/{owner}/{repo}/labels
 func handleLabel(ctx context.Context, c client, owner, repo, ref, _, _ string) error {
-	labels, _, err := c.listLabels(ctx, owner, repo, &github.ListOptions{})
+	labels, _, err := c.listLabels(ctx, owner, repo, nil)
 	if err != nil {
 		return err
 	}
