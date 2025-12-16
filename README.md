@@ -1,6 +1,7 @@
 [![Main](https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/main.yaml)
 [![golangci-lint](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/golangci-lint.yaml)
 [![Link validation](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/link-validator.yaml)
+[![CodeQL Advanced](https://github.com/your-ko/link-validator/actions/workflows/codeql.yml/badge.svg)](https://github.com/your-ko/link-validator/actions/workflows/codeql.yml)
 
 # Link Validator
 
