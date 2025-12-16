@@ -11,11 +11,10 @@ import (
 type client interface {
 	withAuth(ctx context.Context) context.Context
 	getDDClient() *datadog.APIClient
-	ListMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)
-	GetMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)
-	ListDashboards(ctx context.Context, o ...datadogV1.ListDashboardsOptionalParameters) (datadogV1.DashboardSummary, *http.Response, error)
-	GetDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)
-	GetDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error)
+	listMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)
+	getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)
+	getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)
+	getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error)
 }
 
 type wrapper struct {
@@ -33,27 +32,22 @@ func (w wrapper) withAuth(ctx context.Context) context.Context {
 	})
 }
 
-func (w wrapper) ListMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error) {
+func (w wrapper) listMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error) {
 	monitorsApi := datadogV1.NewMonitorsApi(w.client)
 	return monitorsApi.ListMonitors(w.withAuth(ctx), o...)
 }
 
-func (w wrapper) GetMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
+func (w wrapper) getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
 	monitorsApi := datadogV1.NewMonitorsApi(w.client)
 	return monitorsApi.GetMonitor(w.withAuth(ctx), monitorId, o...)
 }
 
-func (w wrapper) ListDashboards(ctx context.Context, o ...datadogV1.ListDashboardsOptionalParameters) (datadogV1.DashboardSummary, *http.Response, error) {
-	dashboardApi := datadogV1.NewDashboardsApi(w.client)
-	return dashboardApi.ListDashboards(w.withAuth(ctx), o...)
-}
-
-func (w wrapper) GetDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error) {
+func (w wrapper) getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error) {
 	api := datadogV1.NewDashboardListsApi(w.client)
 	return api.GetDashboardList(w.withAuth(ctx), listId)
 }
 
-func (w wrapper) GetDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
+func (w wrapper) getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
 	dashboardApi := datadogV1.NewDashboardsApi(w.client)
 	return dashboardApi.GetDashboard(w.withAuth(ctx), dashboardId)
 }

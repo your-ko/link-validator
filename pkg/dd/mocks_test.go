@@ -40,411 +40,6 @@ func (_m *mockclient) EXPECT() *mockclient_Expecter {
 	return &mockclient_Expecter{mock: &_m.Mock}
 }
 
-// GetDashboard provides a mock function for the type mockclient
-func (_mock *mockclient) GetDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
-	ret := _mock.Called(ctx, dashboardId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetDashboard")
-	}
-
-	var r0 datadogV1.Dashboard
-	var r1 *http.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (datadogV1.Dashboard, *http.Response, error)); ok {
-		return returnFunc(ctx, dashboardId)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) datadogV1.Dashboard); ok {
-		r0 = returnFunc(ctx, dashboardId)
-	} else {
-		r0 = ret.Get(0).(datadogV1.Dashboard)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) *http.Response); ok {
-		r1 = returnFunc(ctx, dashboardId)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*http.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, string) error); ok {
-		r2 = returnFunc(ctx, dashboardId)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_GetDashboard_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDashboard'
-type mockclient_GetDashboard_Call struct {
-	*mock.Call
-}
-
-// GetDashboard is a helper method to define mock.On call
-//   - ctx context.Context
-//   - dashboardId string
-func (_e *mockclient_Expecter) GetDashboard(ctx interface{}, dashboardId interface{}) *mockclient_GetDashboard_Call {
-	return &mockclient_GetDashboard_Call{Call: _e.mock.On("GetDashboard", ctx, dashboardId)}
-}
-
-func (_c *mockclient_GetDashboard_Call) Run(run func(ctx context.Context, dashboardId string)) *mockclient_GetDashboard_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_GetDashboard_Call) Return(dashboard datadogV1.Dashboard, response *http.Response, err error) *mockclient_GetDashboard_Call {
-	_c.Call.Return(dashboard, response, err)
-	return _c
-}
-
-func (_c *mockclient_GetDashboard_Call) RunAndReturn(run func(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error)) *mockclient_GetDashboard_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetDashboardList provides a mock function for the type mockclient
-func (_mock *mockclient) GetDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error) {
-	ret := _mock.Called(ctx, listId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetDashboardList")
-	}
-
-	var r0 datadogV1.DashboardList
-	var r1 *http.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (datadogV1.DashboardList, *http.Response, error)); ok {
-		return returnFunc(ctx, listId)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) datadogV1.DashboardList); ok {
-		r0 = returnFunc(ctx, listId)
-	} else {
-		r0 = ret.Get(0).(datadogV1.DashboardList)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) *http.Response); ok {
-		r1 = returnFunc(ctx, listId)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*http.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, int64) error); ok {
-		r2 = returnFunc(ctx, listId)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_GetDashboardList_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDashboardList'
-type mockclient_GetDashboardList_Call struct {
-	*mock.Call
-}
-
-// GetDashboardList is a helper method to define mock.On call
-//   - ctx context.Context
-//   - listId int64
-func (_e *mockclient_Expecter) GetDashboardList(ctx interface{}, listId interface{}) *mockclient_GetDashboardList_Call {
-	return &mockclient_GetDashboardList_Call{Call: _e.mock.On("GetDashboardList", ctx, listId)}
-}
-
-func (_c *mockclient_GetDashboardList_Call) Run(run func(ctx context.Context, listId int64)) *mockclient_GetDashboardList_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 int64
-		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_GetDashboardList_Call) Return(dashboardList datadogV1.DashboardList, response *http.Response, err error) *mockclient_GetDashboardList_Call {
-	_c.Call.Return(dashboardList, response, err)
-	return _c
-}
-
-func (_c *mockclient_GetDashboardList_Call) RunAndReturn(run func(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)) *mockclient_GetDashboardList_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetMonitor provides a mock function for the type mockclient
-func (_mock *mockclient) GetMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
-	var tmpRet mock.Arguments
-	if len(o) > 0 {
-		tmpRet = _mock.Called(ctx, monitorId, o)
-	} else {
-		tmpRet = _mock.Called(ctx, monitorId)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetMonitor")
-	}
-
-	var r0 datadogV1.Monitor
-	var r1 *http.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)); ok {
-		return returnFunc(ctx, monitorId, o...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) datadogV1.Monitor); ok {
-		r0 = returnFunc(ctx, monitorId, o...)
-	} else {
-		r0 = ret.Get(0).(datadogV1.Monitor)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) *http.Response); ok {
-		r1 = returnFunc(ctx, monitorId, o...)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*http.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) error); ok {
-		r2 = returnFunc(ctx, monitorId, o...)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_GetMonitor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMonitor'
-type mockclient_GetMonitor_Call struct {
-	*mock.Call
-}
-
-// GetMonitor is a helper method to define mock.On call
-//   - ctx context.Context
-//   - monitorId int64
-//   - o ...datadogV1.GetMonitorOptionalParameters
-func (_e *mockclient_Expecter) GetMonitor(ctx interface{}, monitorId interface{}, o ...interface{}) *mockclient_GetMonitor_Call {
-	return &mockclient_GetMonitor_Call{Call: _e.mock.On("GetMonitor",
-		append([]interface{}{ctx, monitorId}, o...)...)}
-}
-
-func (_c *mockclient_GetMonitor_Call) Run(run func(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters)) *mockclient_GetMonitor_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 int64
-		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 []datadogV1.GetMonitorOptionalParameters
-		var variadicArgs []datadogV1.GetMonitorOptionalParameters
-		if len(args) > 2 {
-			variadicArgs = args[2].([]datadogV1.GetMonitorOptionalParameters)
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_GetMonitor_Call) Return(monitor datadogV1.Monitor, response *http.Response, err error) *mockclient_GetMonitor_Call {
-	_c.Call.Return(monitor, response, err)
-	return _c
-}
-
-func (_c *mockclient_GetMonitor_Call) RunAndReturn(run func(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)) *mockclient_GetMonitor_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListDashboards provides a mock function for the type mockclient
-func (_mock *mockclient) ListDashboards(ctx context.Context, o ...datadogV1.ListDashboardsOptionalParameters) (datadogV1.DashboardSummary, *http.Response, error) {
-	var tmpRet mock.Arguments
-	if len(o) > 0 {
-		tmpRet = _mock.Called(ctx, o)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListDashboards")
-	}
-
-	var r0 datadogV1.DashboardSummary
-	var r1 *http.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListDashboardsOptionalParameters) (datadogV1.DashboardSummary, *http.Response, error)); ok {
-		return returnFunc(ctx, o...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListDashboardsOptionalParameters) datadogV1.DashboardSummary); ok {
-		r0 = returnFunc(ctx, o...)
-	} else {
-		r0 = ret.Get(0).(datadogV1.DashboardSummary)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...datadogV1.ListDashboardsOptionalParameters) *http.Response); ok {
-		r1 = returnFunc(ctx, o...)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*http.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, ...datadogV1.ListDashboardsOptionalParameters) error); ok {
-		r2 = returnFunc(ctx, o...)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_ListDashboards_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDashboards'
-type mockclient_ListDashboards_Call struct {
-	*mock.Call
-}
-
-// ListDashboards is a helper method to define mock.On call
-//   - ctx context.Context
-//   - o ...datadogV1.ListDashboardsOptionalParameters
-func (_e *mockclient_Expecter) ListDashboards(ctx interface{}, o ...interface{}) *mockclient_ListDashboards_Call {
-	return &mockclient_ListDashboards_Call{Call: _e.mock.On("ListDashboards",
-		append([]interface{}{ctx}, o...)...)}
-}
-
-func (_c *mockclient_ListDashboards_Call) Run(run func(ctx context.Context, o ...datadogV1.ListDashboardsOptionalParameters)) *mockclient_ListDashboards_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []datadogV1.ListDashboardsOptionalParameters
-		var variadicArgs []datadogV1.ListDashboardsOptionalParameters
-		if len(args) > 1 {
-			variadicArgs = args[1].([]datadogV1.ListDashboardsOptionalParameters)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_ListDashboards_Call) Return(dashboardSummary datadogV1.DashboardSummary, response *http.Response, err error) *mockclient_ListDashboards_Call {
-	_c.Call.Return(dashboardSummary, response, err)
-	return _c
-}
-
-func (_c *mockclient_ListDashboards_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListDashboardsOptionalParameters) (datadogV1.DashboardSummary, *http.Response, error)) *mockclient_ListDashboards_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListMonitors provides a mock function for the type mockclient
-func (_mock *mockclient) ListMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error) {
-	var tmpRet mock.Arguments
-	if len(o) > 0 {
-		tmpRet = _mock.Called(ctx, o)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListMonitors")
-	}
-
-	var r0 []datadogV1.Monitor
-	var r1 *http.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)); ok {
-		return returnFunc(ctx, o...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) []datadogV1.Monitor); ok {
-		r0 = returnFunc(ctx, o...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]datadogV1.Monitor)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) *http.Response); ok {
-		r1 = returnFunc(ctx, o...)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*http.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) error); ok {
-		r2 = returnFunc(ctx, o...)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_ListMonitors_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMonitors'
-type mockclient_ListMonitors_Call struct {
-	*mock.Call
-}
-
-// ListMonitors is a helper method to define mock.On call
-//   - ctx context.Context
-//   - o ...datadogV1.ListMonitorsOptionalParameters
-func (_e *mockclient_Expecter) ListMonitors(ctx interface{}, o ...interface{}) *mockclient_ListMonitors_Call {
-	return &mockclient_ListMonitors_Call{Call: _e.mock.On("ListMonitors",
-		append([]interface{}{ctx}, o...)...)}
-}
-
-func (_c *mockclient_ListMonitors_Call) Run(run func(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters)) *mockclient_ListMonitors_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []datadogV1.ListMonitorsOptionalParameters
-		var variadicArgs []datadogV1.ListMonitorsOptionalParameters
-		if len(args) > 1 {
-			variadicArgs = args[1].([]datadogV1.ListMonitorsOptionalParameters)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_ListMonitors_Call) Return(monitors []datadogV1.Monitor, response *http.Response, err error) *mockclient_ListMonitors_Call {
-	_c.Call.Return(monitors, response, err)
-	return _c
-}
-
-func (_c *mockclient_ListMonitors_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)) *mockclient_ListMonitors_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // getDDClient provides a mock function for the type mockclient
 func (_mock *mockclient) getDDClient() *datadog.APIClient {
 	ret := _mock.Called()
@@ -487,6 +82,328 @@ func (_c *mockclient_getDDClient_Call) Return(aPIClient *datadog.APIClient) *moc
 }
 
 func (_c *mockclient_getDDClient_Call) RunAndReturn(run func() *datadog.APIClient) *mockclient_getDDClient_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getDashboard provides a mock function for the type mockclient
+func (_mock *mockclient) getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
+	ret := _mock.Called(ctx, dashboardId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getDashboard")
+	}
+
+	var r0 datadogV1.Dashboard
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (datadogV1.Dashboard, *http.Response, error)); ok {
+		return returnFunc(ctx, dashboardId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) datadogV1.Dashboard); ok {
+		r0 = returnFunc(ctx, dashboardId)
+	} else {
+		r0 = ret.Get(0).(datadogV1.Dashboard)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) *http.Response); ok {
+		r1 = returnFunc(ctx, dashboardId)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = returnFunc(ctx, dashboardId)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getDashboard_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getDashboard'
+type mockclient_getDashboard_Call struct {
+	*mock.Call
+}
+
+// getDashboard is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dashboardId string
+func (_e *mockclient_Expecter) getDashboard(ctx interface{}, dashboardId interface{}) *mockclient_getDashboard_Call {
+	return &mockclient_getDashboard_Call{Call: _e.mock.On("getDashboard", ctx, dashboardId)}
+}
+
+func (_c *mockclient_getDashboard_Call) Run(run func(ctx context.Context, dashboardId string)) *mockclient_getDashboard_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getDashboard_Call) Return(dashboard datadogV1.Dashboard, response *http.Response, err error) *mockclient_getDashboard_Call {
+	_c.Call.Return(dashboard, response, err)
+	return _c
+}
+
+func (_c *mockclient_getDashboard_Call) RunAndReturn(run func(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error)) *mockclient_getDashboard_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getDashboardList provides a mock function for the type mockclient
+func (_mock *mockclient) getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error) {
+	ret := _mock.Called(ctx, listId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getDashboardList")
+	}
+
+	var r0 datadogV1.DashboardList
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (datadogV1.DashboardList, *http.Response, error)); ok {
+		return returnFunc(ctx, listId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) datadogV1.DashboardList); ok {
+		r0 = returnFunc(ctx, listId)
+	} else {
+		r0 = ret.Get(0).(datadogV1.DashboardList)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) *http.Response); ok {
+		r1 = returnFunc(ctx, listId)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int64) error); ok {
+		r2 = returnFunc(ctx, listId)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getDashboardList_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getDashboardList'
+type mockclient_getDashboardList_Call struct {
+	*mock.Call
+}
+
+// getDashboardList is a helper method to define mock.On call
+//   - ctx context.Context
+//   - listId int64
+func (_e *mockclient_Expecter) getDashboardList(ctx interface{}, listId interface{}) *mockclient_getDashboardList_Call {
+	return &mockclient_getDashboardList_Call{Call: _e.mock.On("getDashboardList", ctx, listId)}
+}
+
+func (_c *mockclient_getDashboardList_Call) Run(run func(ctx context.Context, listId int64)) *mockclient_getDashboardList_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getDashboardList_Call) Return(dashboardList datadogV1.DashboardList, response *http.Response, err error) *mockclient_getDashboardList_Call {
+	_c.Call.Return(dashboardList, response, err)
+	return _c
+}
+
+func (_c *mockclient_getDashboardList_Call) RunAndReturn(run func(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)) *mockclient_getDashboardList_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getMonitor provides a mock function for the type mockclient
+func (_mock *mockclient) getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
+	var tmpRet mock.Arguments
+	if len(o) > 0 {
+		tmpRet = _mock.Called(ctx, monitorId, o)
+	} else {
+		tmpRet = _mock.Called(ctx, monitorId)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for getMonitor")
+	}
+
+	var r0 datadogV1.Monitor
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)); ok {
+		return returnFunc(ctx, monitorId, o...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) datadogV1.Monitor); ok {
+		r0 = returnFunc(ctx, monitorId, o...)
+	} else {
+		r0 = ret.Get(0).(datadogV1.Monitor)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) *http.Response); ok {
+		r1 = returnFunc(ctx, monitorId, o...)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int64, ...datadogV1.GetMonitorOptionalParameters) error); ok {
+		r2 = returnFunc(ctx, monitorId, o...)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getMonitor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getMonitor'
+type mockclient_getMonitor_Call struct {
+	*mock.Call
+}
+
+// getMonitor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - monitorId int64
+//   - o ...datadogV1.GetMonitorOptionalParameters
+func (_e *mockclient_Expecter) getMonitor(ctx interface{}, monitorId interface{}, o ...interface{}) *mockclient_getMonitor_Call {
+	return &mockclient_getMonitor_Call{Call: _e.mock.On("getMonitor",
+		append([]interface{}{ctx, monitorId}, o...)...)}
+}
+
+func (_c *mockclient_getMonitor_Call) Run(run func(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters)) *mockclient_getMonitor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 []datadogV1.GetMonitorOptionalParameters
+		var variadicArgs []datadogV1.GetMonitorOptionalParameters
+		if len(args) > 2 {
+			variadicArgs = args[2].([]datadogV1.GetMonitorOptionalParameters)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getMonitor_Call) Return(monitor datadogV1.Monitor, response *http.Response, err error) *mockclient_getMonitor_Call {
+	_c.Call.Return(monitor, response, err)
+	return _c
+}
+
+func (_c *mockclient_getMonitor_Call) RunAndReturn(run func(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)) *mockclient_getMonitor_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// listMonitors provides a mock function for the type mockclient
+func (_mock *mockclient) listMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error) {
+	var tmpRet mock.Arguments
+	if len(o) > 0 {
+		tmpRet = _mock.Called(ctx, o)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for listMonitors")
+	}
+
+	var r0 []datadogV1.Monitor
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)); ok {
+		return returnFunc(ctx, o...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) []datadogV1.Monitor); ok {
+		r0 = returnFunc(ctx, o...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]datadogV1.Monitor)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) *http.Response); ok {
+		r1 = returnFunc(ctx, o...)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, ...datadogV1.ListMonitorsOptionalParameters) error); ok {
+		r2 = returnFunc(ctx, o...)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_listMonitors_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'listMonitors'
+type mockclient_listMonitors_Call struct {
+	*mock.Call
+}
+
+// listMonitors is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o ...datadogV1.ListMonitorsOptionalParameters
+func (_e *mockclient_Expecter) listMonitors(ctx interface{}, o ...interface{}) *mockclient_listMonitors_Call {
+	return &mockclient_listMonitors_Call{Call: _e.mock.On("listMonitors",
+		append([]interface{}{ctx}, o...)...)}
+}
+
+func (_c *mockclient_listMonitors_Call) Run(run func(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters)) *mockclient_listMonitors_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []datadogV1.ListMonitorsOptionalParameters
+		var variadicArgs []datadogV1.ListMonitorsOptionalParameters
+		if len(args) > 1 {
+			variadicArgs = args[1].([]datadogV1.ListMonitorsOptionalParameters)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_listMonitors_Call) Return(monitors []datadogV1.Monitor, response *http.Response, err error) *mockclient_listMonitors_Call {
+	_c.Call.Return(monitors, response, err)
+	return _c
+}
+
+func (_c *mockclient_listMonitors_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)) *mockclient_listMonitors_Call {
 	_c.Call.Return(run)
 	return _c
 }

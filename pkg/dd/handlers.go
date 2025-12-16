@@ -30,7 +30,7 @@ func handleConnection(ctx context.Context, c client, resource ddResource) error 
 
 func handleMonitors(ctx context.Context, c client, resource ddResource) error {
 	if resource.id == "" {
-		_, _, err := c.ListMonitors(ctx)
+		_, _, err := c.listMonitors(ctx)
 		return err
 	}
 	monitorId, err := strconv.ParseInt(resource.id, 10, 64)
@@ -38,7 +38,7 @@ func handleMonitors(ctx context.Context, c client, resource ddResource) error {
 		return fmt.Errorf("invalid monitor id: '%s'", resource.id)
 	}
 
-	_, _, err = c.GetMonitor(ctx, monitorId)
+	_, _, err = c.getMonitor(ctx, monitorId)
 	if err != nil {
 		return err
 	}
@@ -52,12 +52,12 @@ func handleDashboards(ctx context.Context, c client, resource ddResource) error 
 		if err != nil {
 			return fmt.Errorf("invalid dashboard list id: '%s'", resource.id)
 		}
-		_, _, err = c.GetDashboardList(ctx, listId)
+		_, _, err = c.getDashboardList(ctx, listId)
 		return err
 	}
 	if resource.id != "" {
 		// get particular dashboard
-		_, _, err := c.GetDashboard(ctx, resource.id)
+		_, _, err := c.getDashboard(ctx, resource.id)
 		return err
 	}
 	return fmt.Errorf("unsupported Dashboard URL found. Please report a bug")

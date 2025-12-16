@@ -33,7 +33,7 @@ func Test_handleMonitors(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				monitors := []datadogV1.Monitor{{Name: Ptr("test")}}
 				resp := &http.Response{StatusCode: http.StatusOK}
-				m.EXPECT().ListMonitors(mock.Anything).Return(monitors, resp, nil)
+				m.EXPECT().listMonitors(mock.Anything).Return(monitors, resp, nil)
 			},
 		},
 		{
@@ -45,7 +45,7 @@ func Test_handleMonitors(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				monitor := datadogV1.Monitor{Name: Ptr("test"), Id: Ptr(int64(1234567890))}
 				resp := &http.Response{StatusCode: http.StatusOK}
-				m.EXPECT().GetMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, nil)
+				m.EXPECT().getMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, nil)
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func Test_handleMonitors(t *testing.T) {
 					ErrorModel:   []string{"Monitor not found"},
 				}
 				resp := &http.Response{StatusCode: http.StatusNotFound}
-				m.EXPECT().GetMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, err)
+				m.EXPECT().getMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, err)
 			},
 			wantErr: datadog.GenericOpenAPIError{
 				ErrorMessage: "404 Not Found",
@@ -126,7 +126,7 @@ func Test_handleDashboards(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				dashboard := datadogV1.Dashboard{Title: "title"}
 				resp := &http.Response{StatusCode: http.StatusOK}
-				m.EXPECT().GetDashboard(mock.Anything, "1234567890").Return(dashboard, resp, nil)
+				m.EXPECT().getDashboard(mock.Anything, "1234567890").Return(dashboard, resp, nil)
 			},
 		},
 		{
@@ -139,7 +139,7 @@ func Test_handleDashboards(t *testing.T) {
 					ErrorModel:   []string{"Not found"},
 				}
 				resp := &http.Response{StatusCode: http.StatusNotFound}
-				m.EXPECT().GetDashboard(mock.Anything, "1234567890").Return(dashboard, resp, err)
+				m.EXPECT().getDashboard(mock.Anything, "1234567890").Return(dashboard, resp, err)
 			},
 			wantErr: datadog.GenericOpenAPIError{
 				ErrorMessage: "404 Not Found",
@@ -155,7 +155,7 @@ func Test_handleDashboards(t *testing.T) {
 					Type: Ptr("manual_dashboard_list"),
 				}
 				resp := &http.Response{StatusCode: http.StatusOK}
-				m.EXPECT().GetDashboardList(mock.Anything, int64(1234567890)).Return(dashboards, resp, nil)
+				m.EXPECT().getDashboardList(mock.Anything, int64(1234567890)).Return(dashboards, resp, nil)
 			},
 		},
 		{
@@ -169,7 +169,7 @@ func Test_handleDashboards(t *testing.T) {
 				}
 
 				resp := &http.Response{StatusCode: http.StatusNotFound}
-				m.EXPECT().GetDashboardList(mock.Anything, int64(1234567890)).Return(dashboards, resp, err)
+				m.EXPECT().getDashboardList(mock.Anything, int64(1234567890)).Return(dashboards, resp, err)
 			},
 			wantErr: datadog.GenericOpenAPIError{
 				ErrorMessage: "404 Not Found",
