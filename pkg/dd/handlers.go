@@ -12,7 +12,7 @@ type ddHandler func(
 	resource ddResource,
 ) error
 
-func handleConnection(ctx context.Context, c client, resource ddResource) error {
+func handleConnection(ctx context.Context, c client, _ ddResource) error {
 	validation, _, err := c.validate(ctx)
 	if err != nil {
 		return err

@@ -49,8 +49,10 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 	return proc.
 		Route("", handleConnection).
 		Route("ddsql", handleConnection).
+		Route("dash/integration", handleConnection). // dashboards coming from integrations are not accessible via API
 		Route("monitors", handleMonitors).
 		Route("dashboard", handleDashboards)
+
 	//Route("logs", proc.validateConnection).
 	//Route("apm", proc.validateConnection).
 	//Route("infrastructure", proc.validateConnection).
@@ -125,6 +127,9 @@ func parseDataDogURL(link string) (*ddResource, error) {
 			resource.id = pathSegments[1]
 			resource.subType = pathSegments[2]
 		}
+	case "dash":
+		resource.typ = path.Join(resource.typ, pathSegments[1])
+		resource.id = pathSegments[2]
 	case "ddsql":
 		resource.subType = pathSegments[1]
 	}
