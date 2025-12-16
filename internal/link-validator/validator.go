@@ -46,7 +46,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	processors = append(processors, ghValidator)
 	ddValidator, err := dd.New(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("can't instantiate DataDog link validator: %w", err)
+		slog.Info("skip DataDog validator initialisation, DD_API_KEY/DD_APP_KEY are not set")
 	}
 	processors = append(processors, ddValidator)
 	processors = append(processors, local_path.New())
