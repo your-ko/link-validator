@@ -8,7 +8,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -38,52 +37,6 @@ type mockclient_Expecter struct {
 
 func (_m *mockclient) EXPECT() *mockclient_Expecter {
 	return &mockclient_Expecter{mock: &_m.Mock}
-}
-
-// getDDClient provides a mock function for the type mockclient
-func (_mock *mockclient) getDDClient() *datadog.APIClient {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for getDDClient")
-	}
-
-	var r0 *datadog.APIClient
-	if returnFunc, ok := ret.Get(0).(func() *datadog.APIClient); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*datadog.APIClient)
-		}
-	}
-	return r0
-}
-
-// mockclient_getDDClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getDDClient'
-type mockclient_getDDClient_Call struct {
-	*mock.Call
-}
-
-// getDDClient is a helper method to define mock.On call
-func (_e *mockclient_Expecter) getDDClient() *mockclient_getDDClient_Call {
-	return &mockclient_getDDClient_Call{Call: _e.mock.On("getDDClient")}
-}
-
-func (_c *mockclient_getDDClient_Call) Run(run func()) *mockclient_getDDClient_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *mockclient_getDDClient_Call) Return(aPIClient *datadog.APIClient) *mockclient_getDDClient_Call {
-	_c.Call.Return(aPIClient)
-	return _c
-}
-
-func (_c *mockclient_getDDClient_Call) RunAndReturn(run func() *datadog.APIClient) *mockclient_getDDClient_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // getDashboard provides a mock function for the type mockclient
@@ -404,6 +357,74 @@ func (_c *mockclient_listMonitors_Call) Return(monitors []datadogV1.Monitor, res
 }
 
 func (_c *mockclient_listMonitors_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)) *mockclient_listMonitors_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// validate provides a mock function for the type mockclient
+func (_mock *mockclient) validate(ctx context.Context) (datadogV1.AuthenticationValidationResponse, *http.Response, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for validate")
+	}
+
+	var r0 datadogV1.AuthenticationValidationResponse
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (datadogV1.AuthenticationValidationResponse, *http.Response, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) datadogV1.AuthenticationValidationResponse); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(datadogV1.AuthenticationValidationResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) *http.Response); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context) error); ok {
+		r2 = returnFunc(ctx)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'validate'
+type mockclient_validate_Call struct {
+	*mock.Call
+}
+
+// validate is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *mockclient_Expecter) validate(ctx interface{}) *mockclient_validate_Call {
+	return &mockclient_validate_Call{Call: _e.mock.On("validate", ctx)}
+}
+
+func (_c *mockclient_validate_Call) Run(run func(ctx context.Context)) *mockclient_validate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_validate_Call) Return(authenticationValidationResponse datadogV1.AuthenticationValidationResponse, response *http.Response, err error) *mockclient_validate_Call {
+	_c.Call.Return(authenticationValidationResponse, response, err)
+	return _c
+}
+
+func (_c *mockclient_validate_Call) RunAndReturn(run func(ctx context.Context) (datadogV1.AuthenticationValidationResponse, *http.Response, error)) *mockclient_validate_Call {
 	_c.Call.Return(run)
 	return _c
 }

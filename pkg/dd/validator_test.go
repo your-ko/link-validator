@@ -158,6 +158,15 @@ func Test_parseUrl(t *testing.T) {
 				query:   url.Values{"fromUser": []string{"false"}},
 			},
 		},
+		{
+			name: "ddsql",
+			args: args{link: "https://app.datadoghq.com/ddsql/editor"},
+			want: &ddResource{
+				typ:     "ddsql",
+				subType: "editor",
+				query:   url.Values{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

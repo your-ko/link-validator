@@ -10,7 +10,7 @@ import (
 
 type client interface {
 	withAuth(ctx context.Context) context.Context
-	getDDClient() *datadog.APIClient
+	validate(ctx context.Context) (datadogV1.AuthenticationValidationResponse, *http.Response, error)
 	listMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)
 	getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)
 	getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)
@@ -21,6 +21,11 @@ type wrapper struct {
 	client *datadog.APIClient
 	apiKey string
 	appKey string
+}
+
+func (w wrapper) validate(ctx context.Context) (datadogV1.AuthenticationValidationResponse, *http.Response, error) {
+	authApi := datadogV1.NewAuthenticationApi(w.client)
+	return authApi.Validate(w.withAuth(ctx))
 }
 
 // withAuth creates a new context with DataDog API authentication from the request context
@@ -50,8 +55,4 @@ func (w wrapper) getDashboardList(ctx context.Context, listId int64) (datadogV1.
 func (w wrapper) getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
 	dashboardApi := datadogV1.NewDashboardsApi(w.client)
 	return dashboardApi.GetDashboard(w.withAuth(ctx), dashboardId)
-}
-
-func (w wrapper) getDDClient() *datadog.APIClient {
-	return w.client
 }

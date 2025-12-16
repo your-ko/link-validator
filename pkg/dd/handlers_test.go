@@ -205,7 +205,75 @@ func Test_handleDashboards(t *testing.T) {
 			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
 			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			//}
+		})
+	}
+}
 
+func Test_handleConnection(t *testing.T) {
+	type args struct {
+		resource ddResource
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
+	}{
+		{
+			name: "connection is valid",
+			args: args{resource: ddResource{}},
+			setupMock: func(m *mockclient) {
+				validation := datadogV1.AuthenticationValidationResponse{Valid: Ptr(true)}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().validate(mock.Anything).Return(validation, resp, nil)
+			},
+		},
+		{
+			name: "invalid credentials",
+			args: args{resource: ddResource{}},
+			setupMock: func(m *mockclient) {
+				validation := datadogV1.AuthenticationValidationResponse{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "403 Forbidden",
+					ErrorModel:   []string{"Forbidden"},
+				}
+				resp := &http.Response{StatusCode: http.StatusForbidden}
+				m.EXPECT().validate(mock.Anything).Return(validation, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "403 Forbidden",
+				ErrorModel:   []string{"Forbidden"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleConnection(context.Background(), mockClient, tt.args.resource)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			//}
 		})
 	}
 }

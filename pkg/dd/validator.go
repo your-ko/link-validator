@@ -48,6 +48,7 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 	return proc.
 		Route("", handleConnection).
+		Route("ddsql", handleConnection).
 		Route("monitors", handleMonitors).
 		Route("dashboard", handleDashboards)
 	//Route("logs", proc.validateConnection).
@@ -124,6 +125,8 @@ func parseDataDogURL(link string) (*ddResource, error) {
 			resource.id = pathSegments[1]
 			resource.subType = pathSegments[2]
 		}
+	case "ddsql":
+		resource.subType = pathSegments[1]
 	}
 
 	return resource, nil

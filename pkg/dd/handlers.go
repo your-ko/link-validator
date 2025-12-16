@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
-	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
 )
 
 type ddHandler func(
@@ -15,10 +13,9 @@ type ddHandler func(
 ) error
 
 func handleConnection(ctx context.Context, c client, resource ddResource) error {
-	authApi := datadogV1.NewAuthenticationApi(c.getDDClient())
-	validation, _, err := authApi.Validate(ctx)
+	validation, _, err := c.validate(ctx)
 	if err != nil {
-		return fmt.Errorf("DataDog API connection failed: %w", err)
+		return err
 	}
 
 	if !validation.GetValid() {
