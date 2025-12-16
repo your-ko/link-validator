@@ -7,6 +7,7 @@ import (
 	"link-validator/pkg/regex"
 	"log/slog"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
@@ -18,12 +19,12 @@ type LinkProcessor struct {
 }
 
 type ddResource struct {
-	Type      string
-	ID        string
-	Action    string
-	Query     url.Values
-	Fragments string
-	Path      []string
+	typ      string
+	id       string
+	subType  string
+	action   string
+	query    url.Values
+	fragment string
 }
 
 func New(cfg *config.Config) (*LinkProcessor, error) {
@@ -66,10 +67,10 @@ func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) e
 		return err
 	}
 
-	if handler, exists := proc.routes[resource.Type]; exists {
+	if handler, exists := proc.routes[resource.typ]; exists {
 		return handler(ctx, proc.client, *resource)
 	}
-	return fmt.Errorf("unsupported DataDog URL type: '%s'", resource.Type)
+	return fmt.Errorf("unsupported DataDog URL type: '%s'", resource.typ)
 }
 
 func parseDataDogURL(link string) (*ddResource, error) {
@@ -84,9 +85,8 @@ func parseDataDogURL(link string) (*ddResource, error) {
 	}
 
 	resource := &ddResource{
-		Path:      pathSegments,
-		Query:     u.Query(),
-		Fragments: u.Fragment,
+		query:    u.Query(),
+		fragment: u.Fragment,
 	}
 	if len(pathSegments) == 0 {
 		return resource, nil
@@ -97,17 +97,45 @@ func parseDataDogURL(link string) (*ddResource, error) {
 		pathSegments = append(pathSegments, make([]string, diff)...)[:growTo]
 	}
 
-	resource.Type = pathSegments[0]
-	switch resource.Type {
+	resource.typ = pathSegments[0]
+	switch resource.typ {
 	case "monitors":
-		resource.ID = pathSegments[1]
-		resource.Action = pathSegments[2]
-	case "dashboards":
-		resource.ID = pathSegments[1]
-		resource.Action = pathSegments[2]
+		switch pathSegments[1] {
+		case "manage", "edit":
+			resource.action = pathSegments[1]
+		default:
+			resource.id = pathSegments[1]
+			resource.action = pathSegments[2]
+		}
+	case "dashboard":
+		switch pathSegments[1] {
+		case "lists", "reports", "shared":
+			if isEmpty(pathSegments[2:]) {
+				resource.typ = ""
+			} else {
+				resource.subType = path.Join(pathSegments[1], pathSegments[2])
+				resource.id = pathSegments[3]
+			}
+			if resource.subType == "lists/preset" {
+				// currently there is no DD API to fetch preset lists of dashboards
+				resource.typ = ""
+			}
+		default:
+			resource.id = pathSegments[1]
+			resource.subType = pathSegments[2]
+		}
 	}
 
 	return resource, nil
+}
+
+func isEmpty(segments []string) bool {
+	for _, s := range segments {
+		if s != "" {
+			return false
+		}
+	}
+	return true
 }
 
 func (proc *LinkProcessor) ExtractLinks(line string) []string {

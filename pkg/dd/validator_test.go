@@ -68,61 +68,94 @@ func Test_parseUrl(t *testing.T) {
 			name: "parses list monitors",
 			args: args{link: "https://app.datadoghq.com/monitors"},
 			want: &ddResource{
-				Type:  "monitors",
-				Query: url.Values{},
-				Path:  []string{"monitors"},
+				typ:   "monitors",
+				query: url.Values{},
 			},
 		},
 		{
 			name: "parses list monitors with a query string",
 			args: args{link: "https://app.datadoghq.com/monitors/manage?q=team%3A%28thebest&p=1"},
 			want: &ddResource{
-				Type:   "monitors",
-				Action: "manage",
-				Query:  url.Values{"q": []string{"team:(thebest"}, "p": []string{"1"}},
-				Path:   []string{"monitors", "manage"},
+				typ:      "monitors",
+				action:   "manage",
+				query:    url.Values{"q": []string{"team:(thebest"}, "p": []string{"1"}},
+				fragment: "",
 			},
 		},
 		{
 			name: "parses particular monitor",
 			args: args{link: "https://app.datadoghq.com/monitors/1234567890"},
 			want: &ddResource{
-				Type:  "monitors",
-				ID:    "1234567890",
-				Query: url.Values{},
-				Path:  []string{"monitors", "1234567890"},
+				typ:   "monitors",
+				id:    "1234567890",
+				query: url.Values{},
 			},
 		},
 		{
 			name: "parses particular monitor edit",
 			args: args{link: "https://app.datadoghq.com/monitors/1234567890/edit"},
 			want: &ddResource{
-				Type:   "monitors",
-				ID:     "1234567890",
-				Action: "edit",
-				Query:  url.Values{},
-				Path:   []string{"monitors", "1234567890", "edit"},
+				typ:    "monitors",
+				id:     "1234567890",
+				action: "edit",
+				query:  url.Values{},
 			},
 		},
 		{
 			name: "parses list dashboards",
 			args: args{link: "https://app.datadoghq.com/dashboard/lists?p1"},
 			want: &ddResource{
-				Type:   "dashboard",
-				Action: "lists",
-				Query:  url.Values{"p1": []string{""}},
-				Path:   []string{"dashboard", "lists"},
+				typ:     "",
+				subType: "",
+				query:   url.Values{"p1": []string{""}},
+			},
+		},
+		{
+			name: "parses list dashboards",
+			args: args{link: "https://app.datadoghq.com/dashboard/shared?p1"},
+			want: &ddResource{
+				typ:     "",
+				subType: "",
+				query:   url.Values{"p1": []string{""}},
+			},
+		},
+		{
+			name: "parses dashboard presets",
+			args: args{link: "https://app.datadoghq.com/dashboard/lists/preset/5"},
+			want: &ddResource{
+				typ:     "",
+				subType: "lists/preset",
+				id:      "5",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "parses dashboard manual presets",
+			args: args{link: "https://app.datadoghq.com/dashboard/lists/manual/123456789"},
+			want: &ddResource{
+				typ:     "dashboard",
+				subType: "lists/manual",
+				id:      "123456789",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "parses dashboard reports",
+			args: args{link: "https://app.datadoghq.com/dashboard/reports"},
+			want: &ddResource{
+				typ:     "",
+				subType: "",
+				query:   url.Values{},
 			},
 		},
 		{
 			name: "parses particular dashboard",
 			args: args{link: "https://app.datadoghq.com/dashboard/12345/somedashboard?fromUser=false"},
 			want: &ddResource{
-				Type:   "dashboard",
-				ID:     "12345",
-				Action: "somedashboard",
-				Query:  url.Values{"fromUser": []string{"false"}},
-				Path:   []string{"dashboard", "12345", "somedashboard"},
+				typ:     "dashboard",
+				id:      "12345",
+				subType: "somedashboard",
+				query:   url.Values{"fromUser": []string{"false"}},
 			},
 		},
 	}
@@ -133,8 +166,10 @@ func Test_parseUrl(t *testing.T) {
 				t.Errorf("parseUrl() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(*got, tt.want) {
-				t.Errorf("parseUrl() got = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseUrl() \n"+
+					" got: %+v\n"+
+					"want: %+v", got, tt.want)
 			}
 		})
 	}

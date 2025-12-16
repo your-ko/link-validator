@@ -29,13 +29,13 @@ func handleConnection(ctx context.Context, c client, resource ddResource) error 
 }
 
 func handleMonitors(ctx context.Context, c client, resource ddResource) error {
-	if resource.ID == "" {
+	if resource.id == "" {
 		_, _, err := c.ListMonitors(ctx)
 		return err
 	}
-	monitorId, err := strconv.ParseInt(resource.ID, 10, 64)
+	monitorId, err := strconv.ParseInt(resource.id, 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid monitor id: '%s'", resource.ID)
+		return fmt.Errorf("invalid monitor id: '%s'", resource.id)
 	}
 
 	_, _, err = c.GetMonitor(ctx, monitorId)
@@ -46,15 +46,21 @@ func handleMonitors(ctx context.Context, c client, resource ddResource) error {
 }
 
 func handleDashboards(ctx context.Context, c client, resource ddResource) error {
-	if resource.ID == "" {
-		_, _, err := c.ListDashboards(ctx)
+	if resource.subType == "lists/manual" {
+		// looking for dashboard with type == "manual_dashboard_list"
+		listId, err := strconv.ParseInt(resource.id, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid dashboard list id: '%s'", resource.id)
+		}
+		_, _, err = c.GetDashboardList(ctx, listId)
 		return err
 	}
-	_, _, err := c.GetDashboard(ctx, resource.ID)
-	if err != nil {
+	if resource.id != "" {
+		// get particular dashboard
+		_, _, err := c.GetDashboard(ctx, resource.id)
 		return err
 	}
-	return nil
+	return fmt.Errorf("unsupported Dashboard URL found. Please report a bug")
 }
 
 //func handleLogs(ctx context.Context, id string, query string) error {

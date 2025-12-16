@@ -114,6 +114,80 @@ func (_c *mockclient_GetDashboard_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// GetDashboardList provides a mock function for the type mockclient
+func (_mock *mockclient) GetDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error) {
+	ret := _mock.Called(ctx, listId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDashboardList")
+	}
+
+	var r0 datadogV1.DashboardList
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (datadogV1.DashboardList, *http.Response, error)); ok {
+		return returnFunc(ctx, listId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) datadogV1.DashboardList); ok {
+		r0 = returnFunc(ctx, listId)
+	} else {
+		r0 = ret.Get(0).(datadogV1.DashboardList)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) *http.Response); ok {
+		r1 = returnFunc(ctx, listId)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int64) error); ok {
+		r2 = returnFunc(ctx, listId)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_GetDashboardList_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDashboardList'
+type mockclient_GetDashboardList_Call struct {
+	*mock.Call
+}
+
+// GetDashboardList is a helper method to define mock.On call
+//   - ctx context.Context
+//   - listId int64
+func (_e *mockclient_Expecter) GetDashboardList(ctx interface{}, listId interface{}) *mockclient_GetDashboardList_Call {
+	return &mockclient_GetDashboardList_Call{Call: _e.mock.On("GetDashboardList", ctx, listId)}
+}
+
+func (_c *mockclient_GetDashboardList_Call) Run(run func(ctx context.Context, listId int64)) *mockclient_GetDashboardList_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_GetDashboardList_Call) Return(dashboardList datadogV1.DashboardList, response *http.Response, err error) *mockclient_GetDashboardList_Call {
+	_c.Call.Return(dashboardList, response, err)
+	return _c
+}
+
+func (_c *mockclient_GetDashboardList_Call) RunAndReturn(run func(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)) *mockclient_GetDashboardList_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMonitor provides a mock function for the type mockclient
 func (_mock *mockclient) GetMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
 	var tmpRet mock.Arguments
