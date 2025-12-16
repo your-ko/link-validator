@@ -112,8 +112,6 @@ func Test_handleMonitors(t *testing.T) {
 
 func Test_handleDashboards(t *testing.T) {
 	type args struct {
-		ctx      context.Context
-		c        client
 		resource ddResource
 	}
 	tests := []struct {
