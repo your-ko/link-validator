@@ -2,6 +2,7 @@ package dd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"link-validator/pkg/config"
 	"link-validator/pkg/regex"
@@ -56,6 +57,9 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("monitor", handleMonitors).
 		Route("dashboard", handleDashboards).
 		Route("notebook", handleNotebooks).
+		Route("slo", handleSLO).
+		// -----
+
 		Route("logs", handleConnection).
 		Route("apm", handleConnection).
 		Route("infrastructure", handleConnection).
@@ -128,11 +132,26 @@ func parseResourceFromSegments(resource *ddResource, segments []string) *ddResou
 		parseNotebookResource(resource, segments)
 	case "sheets":
 		parseSheetsResource(resource, segments)
+	case "slo":
+		parseSLO(resource, segments)
 	default:
 		resource.typ = "" // exist point for not supported DD resources, just test connection
 	}
 
 	return resource
+}
+
+func parseSLO(resource *ddResource, segments []string) {
+	resource.action = segments[1]
+	if len(resource.query) != 0 && resource.query.Has("sp") {
+		var sps []sloSPElement
+		if err := json.Unmarshal([]byte(resource.query.Get("sp")), &sps); err != nil {
+			slog.With("error", err).Error("can't parse SLO query string, leave SLO id empty")
+			return
+		}
+		resource.id = sps[0].P.ID
+		resource.query = url.Values{}
+	}
 }
 
 func parseMonitorsResource(resource *ddResource, segments []string) {

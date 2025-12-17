@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -113,6 +114,95 @@ func (_c *mockclient_GetNotebook_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// GetSLO provides a mock function for the type mockclient
+func (_mock *mockclient) GetSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error) {
+	var tmpRet mock.Arguments
+	if len(o) > 0 {
+		tmpRet = _mock.Called(ctx, sloId, o)
+	} else {
+		tmpRet = _mock.Called(ctx, sloId)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSLO")
+	}
+
+	var r0 datadogV1.SLOResponse
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error)); ok {
+		return returnFunc(ctx, sloId, o...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...datadogV1.GetSLOOptionalParameters) datadogV1.SLOResponse); ok {
+		r0 = returnFunc(ctx, sloId, o...)
+	} else {
+		r0 = ret.Get(0).(datadogV1.SLOResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...datadogV1.GetSLOOptionalParameters) *http.Response); ok {
+		r1 = returnFunc(ctx, sloId, o...)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, ...datadogV1.GetSLOOptionalParameters) error); ok {
+		r2 = returnFunc(ctx, sloId, o...)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_GetSLO_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSLO'
+type mockclient_GetSLO_Call struct {
+	*mock.Call
+}
+
+// GetSLO is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sloId string
+//   - o ...datadogV1.GetSLOOptionalParameters
+func (_e *mockclient_Expecter) GetSLO(ctx interface{}, sloId interface{}, o ...interface{}) *mockclient_GetSLO_Call {
+	return &mockclient_GetSLO_Call{Call: _e.mock.On("GetSLO",
+		append([]interface{}{ctx, sloId}, o...)...)}
+}
+
+func (_c *mockclient_GetSLO_Call) Run(run func(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters)) *mockclient_GetSLO_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []datadogV1.GetSLOOptionalParameters
+		var variadicArgs []datadogV1.GetSLOOptionalParameters
+		if len(args) > 2 {
+			variadicArgs = args[2].([]datadogV1.GetSLOOptionalParameters)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_GetSLO_Call) Return(sLOResponse datadogV1.SLOResponse, response *http.Response, err error) *mockclient_GetSLO_Call {
+	_c.Call.Return(sLOResponse, response, err)
+	return _c
+}
+
+func (_c *mockclient_GetSLO_Call) RunAndReturn(run func(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error)) *mockclient_GetSLO_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListNotebooks provides a mock function for the type mockclient
 func (_mock *mockclient) ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error) {
 	var tmpRet mock.Arguments
@@ -192,6 +282,52 @@ func (_c *mockclient_ListNotebooks_Call) Return(notebooksResponse datadogV1.Note
 }
 
 func (_c *mockclient_ListNotebooks_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)) *mockclient_ListNotebooks_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getClient provides a mock function for the type mockclient
+func (_mock *mockclient) getClient() *datadog.APIClient {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for getClient")
+	}
+
+	var r0 *datadog.APIClient
+	if returnFunc, ok := ret.Get(0).(func() *datadog.APIClient); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*datadog.APIClient)
+		}
+	}
+	return r0
+}
+
+// mockclient_getClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getClient'
+type mockclient_getClient_Call struct {
+	*mock.Call
+}
+
+// getClient is a helper method to define mock.On call
+func (_e *mockclient_Expecter) getClient() *mockclient_getClient_Call {
+	return &mockclient_getClient_Call{Call: _e.mock.On("getClient")}
+}
+
+func (_c *mockclient_getClient_Call) Run(run func()) *mockclient_getClient_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *mockclient_getClient_Call) Return(aPIClient *datadog.APIClient) *mockclient_getClient_Call {
+	_c.Call.Return(aPIClient)
+	return _c
+}
+
+func (_c *mockclient_getClient_Call) RunAndReturn(run func() *datadog.APIClient) *mockclient_getClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
