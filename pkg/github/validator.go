@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v78/github"
+	"github.com/google/go-github/v79/github"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
