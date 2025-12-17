@@ -51,7 +51,9 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("ddsql", handleConnection).
 		Route("dash/integration", handleConnection). // dashboards coming from integrations are not accessible via API
 		Route("monitors", handleMonitors).
-		Route("dashboard", handleDashboards)
+		Route("dashboard", handleDashboards).
+		Route("notebooks", handleConnection).
+		Route("notebook", handleNotebooks)
 
 	//Route("logs", proc.validateConnection).
 	//Route("apm", proc.validateConnection).
@@ -82,56 +84,66 @@ func parseDataDogURL(link string) (*ddResource, error) {
 		return nil, fmt.Errorf("invalid URL: %w", err)
 	}
 
-	pathSegments := strings.Split(strings.Trim(u.Path, "/"), "/")
-	if len(pathSegments) == 1 && pathSegments[0] == "" {
-		pathSegments = []string{} // Empty path
+	segments := strings.Split(strings.Trim(u.Path, "/"), "/")
+	if len(segments) == 1 && segments[0] == "" {
+		segments = []string{} // Empty path
 	}
 
 	resource := &ddResource{
 		query:    u.Query(),
 		fragment: u.Fragment,
 	}
-	if len(pathSegments) == 0 {
+	if len(segments) == 0 {
 		return resource, nil
 	}
 	growTo := 5 // some arbitrary number more than 5 to prevent 'len out of range' during parsing below
-	if len(pathSegments) < growTo {
-		diff := growTo - len(pathSegments)
-		pathSegments = append(pathSegments, make([]string, diff)...)[:growTo]
+	if len(segments) < growTo {
+		diff := growTo - len(segments)
+		segments = append(segments, make([]string, diff)...)[:growTo]
 	}
 
-	resource.typ = pathSegments[0]
+	resource.typ = segments[0]
 	switch resource.typ {
 	case "monitors":
-		switch pathSegments[1] {
+		switch segments[1] {
 		case "manage", "edit":
-			resource.action = pathSegments[1]
+			resource.action = segments[1]
 		default:
-			resource.id = pathSegments[1]
-			resource.action = pathSegments[2]
+			resource.id = segments[1]
+			resource.action = segments[2]
 		}
 	case "dashboard":
-		switch pathSegments[1] {
+		switch segments[1] {
 		case "lists", "reports", "shared":
-			if isEmpty(pathSegments[2:]) {
+			if isEmpty(segments[2:]) {
 				resource.typ = ""
 			} else {
-				resource.subType = path.Join(pathSegments[1], pathSegments[2])
-				resource.id = pathSegments[3]
+				resource.subType = path.Join(segments[1], segments[2])
+				resource.id = segments[3]
 			}
 			if resource.subType == "lists/preset" {
 				// currently there is no DD API to fetch preset lists of dashboards
 				resource.typ = ""
 			}
 		default:
-			resource.id = pathSegments[1]
-			resource.subType = pathSegments[2]
+			resource.id = segments[1]
+			resource.subType = segments[2]
 		}
 	case "dash":
-		resource.typ = path.Join(resource.typ, pathSegments[1])
-		resource.id = pathSegments[2]
+		resource.typ = path.Join(resource.typ, segments[1])
+		resource.id = segments[2]
 	case "ddsql":
-		resource.subType = pathSegments[1]
+		resource.subType = segments[1]
+	case "notebook":
+		if segments[1] == "reports" || segments[1] == "template-gallery" || segments[1] == "list" {
+			resource.subType = segments[1]
+			resource.typ = "notebooks"
+		} else if segments[1] == "custom-template" {
+			resource.id = segments[2]
+			resource.subType = segments[1]
+		} else {
+			resource.id = segments[1]
+		}
 	}
 
 	return resource, nil

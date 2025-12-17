@@ -15,6 +15,8 @@ type client interface {
 	getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)
 	getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)
 	getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error)
+	ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)
+	GetNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error)
 }
 
 type wrapper struct {
@@ -38,21 +40,31 @@ func (w wrapper) withAuth(ctx context.Context) context.Context {
 }
 
 func (w wrapper) listMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error) {
-	monitorsApi := datadogV1.NewMonitorsApi(w.client)
-	return monitorsApi.ListMonitors(w.withAuth(ctx), o...)
+	apiV1 := datadogV1.NewMonitorsApi(w.client)
+	return apiV1.ListMonitors(w.withAuth(ctx), o...)
 }
 
 func (w wrapper) getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error) {
-	monitorsApi := datadogV1.NewMonitorsApi(w.client)
-	return monitorsApi.GetMonitor(w.withAuth(ctx), monitorId, o...)
+	apiV1 := datadogV1.NewMonitorsApi(w.client)
+	return apiV1.GetMonitor(w.withAuth(ctx), monitorId, o...)
 }
 
 func (w wrapper) getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error) {
-	api := datadogV1.NewDashboardListsApi(w.client)
-	return api.GetDashboardList(w.withAuth(ctx), listId)
+	apiV1 := datadogV1.NewDashboardListsApi(w.client)
+	return apiV1.GetDashboardList(w.withAuth(ctx), listId)
 }
 
 func (w wrapper) getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
-	dashboardApi := datadogV1.NewDashboardsApi(w.client)
-	return dashboardApi.GetDashboard(w.withAuth(ctx), dashboardId)
+	apiV1 := datadogV1.NewDashboardsApi(w.client)
+	return apiV1.GetDashboard(w.withAuth(ctx), dashboardId)
+}
+
+func (w wrapper) ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error) {
+	apiV1 := datadogV1.NewNotebooksApi(w.client)
+	return apiV1.ListNotebooks(w.withAuth(ctx))
+}
+
+func (w wrapper) GetNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error) {
+	apiV1 := datadogV1.NewNotebooksApi(w.client)
+	return apiV1.GetNotebook(w.withAuth(ctx), notebookId)
 }

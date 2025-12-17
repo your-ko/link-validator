@@ -60,6 +60,16 @@ func handleDashboards(ctx context.Context, c client, resource ddResource) error 
 	return fmt.Errorf("unsupported Dashboard URL found. Please report a bug")
 }
 
+func handleNotebooks(ctx context.Context, c client, resource ddResource) error {
+	notebookId, err := strconv.ParseInt(resource.id, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid notebook id: '%s'", resource.id)
+	}
+
+	_, _, err = c.GetNotebook(ctx, notebookId)
+	return err
+}
+
 //func handleLogs(ctx context.Context, id string, query string) error {
 //	logsApi := datadogV1.NewLogsApi(proc.client)
 //	logsApi.

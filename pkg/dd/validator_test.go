@@ -177,6 +177,52 @@ func Test_parseUrl(t *testing.T) {
 				query:   url.Values{},
 			},
 		},
+		{
+			name: "notebook list",
+			args: args{link: "https://app.datadoghq.com/notebook/list?tags=team"},
+			want: &ddResource{
+				typ:     "notebooks",
+				subType: "list",
+				query:   url.Values{"tags": []string{"team"}},
+			},
+		},
+		{
+			name: "notebook reports list",
+			args: args{link: "https://app.datadoghq.com/notebook/reports"},
+			want: &ddResource{
+				typ:     "notebooks",
+				subType: "reports",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "notebook template gallery",
+			args: args{link: "https://app.datadoghq.com/notebook/template-gallery"},
+			want: &ddResource{
+				typ:     "notebooks",
+				subType: "template-gallery",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "notebook particular template",
+			args: args{link: "https://app.datadoghq.com/notebook/custom-template/12345/postmortem-template-ticket-number-incident-title"},
+			want: &ddResource{
+				typ:     "notebook",
+				subType: "custom-template",
+				id:      "12345",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "particular notebook",
+			args: args{link: "https://app.datadoghq.com/notebook/12345/postmortem"},
+			want: &ddResource{
+				typ:   "notebook",
+				id:    "12345",
+				query: url.Values{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

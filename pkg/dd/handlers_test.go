@@ -159,6 +159,12 @@ func Test_handleDashboards(t *testing.T) {
 			},
 		},
 		{
+			name:      "manual preset malformed id",
+			args:      args{resource: ddResource{typ: "dashboard", subType: "lists/manual", id: "qwerty"}},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid dashboard list id: 'qwerty'"),
+		},
+		{
 			name: "Manual preset list not found",
 			args: args{resource: ddResource{typ: "dashboard", id: "1234567890", subType: "lists/manual"}},
 			setupMock: func(m *mockclient) {
@@ -252,6 +258,83 @@ func Test_handleConnection(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			err := handleConnection(context.Background(), mockClient, tt.args.resource)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			//}
+		})
+	}
+}
+
+func Test_handleNotebooks(t *testing.T) {
+	type args struct {
+		resource ddResource
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
+	}{
+		{
+			name: "Particular notebook",
+			args: args{resource: ddResource{typ: "notebook", id: "12345"}},
+			setupMock: func(m *mockclient) {
+				notebook := datadogV1.NotebookResponse{
+					Data: &datadogV1.NotebookResponseData{Id: int64(12345), Type: datadogV1.NotebookResourceType("notebooks")},
+				}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().GetNotebook(mock.Anything, int64(12345)).Return(notebook, resp, nil)
+			},
+		},
+		{
+			name:      "malformed id",
+			args:      args{resource: ddResource{typ: "notebook", subType: "custom-template", id: "qwerty"}},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid notebook id: 'qwerty'"),
+		},
+		{
+			name: "notebook not found",
+			args: args{resource: ddResource{typ: "dashboard", id: "12345"}},
+			setupMock: func(m *mockclient) {
+				notebook := datadogV1.NotebookResponse{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "404 Not Found",
+					ErrorModel:   []string{"Notebook not found"},
+				}
+				resp := &http.Response{StatusCode: http.StatusNotFound}
+				m.EXPECT().GetNotebook(mock.Anything, int64(12345)).Return(notebook, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "404 Not Found",
+				ErrorModel:   []string{"Notebook not found"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleNotebooks(context.Background(), mockClient, tt.args.resource)
 
 			if !mockClient.AssertExpectations(t) {
 				return

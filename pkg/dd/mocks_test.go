@@ -39,6 +39,163 @@ func (_m *mockclient) EXPECT() *mockclient_Expecter {
 	return &mockclient_Expecter{mock: &_m.Mock}
 }
 
+// GetNotebook provides a mock function for the type mockclient
+func (_mock *mockclient) GetNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error) {
+	ret := _mock.Called(ctx, notebookId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNotebook")
+	}
+
+	var r0 datadogV1.NotebookResponse
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (datadogV1.NotebookResponse, *http.Response, error)); ok {
+		return returnFunc(ctx, notebookId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) datadogV1.NotebookResponse); ok {
+		r0 = returnFunc(ctx, notebookId)
+	} else {
+		r0 = ret.Get(0).(datadogV1.NotebookResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) *http.Response); ok {
+		r1 = returnFunc(ctx, notebookId)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, int64) error); ok {
+		r2 = returnFunc(ctx, notebookId)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_GetNotebook_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetNotebook'
+type mockclient_GetNotebook_Call struct {
+	*mock.Call
+}
+
+// GetNotebook is a helper method to define mock.On call
+//   - ctx context.Context
+//   - notebookId int64
+func (_e *mockclient_Expecter) GetNotebook(ctx interface{}, notebookId interface{}) *mockclient_GetNotebook_Call {
+	return &mockclient_GetNotebook_Call{Call: _e.mock.On("GetNotebook", ctx, notebookId)}
+}
+
+func (_c *mockclient_GetNotebook_Call) Run(run func(ctx context.Context, notebookId int64)) *mockclient_GetNotebook_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_GetNotebook_Call) Return(notebookResponse datadogV1.NotebookResponse, response *http.Response, err error) *mockclient_GetNotebook_Call {
+	_c.Call.Return(notebookResponse, response, err)
+	return _c
+}
+
+func (_c *mockclient_GetNotebook_Call) RunAndReturn(run func(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error)) *mockclient_GetNotebook_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListNotebooks provides a mock function for the type mockclient
+func (_mock *mockclient) ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error) {
+	var tmpRet mock.Arguments
+	if len(o) > 0 {
+		tmpRet = _mock.Called(ctx, o)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNotebooks")
+	}
+
+	var r0 datadogV1.NotebooksResponse
+	var r1 *http.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)); ok {
+		return returnFunc(ctx, o...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...datadogV1.ListNotebooksOptionalParameters) datadogV1.NotebooksResponse); ok {
+		r0 = returnFunc(ctx, o...)
+	} else {
+		r0 = ret.Get(0).(datadogV1.NotebooksResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...datadogV1.ListNotebooksOptionalParameters) *http.Response); ok {
+		r1 = returnFunc(ctx, o...)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*http.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, ...datadogV1.ListNotebooksOptionalParameters) error); ok {
+		r2 = returnFunc(ctx, o...)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_ListNotebooks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListNotebooks'
+type mockclient_ListNotebooks_Call struct {
+	*mock.Call
+}
+
+// ListNotebooks is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o ...datadogV1.ListNotebooksOptionalParameters
+func (_e *mockclient_Expecter) ListNotebooks(ctx interface{}, o ...interface{}) *mockclient_ListNotebooks_Call {
+	return &mockclient_ListNotebooks_Call{Call: _e.mock.On("ListNotebooks",
+		append([]interface{}{ctx}, o...)...)}
+}
+
+func (_c *mockclient_ListNotebooks_Call) Run(run func(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters)) *mockclient_ListNotebooks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []datadogV1.ListNotebooksOptionalParameters
+		var variadicArgs []datadogV1.ListNotebooksOptionalParameters
+		if len(args) > 1 {
+			variadicArgs = args[1].([]datadogV1.ListNotebooksOptionalParameters)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_ListNotebooks_Call) Return(notebooksResponse datadogV1.NotebooksResponse, response *http.Response, err error) *mockclient_ListNotebooks_Call {
+	_c.Call.Return(notebooksResponse, response, err)
+	return _c
+}
+
+func (_c *mockclient_ListNotebooks_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)) *mockclient_ListNotebooks_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // getDashboard provides a mock function for the type mockclient
 func (_mock *mockclient) getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error) {
 	ret := _mock.Called(ctx, dashboardId)
