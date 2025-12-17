@@ -250,6 +250,34 @@ func Test_parseUrl(t *testing.T) {
 				query: url.Values{},
 			},
 		},
+		{
+			name: "check/summary",
+			args: args{link: "https://app.datadoghq.com/check/summary"},
+			want: &ddResource{
+				typ:     "check",
+				subType: "summary",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "SLO list",
+			args: args{link: "https://app.datadoghq.com/slo/manage?query=team%3A%sre%20OR%sre%29"},
+			want: &ddResource{
+				typ:    "slo",
+				action: "manage",
+				query:  url.Values{},
+			},
+		},
+		{
+			name: "particular SLO",
+			args: args{link: "https://app.datadoghq.com/slo/manage?query=team%3Asre&sp=%5B%7B%22p%22%3A%7B%22id%22%3A%22qwerty%22%2C%22activeTab%22%3A%22status_and_history%22%2C%22timeFrame%22%3A%7B%22start%22%3A1763416596842%2C%22end%22%3A1766008596842%2C%22mode%22%3A%22sliding%22%2C%22fromUser%22%3Afalse%2C%22paused%22%3Afalse%7D%7D%2C%22i%22%3A%22slo-panel%22%7D%5D"},
+			want: &ddResource{
+				typ:    "slo",
+				action: "manage",
+				id:     "qwerty",
+				query:  url.Values{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

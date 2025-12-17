@@ -2,6 +2,7 @@ package dd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"link-validator/pkg/config"
 	"link-validator/pkg/regex"
@@ -52,9 +53,13 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("sheets", handleConnection).   // currently there is no API to fetch sheets
 		Route("monitors", handleConnection). // generic monitors list or settings
 		Route("dash", handleConnection).     // dashboards coming from integrations are not accessible via API
+		Route("check", handleConnection).    // not accessible via API
 		Route("monitor", handleMonitors).
 		Route("dashboard", handleDashboards).
 		Route("notebook", handleNotebooks).
+		Route("slo", handleSLO).
+		// -----
+
 		Route("logs", handleConnection).
 		Route("apm", handleConnection).
 		Route("infrastructure", handleConnection).
@@ -121,17 +126,32 @@ func parseResourceFromSegments(resource *ddResource, segments []string) *ddResou
 		parseMonitorsResource(resource, segments)
 	case "dashboard":
 		parseDashboardResource(resource, segments)
-	case "dash", "ddsql":
+	case "dash", "ddsql", "check":
 		parseDefaultResource(resource, segments)
 	case "notebook":
 		parseNotebookResource(resource, segments)
 	case "sheets":
 		parseSheetsResource(resource, segments)
+	case "slo":
+		parseSLO(resource, segments)
 	default:
 		resource.typ = "" // exist point for not supported DD resources, just test connection
 	}
 
 	return resource
+}
+
+func parseSLO(resource *ddResource, segments []string) {
+	resource.action = segments[1]
+	if len(resource.query) != 0 && resource.query.Has("sp") {
+		var sps []sloSPElement
+		if err := json.Unmarshal([]byte(resource.query.Get("sp")), &sps); err != nil {
+			slog.With("error", err).Error("can't parse SLO query string, leave SLO id empty")
+			return
+		}
+		resource.id = sps[0].P.ID
+		resource.query = url.Values{}
+	}
 }
 
 func parseMonitorsResource(resource *ddResource, segments []string) {
