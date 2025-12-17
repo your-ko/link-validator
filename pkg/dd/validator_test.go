@@ -250,6 +250,15 @@ func Test_parseUrl(t *testing.T) {
 				query: url.Values{},
 			},
 		},
+		{
+			name: "check/summary",
+			args: args{link: "https://app.datadoghq.com/check/summary"},
+			want: &ddResource{
+				typ:     "check",
+				subType: "summary",
+				query:   url.Values{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

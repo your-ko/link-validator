@@ -52,6 +52,7 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("sheets", handleConnection).   // currently there is no API to fetch sheets
 		Route("monitors", handleConnection). // generic monitors list or settings
 		Route("dash", handleConnection).     // dashboards coming from integrations are not accessible via API
+		Route("check", handleConnection).    // not accessible via API
 		Route("monitor", handleMonitors).
 		Route("dashboard", handleDashboards).
 		Route("notebook", handleNotebooks).
@@ -121,7 +122,7 @@ func parseResourceFromSegments(resource *ddResource, segments []string) *ddResou
 		parseMonitorsResource(resource, segments)
 	case "dashboard":
 		parseDashboardResource(resource, segments)
-	case "dash", "ddsql":
+	case "dash", "ddsql", "check":
 		parseDefaultResource(resource, segments)
 	case "notebook":
 		parseNotebookResource(resource, segments)
