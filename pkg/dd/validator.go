@@ -52,7 +52,6 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("dash/integration", handleConnection). // dashboards coming from integrations are not accessible via API
 		Route("monitors", handleMonitors).
 		Route("dashboard", handleDashboards).
-		Route("notebooks", handleConnection).
 		Route("notebook", handleNotebooks)
 
 	//Route("logs", proc.validateConnection).
@@ -105,12 +104,16 @@ func parseDataDogURL(link string) (*ddResource, error) {
 	resource.typ = segments[0]
 	switch resource.typ {
 	case "monitors":
-		switch segments[1] {
-		case "manage", "edit":
-			resource.action = segments[1]
-		default:
-			resource.id = segments[1]
-			resource.action = segments[2]
+		if isEmpty(segments[1:]) {
+			resource.typ = ""
+		} else {
+			switch segments[1] {
+			case "manage", "edit":
+				resource.action = segments[1]
+			default:
+				resource.id = segments[1]
+				resource.action = segments[2]
+			}
 		}
 	case "dashboard":
 		switch segments[1] {
@@ -137,7 +140,7 @@ func parseDataDogURL(link string) (*ddResource, error) {
 	case "notebook":
 		if segments[1] == "reports" || segments[1] == "template-gallery" || segments[1] == "list" {
 			resource.subType = segments[1]
-			resource.typ = "notebooks"
+			resource.typ = ""
 		} else if segments[1] == "custom-template" {
 			resource.id = segments[2]
 			resource.subType = segments[1]

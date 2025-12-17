@@ -68,7 +68,7 @@ func Test_parseUrl(t *testing.T) {
 			name: "parses list monitors",
 			args: args{link: "https://app.datadoghq.com/monitors"},
 			want: &ddResource{
-				typ:   "monitors",
+				typ:   "",
 				query: url.Values{},
 			},
 		},
@@ -181,7 +181,7 @@ func Test_parseUrl(t *testing.T) {
 			name: "notebook list",
 			args: args{link: "https://app.datadoghq.com/notebook/list?tags=team"},
 			want: &ddResource{
-				typ:     "notebooks",
+				typ:     "",
 				subType: "list",
 				query:   url.Values{"tags": []string{"team"}},
 			},
@@ -190,7 +190,7 @@ func Test_parseUrl(t *testing.T) {
 			name: "notebook reports list",
 			args: args{link: "https://app.datadoghq.com/notebook/reports"},
 			want: &ddResource{
-				typ:     "notebooks",
+				typ:     "",
 				subType: "reports",
 				query:   url.Values{},
 			},
@@ -199,7 +199,7 @@ func Test_parseUrl(t *testing.T) {
 			name: "notebook template gallery",
 			args: args{link: "https://app.datadoghq.com/notebook/template-gallery"},
 			want: &ddResource{
-				typ:     "notebooks",
+				typ:     "",
 				subType: "template-gallery",
 				query:   url.Values{},
 			},
