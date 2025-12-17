@@ -4,6 +4,10 @@
     'config:recommended',
     'customManagers:dockerfileVersions',
   ],
+  gomod: {
+    enabled: true,
+    postUpdateOptions: ["gomodTidy", "gomodUpdateImportPaths"]
+  },
   customManagers: [
     {
       customType: 'regex',
@@ -28,16 +32,15 @@
   ],
   packageRules: [
     {
-      matchManagers: [
-        'gomod',
-      ],
-      matchDepNames: [
-        'go',
-      ],
-      matchDepTypes: [
-        'golang',
-      ],
-      rangeStrategy: 'bump',
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["indirect"],
+      "enabled": true,
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepNames": ["go"],
+      "matchDepTypes": ["golang"],
+      "matchDepTypes": ["direct"],
     },
     {
       commitMessagePrefix: 'chore:',
