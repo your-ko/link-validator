@@ -156,6 +156,8 @@ func parseDataDogURL(link string) (*ddResource, error) {
 		}
 	case "sheets":
 		resource.id = segments[1]
+	default:
+		resource.typ = "" // just test connection in all other cases
 	}
 
 	return resource, nil
