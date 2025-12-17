@@ -1,0 +1,362 @@
+package dd
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"testing"
+
+	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
+	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
+	"github.com/stretchr/testify/mock"
+)
+
+// Ptr is a helper routine that allocates a new T value
+// to store v and returns a pointer to it.
+func Ptr[T any](v T) *T {
+	return &v
+}
+
+func Test_handleMonitors(t *testing.T) {
+	type args struct {
+		resource ddResource
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
+	}{
+		{
+			name: "Monitors list",
+			args: args{resource: ddResource{typ: "monitors"}},
+			setupMock: func(m *mockclient) {
+				monitors := []datadogV1.Monitor{{Name: Ptr("test")}}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().listMonitors(mock.Anything).Return(monitors, resp, nil)
+			},
+		},
+		{
+			name: "Particular monitor",
+			args: args{resource: ddResource{
+				typ: "monitors",
+				id:  "1234567890",
+			}},
+			setupMock: func(m *mockclient) {
+				monitor := datadogV1.Monitor{Name: Ptr("test"), Id: Ptr(int64(1234567890))}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().getMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, nil)
+			},
+		},
+		{
+			name: "Particular monitor incorrect id",
+			args: args{resource: ddResource{
+				typ: "monitors",
+				id:  "qwerty",
+			}},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid monitor id: 'qwerty'"),
+		},
+		{
+			name: "monitor not found",
+			args: args{resource: ddResource{
+				typ: "monitors",
+				id:  "1234567890",
+			}},
+			setupMock: func(m *mockclient) {
+				monitor := datadogV1.Monitor{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "404 Not Found",
+					ErrorModel:   []string{"Monitor not found"},
+				}
+				resp := &http.Response{StatusCode: http.StatusNotFound}
+				m.EXPECT().getMonitor(mock.Anything, int64(1234567890)).Return(monitor, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "404 Not Found",
+				ErrorModel:   []string{"Monitor not found"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleMonitors(context.Background(), mockClient, tt.args.resource)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			//}
+		})
+	}
+}
+
+func Test_handleDashboards(t *testing.T) {
+	type args struct {
+		resource ddResource
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
+	}{
+		{
+			name: "Particular dashboard",
+			args: args{resource: ddResource{typ: "dashboard", id: "1234567890"}},
+			setupMock: func(m *mockclient) {
+				dashboard := datadogV1.Dashboard{Title: "title"}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().getDashboard(mock.Anything, "1234567890").Return(dashboard, resp, nil)
+			},
+		},
+		{
+			name: "dashboard not found",
+			args: args{resource: ddResource{typ: "dashboard", id: "1234567890"}},
+			setupMock: func(m *mockclient) {
+				dashboard := datadogV1.Dashboard{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "404 Not Found",
+					ErrorModel:   []string{"Not found"},
+				}
+				resp := &http.Response{StatusCode: http.StatusNotFound}
+				m.EXPECT().getDashboard(mock.Anything, "1234567890").Return(dashboard, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "404 Not Found",
+				ErrorModel:   []string{"Not found"},
+			},
+		},
+		{
+			name: "Manual preset list",
+			args: args{resource: ddResource{typ: "dashboard", id: "1234567890", subType: "lists/manual"}},
+			setupMock: func(m *mockclient) {
+				dashboards := datadogV1.DashboardList{
+					Name: "manual list",
+					Type: Ptr("manual_dashboard_list"),
+				}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().getDashboardList(mock.Anything, int64(1234567890)).Return(dashboards, resp, nil)
+			},
+		},
+		{
+			name:      "manual preset malformed id",
+			args:      args{resource: ddResource{typ: "dashboard", subType: "lists/manual", id: "qwerty"}},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid dashboard list id: 'qwerty'"),
+		},
+		{
+			name: "Manual preset list not found",
+			args: args{resource: ddResource{typ: "dashboard", id: "1234567890", subType: "lists/manual"}},
+			setupMock: func(m *mockclient) {
+				dashboards := datadogV1.DashboardList{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "404 Not Found",
+					ErrorModel:   []string{"Manual Dashboard List with id 1234567890 not found"},
+				}
+
+				resp := &http.Response{StatusCode: http.StatusNotFound}
+				m.EXPECT().getDashboardList(mock.Anything, int64(1234567890)).Return(dashboards, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "404 Not Found",
+				ErrorModel:   []string{"Manual Dashboard List with id 1234567890 not found"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleDashboards(context.Background(), mockClient, tt.args.resource)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			//}
+		})
+	}
+}
+
+func Test_handleConnection(t *testing.T) {
+	type args struct {
+		resource ddResource
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
+	}{
+		{
+			name: "connection is valid",
+			args: args{resource: ddResource{}},
+			setupMock: func(m *mockclient) {
+				validation := datadogV1.AuthenticationValidationResponse{Valid: Ptr(true)}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().validate(mock.Anything).Return(validation, resp, nil)
+			},
+		},
+		{
+			name: "invalid credentials",
+			args: args{resource: ddResource{}},
+			setupMock: func(m *mockclient) {
+				validation := datadogV1.AuthenticationValidationResponse{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "403 Forbidden",
+					ErrorModel:   []string{"Forbidden"},
+				}
+				resp := &http.Response{StatusCode: http.StatusForbidden}
+				m.EXPECT().validate(mock.Anything).Return(validation, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "403 Forbidden",
+				ErrorModel:   []string{"Forbidden"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleConnection(context.Background(), mockClient, tt.args.resource)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			//}
+		})
+	}
+}
+
+func Test_handleNotebooks(t *testing.T) {
+	type args struct {
+		resource ddResource
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockclient)
+		wantErr   error
+	}{
+		{
+			name: "Particular notebook",
+			args: args{resource: ddResource{typ: "notebook", id: "12345"}},
+			setupMock: func(m *mockclient) {
+				notebook := datadogV1.NotebookResponse{
+					Data: &datadogV1.NotebookResponseData{Id: int64(12345), Type: datadogV1.NotebookResourceType("notebooks")},
+				}
+				resp := &http.Response{StatusCode: http.StatusOK}
+				m.EXPECT().GetNotebook(mock.Anything, int64(12345)).Return(notebook, resp, nil)
+			},
+		},
+		{
+			name:      "malformed id",
+			args:      args{resource: ddResource{typ: "notebook", subType: "custom-template", id: "qwerty"}},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid notebook id: 'qwerty'"),
+		},
+		{
+			name: "notebook not found",
+			args: args{resource: ddResource{typ: "dashboard", id: "12345"}},
+			setupMock: func(m *mockclient) {
+				notebook := datadogV1.NotebookResponse{}
+				err := datadog.GenericOpenAPIError{
+					ErrorMessage: "404 Not Found",
+					ErrorModel:   []string{"Notebook not found"},
+				}
+				resp := &http.Response{StatusCode: http.StatusNotFound}
+				m.EXPECT().GetNotebook(mock.Anything, int64(12345)).Return(notebook, resp, err)
+			},
+			wantErr: datadog.GenericOpenAPIError{
+				ErrorMessage: "404 Not Found",
+				ErrorModel:   []string{"Notebook not found"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleNotebooks(context.Background(), mockClient, tt.args.resource)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			//if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+			//	t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			//}
+		})
+	}
+}

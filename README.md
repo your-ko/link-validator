@@ -138,8 +138,10 @@ jobs:
 | `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                                                                                                                    | `info`  |
 | `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan                                                                                                                                                                                                                                                            | `*.md`  |
 | `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                                                                                                          | `""`    |
-| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://[github].[mycorp].[com]                                                                                                                                                                                                                          | `""`    |
+| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://github.[mycorp].com                                                                                                                                                                                                                              | `""`    |
 | `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                                                                                                                                                                                                                          | `""`    |
+| `DD_API_KEY`      |                | No       | DataDog API key                                                                                                                                                                                                                                                                                  | `""`    |
+| `DD_APP_KEY`      |                | No       | DataDog APP key                                                                                                                                                                                                                                                                                  | `""`    |
 | `IGNORED_DOMAINS` | ignoredDomains | No       | Comma-separated list of domains or their parts that should be ignored during validation.                                                                                                                                                                                                         | `3s`    |
 | `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                                                                                                                                                                             | `[]`    |
 | `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements                                                                                                                                                      | `[]`    |
@@ -167,6 +169,13 @@ EXCLUDE=./docs
 LOOKUP_PATH=./docs
 ```
 then you get a successfully passed validation with no files.
+
+### Datadog
+To get APP/API keys you should go to 
+* Integrations -> Organisation Setting -> Service Accounts and create a service account with the `Datadog Read Only Role`
+* Then make sure that both API and APP keys are created and use these values in the env vars of the app.
+
+Create `Read Only`, following the principle of the least privilege. 
 
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:

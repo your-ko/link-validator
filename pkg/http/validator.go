@@ -127,6 +127,9 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if regex.GitHub.MatchString(raw) {
 			continue // skip GitHub urls
 		}
+		if regex.DataDog.MatchString(raw) {
+			continue // skip DataDog urls
+		}
 
 		urls = append(urls, raw)
 	}
