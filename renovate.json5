@@ -38,12 +38,10 @@
       matchManagers: ['gomod'],
       matchDepTypes: ['indirect'],
       enabled: true,
-      reviewers: ['@your-ko'],
     },
     {
       matchManagers: ['gomod'],
       matchDepTypes: ['direct'],
-      reviewers: ['@your-ko'],
     },
     {
       matchManagers: ['gomod'],
