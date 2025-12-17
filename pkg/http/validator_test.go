@@ -175,6 +175,21 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://google.com",
 			},
 		},
+		{
+			name: "captures non-API GitHub links",
+			line: `test
+				https://github.com/features/preview
+				https://raw.githubusercontent.com/your-ko/link-validator/refs/heads/main/README.md
+				https://github.blog/news-insights/product-news/lets-talk-about-github-actions
+				https://docs.github.com/en/actions
+				test`,
+			want: []string{
+				"https://github.com/features/preview",
+				"https://raw.githubusercontent.com/your-ko/link-validator/refs/heads/main/README.md",
+				"https://github.blog/news-insights/product-news/lets-talk-about-github-actions",
+				"https://docs.github.com/en/actions",
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -64,12 +64,23 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name: "ignores subdomain uploads.* or api* ",
+			name: "ignores subdomain uploads.* or api*",
 			line: `test https://uploads.github.mycorp.com/org/repo/raw/main/image.png
 			       and external https://gitlab.mycorp.com/a/b
 			       and api https://api.github.mycorp.com/org/repo/tree/main/folder`,
 			want: nil,
 		},
+		{
+			name: "ignores non-API GitHub links",
+			line: `test
+				https://github.com/features/preview
+				https://raw.githubusercontent.com/your-ko/link-validator/refs/heads/main/README.md
+				https://github.blog/news-insights/product-news/lets-talk-about-github-actions
+				https://docs.github.com/en/actions
+				test`,
+			want: []string{},
+		},
+
 		{
 			name: "ignores non-matching schemes and hosts",
 			line: `scheme http://github.mycorp.com/org/repo/blob/main/README.md

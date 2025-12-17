@@ -127,8 +127,8 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if strings.ContainsAny(raw, "[]{}()") {
 			continue // seems it is the templated url
 		}
-		if regex.GitHub.MatchString(raw) {
-			continue // skip GitHub urls
+		if regex.GitHub.MatchString(raw) && !regex.GitHubExcluded.MatchString(raw) {
+			continue // skip GitHub urls except for non-API ones
 		}
 		if regex.DataDog.MatchString(raw) {
 			continue // skip DataDog urls
