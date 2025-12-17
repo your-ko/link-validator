@@ -50,8 +50,9 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("", handleConnection).
 		Route("ddsql", handleConnection).
 		Route("sheets", handleConnection).           // currently there is no API to fetch sheets
+		Route("monitors", handleConnection).         // generic monitors list or settings
 		Route("dash/integration", handleConnection). // dashboards coming from integrations are not accessible via API
-		Route("monitors", handleMonitors).
+		Route("monitor", handleMonitors).
 		Route("dashboard", handleDashboards).
 		Route("notebook", handleNotebooks)
 
@@ -106,11 +107,16 @@ func parseDataDogURL(link string) (*ddResource, error) {
 	switch resource.typ {
 	case "monitors":
 		if isEmpty(segments[1:]) {
-			resource.typ = ""
+			resource.typ = "monitors"
 		} else {
+			resource.typ = "monitor"
 			switch segments[1] {
 			case "manage", "edit":
 				resource.action = segments[1]
+			case "settings":
+				resource.typ = "monitors"
+				resource.subType = segments[1]
+				resource.action = segments[2]
 			default:
 				resource.id = segments[1]
 				resource.action = segments[2]

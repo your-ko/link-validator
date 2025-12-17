@@ -65,18 +65,28 @@ func Test_parseUrl(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "parses list monitors",
+			name: "list monitors",
 			args: args{link: "https://app.datadoghq.com/monitors"},
 			want: &ddResource{
-				typ:   "",
+				typ:   "monitors",
 				query: url.Values{},
+			},
+		},
+		{
+			name: "monitors settings",
+			args: args{link: "https://app.datadoghq.com/monitors/settings/general"},
+			want: &ddResource{
+				typ:     "monitors",
+				subType: "settings",
+				action:  "general",
+				query:   url.Values{},
 			},
 		},
 		{
 			name: "parses list monitors with a query string",
 			args: args{link: "https://app.datadoghq.com/monitors/manage?q=team%3A%28thebest&p=1"},
 			want: &ddResource{
-				typ:      "monitors",
+				typ:      "monitor",
 				action:   "manage",
 				query:    url.Values{"q": []string{"team:(thebest"}, "p": []string{"1"}},
 				fragment: "",
@@ -86,7 +96,7 @@ func Test_parseUrl(t *testing.T) {
 			name: "parses particular monitor",
 			args: args{link: "https://app.datadoghq.com/monitors/1234567890"},
 			want: &ddResource{
-				typ:   "monitors",
+				typ:   "monitor",
 				id:    "1234567890",
 				query: url.Values{},
 			},
@@ -95,7 +105,7 @@ func Test_parseUrl(t *testing.T) {
 			name: "parses particular monitor edit",
 			args: args{link: "https://app.datadoghq.com/monitors/1234567890/edit"},
 			want: &ddResource{
-				typ:    "monitors",
+				typ:    "monitor",
 				id:     "1234567890",
 				action: "edit",
 				query:  url.Values{},
