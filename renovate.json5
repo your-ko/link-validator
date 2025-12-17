@@ -4,20 +4,19 @@
     'config:recommended',
     'customManagers:dockerfileVersions',
   ],
-
-  // Go module configuration
   gomod: {
     enabled: true,
-    postUpdateOptions: ["gomodTidy", "gomodUpdateImportPaths"]
+    postUpdateOptions: [
+      'gomodTidy',
+      'gomodUpdateImportPaths',
+    ],
   },
-
-  // Custom managers for version detection in various files
   customManagers: [
     {
       customType: 'regex',
-      fileMatch: [
-        '^\\.github/workflows/.+\\.ya?ml$',
-        '^Makefile$',
+      managerFilePatterns: [
+        '/^\\.github/workflows/.+\\.ya?ml$/',
+        '/^Makefile$/',
       ],
       matchStrings: [
         '(?:^|\\n)\\s*# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: versioning=(?<versioning>\\S+))?\\s*\\n\\s*(?:.*VERSION.*|version)[:=]\\s*(?<currentValue>\\S+)',
@@ -25,46 +24,68 @@
     },
     {
       customType: 'regex',
-      fileMatch: ['^Dockerfile[^/]*$'],
+      managerFilePatterns: [
+        '/^Dockerfile[^/]*$/',
+      ],
       matchStrings: [
         '#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?\\s*[\\r\\n]+ARG\\s+\\w+_VERSION=(?<currentValue>\\S+)',
       ],
       versioningTemplate: '{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}',
     },
   ],
-
   packageRules: [
     {
-      matchManagers: ['gomod'],
-      matchDepTypes: ['indirect'],
+      matchManagers: [
+        'gomod',
+      ],
+      matchDepTypes: [
+        'indirect',
+      ],
       enabled: true,
     },
     {
-      matchManagers: ['gomod'],
-      matchDepTypes: ['direct'],
+      matchManagers: [
+        'gomod',
+      ],
+      matchDepTypes: [
+        'direct',
+      ],
     },
     {
-      matchManagers: ['gomod'],
-      matchDepNames: ['go'],
-      matchDepTypes: ['golang'],
-      labels: ['go-version', 'chore'],
+      matchManagers: [
+        'gomod',
+      ],
+      matchDepNames: [
+        'go',
+      ],
+      matchDepTypes: [
+        'golang',
+      ],
+      labels: [
+        'go-version',
+        'chore',
+      ],
     },
-
-    // GitHub Actions updates
     {
-      matchManagers: ['github-actions'],
+      matchManagers: [
+        'github-actions',
+      ],
       groupName: 'GitHub Actions',
-      labels: ['github-actions', 'chore'],
+      labels: [
+        'github-actions',
+        'chore',
+      ],
     },
-
-    // Docker image updates
     {
-      matchManagers: ['dockerfile'],
+      matchManagers: [
+        'dockerfile',
+      ],
       groupName: 'Docker images',
-      labels: ['docker', 'chore'],
+      labels: [
+        'docker',
+        'chore',
+      ],
     },
-
-    // Link-validator self-updates (if you publish Docker images)
     {
       matchPackageNames: [
         'ghcr.io/your-ko/link-validator',
@@ -77,24 +98,35 @@
       commitMessagePrefix: 'chore(deps): ',
       commitMessageTopic: 'link-validator',
       commitMessageExtra: 'to {{newVersion}}',
-      labels: ['self-update', 'chore'],
+      labels: [
+        'self-update',
+        'chore',
+      ],
     },
-
-    // Security updates - high priority
     {
-      matchPackagePatterns: ['*'],
-      matchUpdateTypes: ['patch'],
+      matchUpdateTypes: [
+        'patch',
+      ],
       matchCurrentVersion: '/.*/',
-      vulnerabilityAlerts: true,
-      labels: ['security', 'high-priority'],
+      vulnerabilityAlerts: {
+        enabled: true,
+      },
+      labels: [
+        'security',
+        'high-priority',
+      ],
       prPriority: 10,
+      matchPackageNames: [
+        '*',
+      ],
     },
   ],
-
-  // Global settings
   prConcurrentLimit: 3,
   prHourlyLimit: 2,
   timezone: 'UTC',
-  labels: ['dependencies','chore'],
+  labels: [
+    'dependencies',
+    'chore',
+  ],
   reviewersFromCodeOwners: true,
 }
