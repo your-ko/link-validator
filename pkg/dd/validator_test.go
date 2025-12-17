@@ -172,9 +172,9 @@ func Test_parseUrl(t *testing.T) {
 			name: "parses particular integration dashboard",
 			args: args{link: "https://app.datadoghq.com/dash/integration/12345/tools-overview?fromUser=false"},
 			want: &ddResource{
-				typ:     "dash/integration",
+				typ:     "dash",
 				id:      "12345",
-				subType: "",
+				subType: "integration",
 				query:   url.Values{"fromUser": []string{"false"}},
 			},
 		},
