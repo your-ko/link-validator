@@ -268,6 +268,9 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if strings.ContainsAny(raw, "[]{}()") {
 			continue // seems it is the templated url
 		}
+		if regex.GitHubExcluded.MatchString(raw) {
+			continue // skip non-API GitHub urls
+		}
 
 		// Filter out GitHub non-API URLs that shouldn't be validated here
 		hostname := strings.ToLower(u.Hostname())

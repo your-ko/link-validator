@@ -20,3 +20,5 @@ var DotPattern = regexp.MustCompile(`\.{2,}`)
 
 // DataDog captures all app.datadoghq.com URLs including paths, query parameters, and fragments
 var DataDog = regexp.MustCompile(`(?i)https://app\.datadoghq\.com(?:/[^\s\x60\]~"\\]*[^\s.,:;!?()\[\]{}\x60~"\\])?`)
+
+var GitHubExcluded = regexp.MustCompile(`(?i)https://(?:github\.com/features|raw\.githubusercontent\.com|github\.blog|docs\.github\.com)(?:/[^\s\x60\]~"\\<>]*[^\s.,:;!?()\[\]{}\x60~"\\<>])?`)
