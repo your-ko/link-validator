@@ -121,6 +121,9 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if err != nil || u.Hostname() == "" {
 			continue // skip malformed
 		}
+		if strings.Contains(raw, "localhost") {
+			continue // no need to validate localhost
+		}
 		if strings.ContainsAny(raw, "[]{}()") {
 			continue // seems it is the templated url
 		}

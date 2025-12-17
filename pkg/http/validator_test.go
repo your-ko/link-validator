@@ -162,6 +162,19 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://google.com",
 			},
 		},
+		{
+			name: "ignores localhost",
+			line: `test
+				https://localhost:8443,
+				http://localhost:80,
+				https://docs.datadoghq.com/,
+				https://google.com,
+				test`,
+			want: []string{
+				"https://docs.datadoghq.com/",
+				"https://google.com",
+			},
+		},
 	}
 
 	for _, tt := range tests {
