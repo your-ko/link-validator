@@ -49,6 +49,7 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 	return proc.
 		Route("", handleConnection).
 		Route("ddsql", handleConnection).
+		Route("sheets", handleConnection).           // currently there is no API to fetch sheets
 		Route("dash/integration", handleConnection). // dashboards coming from integrations are not accessible via API
 		Route("monitors", handleMonitors).
 		Route("dashboard", handleDashboards).
@@ -147,6 +148,8 @@ func parseDataDogURL(link string) (*ddResource, error) {
 		} else {
 			resource.id = segments[1]
 		}
+	case "sheets":
+		resource.id = segments[1]
 	}
 
 	return resource, nil

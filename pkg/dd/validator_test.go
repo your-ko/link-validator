@@ -223,6 +223,23 @@ func Test_parseUrl(t *testing.T) {
 				query: url.Values{},
 			},
 		},
+		{
+			name: "list of sheets",
+			args: args{link: "https://app.datadoghq.com/sheets"},
+			want: &ddResource{
+				typ:   "sheets",
+				query: url.Values{},
+			},
+		},
+		{
+			name: "particular sheet",
+			args: args{link: "https://app.datadoghq.com/sheets/qwe-rty-123"},
+			want: &ddResource{
+				typ:   "sheets",
+				id:    "qwe-rty-123",
+				query: url.Values{},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
