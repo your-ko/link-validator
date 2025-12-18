@@ -59,14 +59,7 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("dashboard", handleDashboards).
 		Route("notebook", handleNotebooks).
 		Route("slo", handleSLO).
-		// -----
-
-		Route("logs", handleConnection).
-		Route("apm", handleConnection).
-		Route("infrastructure", handleConnection).
-		Route("synthetics", handleConnection).
-		Route("account", handleConnection).
-		Route("organization-settings", handleConnection)
+		Route("incidents", handleConnection) // Unstable operation 'v2.GetIncident' is disabled
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) error {
@@ -135,8 +128,10 @@ func parseResourceFromSegments(resource *ddResource, segments []string) *ddResou
 		parseSheetsResource(resource, segments)
 	case "slo":
 		parseSLO(resource, segments)
+	case "incidents":
+		parseIncidents(resource, segments)
 	default:
-		resource.typ = "" // exist point for not supported DD resources, just test connection
+		resource.typ = "" // generic exit point for not supported DD resources, so just test connection
 	}
 
 	return resource
@@ -217,6 +212,10 @@ func parseNotebookResource(resource *ddResource, segments []string) {
 }
 
 func parseSheetsResource(resource *ddResource, segments []string) {
+	resource.id = segments[1]
+}
+
+func parseIncidents(resource *ddResource, segments []string) {
 	resource.id = segments[1]
 }
 

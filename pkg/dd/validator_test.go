@@ -315,13 +315,21 @@ func Test_parseUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "events settings/metrics",
-			args: args{link: "https://app.datadoghq.com/event/settings/generate-metrics/qwerty"},
+			name: "incidents",
+			args: args{link: "https://app.datadoghq.com/incidents/12345"},
 			want: &ddResource{
-				typ:     "event",
-				subType: "settings",
-				id:      "generate-metrics",
-				query:   url.Values{},
+				typ:   "incidents",
+				id:    "12345",
+				query: url.Values{},
+			},
+		},
+		{
+			name: "pages",
+			args: args{link: "https://app.datadoghq.com/on-call/pages?page-identifier=12345"},
+			want: &ddResource{
+				typ:   "pages",
+				id:    "12345",
+				query: url.Values{},
 			},
 		},
 	}
