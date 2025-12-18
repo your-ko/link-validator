@@ -74,8 +74,3 @@ func handleSLO(ctx context.Context, c client, resource ddResource) error {
 	_, _, err := c.GetSLO(c.withAuth(ctx), resource.id)
 	return err
 }
-
-//func handleLogs(ctx context.Context, id string, query string) error {
-//	logsApi := datadogV1.NewLogsApi(proc.client)
-//	logsApi.
-//}

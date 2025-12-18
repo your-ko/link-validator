@@ -175,7 +175,7 @@ func Test_parseUrl(t *testing.T) {
 				typ:     "dash",
 				id:      "12345",
 				subType: "integration",
-				query:   url.Values{"fromUser": []string{"false"}},
+				query:   url.Values{},
 			},
 		},
 		{
@@ -278,6 +278,60 @@ func Test_parseUrl(t *testing.T) {
 				query:  url.Values{},
 			},
 		},
+		{
+			name: "events overview",
+			args: args{link: "https://app.datadoghq.com/event/overview"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "overview",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events explorer",
+			args: args{link: "https://app.datadoghq.com/event/explorer?query=&cols=&messageDisplay=expanded-lg&options=&refresh_mode=sliding&sort=DESC&view=all&from_ts=1765948310957&to_ts=1765949210957&live=true"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "explorer",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events explorer: particular event",
+			args: args{link: "https://app.datadoghq.com/event/explorer?query=&cols=&event=qwerty&messageDisplay=expanded-lg&options=&refresh_mode=sliding&sort=DESC&view=all&from_ts=1765948310957&to_ts=1765949210957&live=true"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "explorer",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events correlation",
+			args: args{link: "https://app.datadoghq.com/event/correlation?query=&page=1&project-id=-1&sorts=-created_at&view-id=all-cases&from_ts=1765344401318&to_ts=1765949201318&paused=false"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "correlation",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "incidents",
+			args: args{link: "https://app.datadoghq.com/incidents/12345"},
+			want: &ddResource{
+				typ:   "incidents",
+				id:    "12345",
+				query: url.Values{},
+			},
+		},
+		//{
+		//	name: "pages", 		// not supported yet
+		//	args: args{link: "https://app.datadoghq.com/on-call/pages?page-identifier=12345"},
+		//	want: &ddResource{
+		//		typ: "pages",
+		//		id:    "12345",
+		//		query: url.Values{},
+		//	},
+		//},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

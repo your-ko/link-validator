@@ -9,8 +9,9 @@ Validates links and URLs in Markdown files by checking:
 - GitHub links (files, PRs, issues, releases, workflows, etc.)
 - External HTTP(S) URLs
 - Local file references (`./README.md`, `../docs/intro.md`)
+- Datadog URLs (monitors, dashboards, etc)
 
-Supports both github.com and GitHub Enterprise Server (GHES).
+Supports both public GitHub.com and GitHub Enterprise Server (GHES).
 
 ## Features
 
@@ -176,6 +177,9 @@ To get APP/API keys you should go to
 * Then make sure that both API and APP keys are created and use these values in the env vars of the app.
 
 Create `Read Only`, following the principle of the least privilege. 
+
+Unfortunately Datadog API are limited so not many resources are validated at the moment. 
+To avoid a lot of false positives, I just perform "mock" validation.
 
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:
