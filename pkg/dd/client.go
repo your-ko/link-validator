@@ -9,7 +9,6 @@ import (
 )
 
 type client interface {
-	getClient() *datadog.APIClient // TODO: remove eventually. Now it is for debugging purpose
 	withAuth(ctx context.Context) context.Context
 	validate(ctx context.Context) (datadogV1.AuthenticationValidationResponse, *http.Response, error)
 	listMonitors(ctx context.Context, o ...datadogV1.ListMonitorsOptionalParameters) ([]datadogV1.Monitor, *http.Response, error)
@@ -19,10 +18,6 @@ type client interface {
 	ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)
 	GetNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error)
 	GetSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error)
-}
-
-func (w wrapper) getClient() *datadog.APIClient {
-	return w.client
 }
 
 type wrapper struct {
