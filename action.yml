@@ -20,6 +20,12 @@ inputs:
   corp-pat:
     description: "GitHub Enterprise personal access token.  The PAT needs read access to repositories referenced in your documentation."
     default: ""
+  ddApiKey:
+    description: "Datadog API key."
+    default: ""
+  ddAppKey:
+    description: "Datadog APP key."
+    default: ""
   ignored-domains:
     description: "Comma separated list of domains or their parts that should be ignored during validation."
     default: ""
@@ -43,6 +49,8 @@ runs:
           -e 'FILE_MASKS=${{ inputs.file-mask }}' \
           -e 'PAT=${{ inputs.pat }}' \
           -e 'CORP_PAT=${{ inputs.corp-pat }}' \
+          -e 'DD_API_KEY=${{ inputs.ddApiKey }}' \
+          -e 'DD_APP_KEY=${{ inputs.ddAppKey }}' \
           -e CORP_URL=${{ inputs.corp-url }} \
           -e FILES=${{ inputs.files }} \
           -e TIMEOUT=${{ inputs.timeout }} \
