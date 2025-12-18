@@ -54,6 +54,7 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 		Route("monitors", handleConnection). // generic monitors list or settings
 		Route("dash", handleConnection).     // dashboards coming from integrations are not accessible via API
 		Route("check", handleConnection).    // not accessible via API
+		Route("event", handleConnection).    // events API are not very clear, don't provide a way to decode event ID and I won't want to perform a magic trying to guess it
 		Route("monitor", handleMonitors).
 		Route("dashboard", handleDashboards).
 		Route("notebook", handleNotebooks).
@@ -126,7 +127,7 @@ func parseResourceFromSegments(resource *ddResource, segments []string) *ddResou
 		parseMonitorsResource(resource, segments)
 	case "dashboard":
 		parseDashboardResource(resource, segments)
-	case "dash", "ddsql", "check":
+	case "dash", "ddsql", "check", "event":
 		parseDefaultResource(resource, segments)
 	case "notebook":
 		parseNotebookResource(resource, segments)
@@ -198,6 +199,7 @@ func parseDashboardResource(resource *ddResource, segments []string) {
 func parseDefaultResource(resource *ddResource, segments []string) {
 	resource.subType = segments[1]
 	resource.id = segments[2]
+	resource.query = url.Values{}
 }
 
 func parseNotebookResource(resource *ddResource, segments []string) {

@@ -175,7 +175,7 @@ func Test_parseUrl(t *testing.T) {
 				typ:     "dash",
 				id:      "12345",
 				subType: "integration",
-				query:   url.Values{"fromUser": []string{"false"}},
+				query:   url.Values{},
 			},
 		},
 		{
@@ -276,6 +276,52 @@ func Test_parseUrl(t *testing.T) {
 				action: "manage",
 				id:     "qwerty",
 				query:  url.Values{},
+			},
+		},
+		{
+			name: "events overview",
+			args: args{link: "https://app.datadoghq.com/event/overview"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "overview",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events explorer",
+			args: args{link: "https://app.datadoghq.com/event/explorer?query=&cols=&messageDisplay=expanded-lg&options=&refresh_mode=sliding&sort=DESC&view=all&from_ts=1765948310957&to_ts=1765949210957&live=true"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "explorer",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events explorer: particular event",
+			args: args{link: "https://app.datadoghq.com/event/explorer?query=&cols=&event=qwerty&messageDisplay=expanded-lg&options=&refresh_mode=sliding&sort=DESC&view=all&from_ts=1765948310957&to_ts=1765949210957&live=true"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "explorer",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events correlation",
+			args: args{link: "https://app.datadoghq.com/event/correlation?query=&page=1&project-id=-1&sorts=-created_at&view-id=all-cases&from_ts=1765344401318&to_ts=1765949201318&paused=false"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "correlation",
+				query:   url.Values{},
+			},
+		},
+		{
+			name: "events settings/metrics",
+			args: args{link: "https://app.datadoghq.com/event/settings/generate-metrics/qwerty"},
+			want: &ddResource{
+				typ:     "event",
+				subType: "settings",
+				id:      "generate-metrics",
+				query:   url.Values{},
 			},
 		},
 	}
