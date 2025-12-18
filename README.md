@@ -178,6 +178,9 @@ To get APP/API keys you should go to
 
 Create `Read Only`, following the principle of the least privilege. 
 
+Unfortunately Datadog API are limited so not many resources are validated at the moment. 
+To avoid a lot of false positive, I just perform "mock" validation.
+
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:
 ```yaml
