@@ -47,8 +47,9 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	ddValidator, err := dd.New(cfg)
 	if err != nil {
 		slog.Info("skip DataDog validator initialisation, DD_API_KEY/DD_APP_KEY are not set")
+	} else {
+		processors = append(processors, ddValidator)
 	}
-	processors = append(processors, ddValidator)
 	processors = append(processors, local_path.New())
 	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains))
 
