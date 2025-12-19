@@ -2,8 +2,12 @@ package dd
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"link-validator/pkg/errs"
 	"strconv"
+
+	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 )
 
 type ddHandler func(
@@ -72,5 +76,19 @@ func handleNotebooks(ctx context.Context, c client, resource ddResource) error {
 
 func handleSLO(ctx context.Context, c client, resource ddResource) error {
 	_, _, err := c.GetSLO(c.withAuth(ctx), resource.id)
+	return err
+}
+
+func mapDDError(url string, err error) error {
+	if err == nil {
+		return nil
+	}
+	var ddErr datadog.GenericOpenAPIError
+	if errors.As(err, &ddErr) && ddErr.ErrorMessage == "404 Not Found" {
+		return errs.NewNotFound(url)
+	}
+	if errors.Is(err, errs.ErrNotFound) {
+		return err
+	}
 	return err
 }
