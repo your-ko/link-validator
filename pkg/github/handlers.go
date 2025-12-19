@@ -54,7 +54,7 @@ func handleRepoExist(ctx context.Context, c client, owner, repo, _, _, _ string)
 	var gitHubErr *github.ErrorResponse
 	if errors.As(err, &gitHubErr) {
 		if gitHubErr.Response.StatusCode == http.StatusNotFound {
-			return fmt.Errorf("repository '%s' not found", repo)
+			return errs.NewNotFoundMessage(fmt.Sprintf("repository '%s' not found", repo))
 		}
 	}
 	return err
