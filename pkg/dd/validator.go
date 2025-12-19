@@ -72,7 +72,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) e
 	}
 
 	if handler, exists := proc.routes[resource.typ]; exists {
-		return handler(ctx, proc.client, *resource)
+		return mapDDError(link, handler(ctx, proc.client, *resource))
 	}
 	return fmt.Errorf("unsupported DataDog URL type: '%s'", resource.typ)
 }
