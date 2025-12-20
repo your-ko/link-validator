@@ -30,6 +30,7 @@ type client interface {
 	getGist(ctx context.Context, gistID string) (*github.Gist, *github.Response, error)
 	getGistRevision(ctx context.Context, gistID, sha string) (*github.Gist, *github.Response, error)
 	getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)
+	getEnvironment(ctx context.Context, owner, repo, environmentName string) (*github.Environment, *github.Response, error)
 }
 
 type wrapper struct {
@@ -126,4 +127,8 @@ func (w *wrapper) getGistRevision(ctx context.Context, gistID, sha string) (*git
 
 func (w *wrapper) getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error) {
 	return w.client.Gists.GetComment(ctx, gistID, commentID)
+}
+
+func (w *wrapper) getEnvironment(ctx context.Context, owner, repo, environmentName string) (*github.Environment, *github.Response, error) {
+	return w.client.Repositories.GetEnvironment(ctx, owner, repo, environmentName)
 }

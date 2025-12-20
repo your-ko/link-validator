@@ -512,6 +512,16 @@ func handleGist(ctx context.Context, c client, owner, repo, ref, path, fragment 
 	return err
 }
 
+func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+
+	_, _, err = c.getEnvironment(ctx, owner, repo, ref)
+	return err
+}
+
 func mapGHError(url string, err error) error {
 	if err == nil {
 		return nil
