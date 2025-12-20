@@ -1769,12 +1769,12 @@ func Test_handlePackages(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			name: "repository  found",
-			args: args{"your-ko", "nonexistent-repo", "", "", ""},
+			name: "packages list - repository exists",
+			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(repo, resp, nil)
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
 		{
@@ -1789,6 +1789,92 @@ func Test_handlePackages(t *testing.T) {
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
 			},
 			wantErr: errors.New("repository 'nonexistent-repo' not found"),
+		},
+		{
+			name: "specific package - container package found as user package",
+			args: args{"your-ko", "link-validator", "container", "link-validator", ""},
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
+
+				pkg := &github.Package{Name: github.Ptr("link-validator")}
+				pkgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
+			},
+		},
+		{
+			name: "specific package - container package found as org package",
+			args: args{"your-ko", "link-validator", "container", "link-validator", ""},
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
+
+				userErr := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				userResp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(nil, userResp, userErr)
+
+				// Org package found
+				pkg := &github.Package{Name: github.Ptr("link-validator")}
+				orgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().GetOrgPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, orgResp, nil)
+			},
+		},
+		{
+			name: "specific package with version - container package found",
+			args: args{"your-ko", "link-validator", "container", "link-validator/617266022", ""},
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
+
+				// User package found (note: only package name used, version ignored for API call)
+				pkg := &github.Package{Name: github.Ptr("link-validator")}
+				pkgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
+			},
+		},
+		{
+			name: "specific package - package not found",
+			args: args{"your-ko", "link-validator", "container", "nonexistent-package", ""},
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
+
+				userErr := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Package not found",
+				}
+				userResp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "nonexistent-package").Return(nil, userResp, userErr)
+
+				orgErr := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Package not found",
+				}
+				orgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().GetOrgPackage(mock.Anything, "your-ko", "container", "nonexistent-package").Return(nil, orgResp, orgErr)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Package not found",
+			},
+		},
+		{
+			name: "pkgs URL without package name",
+			args: args{"your-ko", "link-validator", "container", "", ""},
+			setupMock: func(m *mockclient) {
+				// Repository exists
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
+			},
+			wantErr: errors.New("package name is required for /pkgs URLs"),
 		},
 	}
 	for _, tt := range tests {
@@ -1814,6 +1900,7 @@ func Test_handlePackages(t *testing.T) {
 			if tt.wantErr.Error() != err.Error() {
 				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
+			var gotGitHubErr *github.ErrorResponse
 			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
 				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}

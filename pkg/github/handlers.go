@@ -434,41 +434,54 @@ func handleWiki(ctx context.Context, c client, owner, repo, _, _, _ string) erro
 }
 
 // handlePackages validates existence of GitHub packages.
-// Since GetPackage requires user authentication, it is not suitable for link-validator current approach,
-// that's why it always returns true
-//
-// For the URL pattern: /packages/{package_type}/{package_name}
+// Handles different package URL patterns:
+// - /packages (list packages for repository)
+// - /pkgs/container/package-name (specific package)
+// - /pkgs/container/package-name/version-id (specific version)
 //
 // GitHub API docs: https://docs.github.com/rest/packages/packages
 //
 //meta:operation GET /user/packages/{package_type}/{package_name}
 //meta:operation GET /users/{username}/packages/{package_type}/{package_name}
-func handlePackages(ctx context.Context, c client, owner, repo, packageType, packageName, fragment string) error {
-	return handleRepoExist(ctx, c, owner, repo, packageType, packageName, fragment)
-	// Handle different package URL patterns:
-	// - /packages/{package_type}/{package_name} (specific package)
+//meta:operation GET /orgs/{org}/packages/{package_type}/{package_name}
+func handlePackages(ctx context.Context, c client, owner, repo, packageType, packagePath, fragment string) error {
+	if repo != "" {
+		err := handleRepoExist(ctx, c, owner, repo, packageType, packagePath, fragment)
+		if err != nil {
+			return err
+		}
+	}
 
-	//if packageType == "" {
-	//	return fmt.Errorf("package type is required")
-	//}
-	//
-	//if packageName == "" {
-	//	return fmt.Errorf("package name is required")
-	//}
+	// Handle /packages - just list packages for repository (no specific validation)
+	if packageType == "" && packagePath == "" {
+		return nil // Repository exists, so packages list is valid
+	}
 
-	// Try to get the package from the user/organization
-	// First, try as a user package
-	//_, _, err := c.Users.GetPackage(ctx, owner, packageType, packageName)
-	//if err == nil {
-	//	return nil // Package found as user package
-	//}
-	//
-	//_, _, orgErr := c.Organizations.GetPackage(ctx, owner, packageType, packageName)
-	//if orgErr == nil {
-	//	return nil // Package found as organization package
-	//}
+	// Handle /pkgs/{type}/{name} or /pkgs/{type}/{name}/{version}
+	if packageType != "" {
+		parts := strings.Split(packagePath, "/")
+		if len(parts) == 0 || parts[0] == "" {
+			return fmt.Errorf("package name is required for /pkgs URLs")
+		}
 
-	//return nil
+		packageName := parts[0]
+
+		// Try to get the package - first as user package, then as org package
+		_, _, err := c.GetUserPackage(ctx, owner, packageType, packageName)
+		if err == nil {
+			return nil
+		}
+
+		_, _, orgErr := c.GetOrgPackage(ctx, owner, packageType, packageName)
+		if orgErr == nil {
+			return nil
+		}
+
+		// Both failed - return the user package error
+		return err
+	}
+
+	return fmt.Errorf("unsupported package URL pattern")
 }
 
 // handleOrgExist  validates the org existence.
