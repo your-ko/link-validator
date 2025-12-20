@@ -1721,10 +1721,7 @@ func Test_handleOrgExist(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrganization(mock.Anything, "nonexistent-org").Return(nil, resp, err)
 			},
-			wantErr: &github.ErrorResponse{
-				Response: &http.Response{StatusCode: http.StatusNotFound},
-				Message:  "Not Found",
-			},
+			wantErr: errors.New("org 'nonexistent-org' not found"),
 		},
 	}
 	for _, tt := range tests {
@@ -2013,6 +2010,105 @@ func Test_handleEnvironments(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			err := handleEnvironments(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			}
+		})
+	}
+}
+
+func Test_handleTeams(t *testing.T) {
+	type args struct {
+		owner    string
+		repo     string
+		ref      string
+		path     string
+		fragment string
+	}
+	tests := []struct {
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
+	}{
+		{
+			name: "team exists",
+			args: args{"mycorp", "", "sre", "", ""},
+			setupMock: func(m *mockclient) {
+				team := &github.Team{Name: github.Ptr("sre")}
+				org := &github.Organization{Name: github.Ptr("mycorp")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
+				m.EXPECT().GetTeamBySlug(mock.Anything, "mycorp", "sre").Return(team, resp, nil)
+			},
+		},
+		{
+			name: "team not found",
+			args: args{"mycorp", "", "sre", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				org := &github.Organization{Name: github.Ptr("mycorp")}
+				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
+				m.EXPECT().GetTeamBySlug(mock.Anything, "mycorp", "sre").Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
+		},
+		{
+			name: "org is not found",
+			args: args{"mycorp", "", "sre", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(nil, resp, err)
+			},
+			wantErr: errors.New("org 'mycorp' not found"),
+		},
+		{
+			name: "org not found",
+			args: args{"mycorp", "", "", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(nil, resp, err)
+			},
+			wantErr: errors.New("org 'mycorp' not found"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleTeams(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
 			if !mockClient.AssertExpectations(t) {
 				return
 			}

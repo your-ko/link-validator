@@ -31,6 +31,7 @@ type client interface {
 	getGistRevision(ctx context.Context, gistID, sha string) (*github.Gist, *github.Response, error)
 	getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)
 	ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)
+	GetTeamBySlug(ctx context.Context, org, slug string) (*github.Team, *github.Response, error)
 }
 
 type wrapper struct {
@@ -131,4 +132,8 @@ func (w *wrapper) getGistComment(ctx context.Context, gistID string, commentID i
 
 func (w *wrapper) ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error) {
 	return w.client.Repositories.ListEnvironments(ctx, owner, repo, opts)
+}
+
+func (w *wrapper) GetTeamBySlug(ctx context.Context, org, slug string) (*github.Team, *github.Response, error) {
+	return w.client.Teams.GetTeamBySlug(ctx, org, slug)
 }
