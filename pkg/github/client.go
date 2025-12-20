@@ -32,6 +32,8 @@ type client interface {
 	getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)
 	ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)
 	GetTeamBySlug(ctx context.Context, org, slug string) (*github.Team, *github.Response, error)
+	GetUserPackage(ctx context.Context, user, packageType, packageName string) (*github.Package, *github.Response, error)
+	GetOrgPackage(ctx context.Context, user, packageType, packageName string) (*github.Package, *github.Response, error)
 }
 
 type wrapper struct {
@@ -136,4 +138,12 @@ func (w *wrapper) ListEnvironments(ctx context.Context, owner string, repo strin
 
 func (w *wrapper) GetTeamBySlug(ctx context.Context, org, slug string) (*github.Team, *github.Response, error) {
 	return w.client.Teams.GetTeamBySlug(ctx, org, slug)
+}
+
+func (w *wrapper) GetUserPackage(ctx context.Context, user, packageType, packageName string) (*github.Package, *github.Response, error) {
+	return w.client.Users.GetPackage(ctx, user, packageType, packageName)
+}
+
+func (w *wrapper) GetOrgPackage(ctx context.Context, org, packageType, packageName string) (*github.Package, *github.Response, error) {
+	return w.client.Organizations.GetPackage(ctx, org, packageType, packageName)
 }

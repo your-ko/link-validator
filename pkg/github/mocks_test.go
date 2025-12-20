@@ -38,6 +38,94 @@ func (_m *mockclient) EXPECT() *mockclient_Expecter {
 	return &mockclient_Expecter{mock: &_m.Mock}
 }
 
+// GetOrgPackage provides a mock function for the type mockclient
+func (_mock *mockclient) GetOrgPackage(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error) {
+	ret := _mock.Called(ctx, user, packageType, packageName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOrgPackage")
+	}
+
+	var r0 *github.Package
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*github.Package, *github.Response, error)); ok {
+		return returnFunc(ctx, user, packageType, packageName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *github.Package); ok {
+		r0 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Package)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
+		r2 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_GetOrgPackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOrgPackage'
+type mockclient_GetOrgPackage_Call struct {
+	*mock.Call
+}
+
+// GetOrgPackage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user string
+//   - packageType string
+//   - packageName string
+func (_e *mockclient_Expecter) GetOrgPackage(ctx interface{}, user interface{}, packageType interface{}, packageName interface{}) *mockclient_GetOrgPackage_Call {
+	return &mockclient_GetOrgPackage_Call{Call: _e.mock.On("GetOrgPackage", ctx, user, packageType, packageName)}
+}
+
+func (_c *mockclient_GetOrgPackage_Call) Run(run func(ctx context.Context, user string, packageType string, packageName string)) *mockclient_GetOrgPackage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_GetOrgPackage_Call) Return(packageParam *github.Package, response *github.Response, err error) *mockclient_GetOrgPackage_Call {
+	_c.Call.Return(packageParam, response, err)
+	return _c
+}
+
+func (_c *mockclient_GetOrgPackage_Call) RunAndReturn(run func(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error)) *mockclient_GetOrgPackage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetTeamBySlug provides a mock function for the type mockclient
 func (_mock *mockclient) GetTeamBySlug(ctx context.Context, org string, slug string) (*github.Team, *github.Response, error) {
 	ret := _mock.Called(ctx, org, slug)
@@ -116,6 +204,94 @@ func (_c *mockclient_GetTeamBySlug_Call) Return(team *github.Team, response *git
 }
 
 func (_c *mockclient_GetTeamBySlug_Call) RunAndReturn(run func(ctx context.Context, org string, slug string) (*github.Team, *github.Response, error)) *mockclient_GetTeamBySlug_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserPackage provides a mock function for the type mockclient
+func (_mock *mockclient) GetUserPackage(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error) {
+	ret := _mock.Called(ctx, user, packageType, packageName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserPackage")
+	}
+
+	var r0 *github.Package
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*github.Package, *github.Response, error)); ok {
+		return returnFunc(ctx, user, packageType, packageName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *github.Package); ok {
+		r0 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Package)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
+		r2 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_GetUserPackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserPackage'
+type mockclient_GetUserPackage_Call struct {
+	*mock.Call
+}
+
+// GetUserPackage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user string
+//   - packageType string
+//   - packageName string
+func (_e *mockclient_Expecter) GetUserPackage(ctx interface{}, user interface{}, packageType interface{}, packageName interface{}) *mockclient_GetUserPackage_Call {
+	return &mockclient_GetUserPackage_Call{Call: _e.mock.On("GetUserPackage", ctx, user, packageType, packageName)}
+}
+
+func (_c *mockclient_GetUserPackage_Call) Run(run func(ctx context.Context, user string, packageType string, packageName string)) *mockclient_GetUserPackage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_GetUserPackage_Call) Return(packageParam *github.Package, response *github.Response, err error) *mockclient_GetUserPackage_Call {
+	_c.Call.Return(packageParam, response, err)
+	return _c
+}
+
+func (_c *mockclient_GetUserPackage_Call) RunAndReturn(run func(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error)) *mockclient_GetUserPackage_Call {
 	_c.Call.Return(run)
 	return _c
 }

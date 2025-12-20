@@ -929,6 +929,18 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			},
 		},
 		{
+			name: "repo packages list",
+			url:  "https://github.com/your-ko/link-validator/packages",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "packages",
+				ref:   "",
+				path:  "",
+			},
+		},
+		{
 			name: "repo container package",
 			url:  "https://github.com/your-ko/link-validator/pkgs/container/link-validator",
 			want: &ghURL{
@@ -936,6 +948,32 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "pkgs",
+				ref:   "container",
+				path:  "link-validator",
+			},
+		},
+		{
+			name: "repo container package with version",
+			url:  "https://github.com/your-ko/link-validator/pkgs/container/link-validator/617266022?tag=1.18.1",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "pkgs",
+				ref:   "container",
+				path:  "link-validator/617266022",
+			},
+		},
+		{
+			name: "repo container package with complex version",
+			url:  "https://github.com/your-ko/link-validator/pkgs/container/link-validator/617266022?tag=sha256-85ea5aa29b291cb9213040fc6b6661657ec61dc4",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "pkgs",
+				ref:   "container",
+				path:  "link-validator/617266022",
 			},
 		},
 		//{
