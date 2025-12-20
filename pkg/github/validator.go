@@ -43,6 +43,7 @@ var handlers = map[string]handlerEntry{
 	"label":        {name: "labels", fn: handleLabel},
 	"gist":         {name: "gist", fn: handleGist},
 	"environments": {name: "environments", fn: handleEnvironments},
+	"teams":        {name: "teams", fn: handleTeams},
 
 	// Generic lists  — we just validate the repo exists
 	"repo":         {name: "repo-exist", fn: handleRepoExist},
@@ -182,10 +183,12 @@ func parseUrl(link string) (*ghURL, error) {
 	// Handle org urls
 	switch parts[0] {
 	case "organizations", "orgs":
-		gh.typ = "orgs"
-		gh.owner = parts[1]
-		gh.path = joinPath(parts[2:])
-		return gh, nil
+		if parts[2] != "teams" {
+			gh.typ = "orgs"
+			gh.owner = parts[1]
+			gh.path = joinPath(parts[2:])
+			return gh, nil
+		}
 	case "settings", "search", "api":
 		gh.typ = "nope"
 		gh.path = joinPath(parts[1:])
@@ -243,6 +246,11 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.ref = parts[4]
 			gh.path = parts[5]
 		}
+	case "teams":
+		gh.owner = parts[1]
+		gh.repo = ""
+		gh.typ = parts[2]
+		gh.ref = parts[3]
 	case "gist":
 		gh.ref = parts[2]
 	case "security":

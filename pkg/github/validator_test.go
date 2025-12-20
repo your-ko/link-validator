@@ -1049,6 +1049,17 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				path:  "edit",
 			},
 		},
+		{
+			name: "github team",
+			url:  "https://github.mycorp.com/orgs/mycorp/teams/sre",
+			want: &ghURL{
+				enterprise: true,
+				host:       "github.mycorp.com",
+				owner:      "mycorp",
+				typ:        "teams",
+				ref:        "sre",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

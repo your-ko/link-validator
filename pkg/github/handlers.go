@@ -481,6 +481,12 @@ func handleOrgExist(ctx context.Context, c client, owner, _, _, _, _ string) err
 		return nil
 	}
 	_, _, err := c.getOrganization(ctx, owner)
+	var gitHubErr *github.ErrorResponse
+	if errors.As(err, &gitHubErr) {
+		if gitHubErr.Response.StatusCode == http.StatusNotFound {
+			return errs.NewNotFoundMessage(fmt.Sprintf("org '%s' not found", owner))
+		}
+	}
 	return err
 }
 
@@ -538,6 +544,15 @@ func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, f
 		}
 	}
 	return errs.NewNotFoundMessage(fmt.Sprintf("environment with id:%s not found", ref))
+}
+
+func handleTeams(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleOrgExist(ctx, c, owner, repo, path, ref, fragment)
+	if err != nil {
+		return err
+	}
+	_, _, err = c.GetTeamBySlug(ctx, owner, ref)
+	return err
 }
 
 func mapGHError(url string, err error) error {
