@@ -38,6 +38,94 @@ func (_m *mockclient) EXPECT() *mockclient_Expecter {
 	return &mockclient_Expecter{mock: &_m.Mock}
 }
 
+// ListEnvironments provides a mock function for the type mockclient
+func (_mock *mockclient) ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error) {
+	ret := _mock.Called(ctx, owner, repo, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEnvironments")
+	}
+
+	var r0 *github.EnvResponse
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)); ok {
+		return returnFunc(ctx, owner, repo, opts)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *github.EnvironmentListOptions) *github.EnvResponse); ok {
+		r0 = returnFunc(ctx, owner, repo, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.EnvResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *github.EnvironmentListOptions) *github.Response); ok {
+		r1 = returnFunc(ctx, owner, repo, opts)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, *github.EnvironmentListOptions) error); ok {
+		r2 = returnFunc(ctx, owner, repo, opts)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_ListEnvironments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEnvironments'
+type mockclient_ListEnvironments_Call struct {
+	*mock.Call
+}
+
+// ListEnvironments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repo string
+//   - opts *github.EnvironmentListOptions
+func (_e *mockclient_Expecter) ListEnvironments(ctx interface{}, owner interface{}, repo interface{}, opts interface{}) *mockclient_ListEnvironments_Call {
+	return &mockclient_ListEnvironments_Call{Call: _e.mock.On("ListEnvironments", ctx, owner, repo, opts)}
+}
+
+func (_c *mockclient_ListEnvironments_Call) Run(run func(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions)) *mockclient_ListEnvironments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 *github.EnvironmentListOptions
+		if args[3] != nil {
+			arg3 = args[3].(*github.EnvironmentListOptions)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_ListEnvironments_Call) Return(envResponse *github.EnvResponse, response *github.Response, err error) *mockclient_ListEnvironments_Call {
+	_c.Call.Return(envResponse, response, err)
+	return _c
+}
+
+func (_c *mockclient_ListEnvironments_Call) RunAndReturn(run func(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)) *mockclient_ListEnvironments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // compareCommits provides a mock function for the type mockclient
 func (_mock *mockclient) compareCommits(ctx context.Context, owner string, repo string, base string, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error) {
 	ret := _mock.Called(ctx, owner, repo, base, head, opts)

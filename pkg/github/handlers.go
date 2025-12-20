@@ -512,6 +512,34 @@ func handleGist(ctx context.Context, c client, owner, repo, ref, path, fragment 
 	return err
 }
 
+// handleEnvironments checks whether the env with the given ID exists
+//
+// GitHub API docs: https://docs.github.com/rest/deployments/environments#list-environments
+//
+//meta:operation GET /repos/{owner}/{repo}/environments
+func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+	if err != nil {
+		return err
+	}
+
+	envID, err := strconv.ParseInt(ref, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid environment id: '%s'", ref)
+	}
+
+	envs, _, err := c.ListEnvironments(ctx, owner, repo, nil)
+	if err != nil {
+		return err
+	}
+	for _, env := range envs.Environments {
+		if *env.ID == envID {
+			return nil
+		}
+	}
+	return errs.NewNotFoundMessage(fmt.Sprintf("environment with id:%s not found", ref))
+}
+
 func mapGHError(url string, err error) error {
 	if err == nil {
 		return nil

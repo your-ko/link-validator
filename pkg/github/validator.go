@@ -31,17 +31,18 @@ var handlers = map[string]handlerEntry{
 	"compare": {name: "compareCommits", fn: handleCompareCommits},
 
 	// Single-object routes
-	"commit":     {name: "commit", fn: handleCommit},
-	"pull":       {name: "pull", fn: handlePull},
-	"milestone":  {name: "milestone", fn: handleMilestone},
-	"advisories": {name: "advisories", fn: handleSecurityAdvisories},
-	"commits":    {name: "commit", fn: handleCommit},
-	"actions":    {name: "actions", fn: handleWorkflow},
-	"user":       {name: "user", fn: handleUser},
-	"issues":     {name: "issues", fn: handleIssue},
-	"releases":   {name: "releases", fn: handleReleases},
-	"label":      {name: "labels", fn: handleLabel},
-	"gist":       {name: "gist", fn: handleGist},
+	"commit":       {name: "commit", fn: handleCommit},
+	"pull":         {name: "pull", fn: handlePull},
+	"milestone":    {name: "milestone", fn: handleMilestone},
+	"advisories":   {name: "advisories", fn: handleSecurityAdvisories},
+	"commits":      {name: "commit", fn: handleCommit},
+	"actions":      {name: "actions", fn: handleWorkflow},
+	"user":         {name: "user", fn: handleUser},
+	"issues":       {name: "issues", fn: handleIssue},
+	"releases":     {name: "releases", fn: handleReleases},
+	"label":        {name: "labels", fn: handleLabel},
+	"gist":         {name: "gist", fn: handleGist},
+	"environments": {name: "environments", fn: handleEnvironments},
 
 	// Generic lists  — we just validate the repo exists
 	"repo":         {name: "repo-exist", fn: handleRepoExist},
@@ -212,7 +213,7 @@ func parseUrl(link string) (*ghURL, error) {
 		} else {
 			gh.typ = "repo"
 		}
-	case "branches", "settings", "tags", "labels", "packages",
+	case "branches", "tags", "labels", "packages",
 		"pulls", "milestones", "projects", "pkgs", "search":
 	// these above go to simple 'if repo exists' validation
 	case "blob", "tree", "blame", "raw":
@@ -233,9 +234,15 @@ func parseUrl(link string) (*ghURL, error) {
 		gh.path = joinPath(parts[4:])
 	case "commit", "commits", "issues", "pull",
 		"milestone", "advisories", "compare",
-		"attestations", "actions":
+		"attestations", "actions", "environments":
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
+	case "settings":
+		if parts[3] == "environments" {
+			gh.typ = parts[3]
+			gh.ref = parts[4]
+			gh.path = parts[5]
+		}
 	case "gist":
 		gh.ref = parts[2]
 	case "security":

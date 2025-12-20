@@ -1037,6 +1037,18 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				anchor: "gistcomment-12345",
 			},
 		},
+		{
+			name: "github env",
+			url:  "https://github.com/your-ko/link-validator/settings/environments/production/edit",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "environments",
+				ref:   "production",
+				path:  "edit",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
