@@ -1934,7 +1934,7 @@ func Test_handleGist(t *testing.T) {
 	}
 }
 
-func Test_handleEnvrironments(t *testing.T) {
+func Test_handleEnvironments(t *testing.T) {
 	type args struct {
 		owner    string
 		repo     string
@@ -1950,32 +1950,48 @@ func Test_handleEnvrironments(t *testing.T) {
 	}{
 		{
 			name: "env exists",
-			args: args{"your-ko", "link-validator", "production", "", ""},
+			args: args{"your-ko", "link-validator", "12345", "", ""},
 			setupMock: func(m *mockclient) {
-				env := &github.Environment{Name: github.Ptr("production")}
+				envs := &github.EnvResponse{
+					TotalCount: github.Ptr(12345),
+					Environments: []*github.Environment{{
+						ID:   github.Ptr(int64(12345)),
+						Name: github.Ptr("test"),
+					}},
+				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-				m.EXPECT().getEnvironment(mock.Anything, "your-ko", "link-validator", "production").Return(env, resp, nil)
+				m.EXPECT().ListEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
 			},
 		},
 		{
 			name: "env not found",
-			args: args{"your-ko", "link-validator", "nonexistent", "", ""},
+			args: args{"your-ko", "link-validator", "09876", "", ""},
 			setupMock: func(m *mockclient) {
-				err := &github.ErrorResponse{
-					Response: &http.Response{StatusCode: http.StatusNotFound},
-					Message:  "Not found",
+				envs := &github.EnvResponse{
+					TotalCount: github.Ptr(12345),
+					Environments: []*github.Environment{{
+						ID:   github.Ptr(int64(12345)),
+						Name: github.Ptr("test"),
+					}},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-				m.EXPECT().getEnvironment(mock.Anything, "your-ko", "link-validator", "nonexistent").Return(nil, resp, err)
+				m.EXPECT().ListEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
 			},
-			wantErr: &github.ErrorResponse{
-				Response: &http.Response{StatusCode: http.StatusNotFound},
-				Message:  "Not found",
+			wantErr: errors.New("environment with id:09876 not found"),
+		},
+		{
+			name: "env id is malformed",
+			args: args{"your-ko", "link-validator", "qwerty", "", ""},
+			setupMock: func(m *mockclient) {
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
+			wantErr: errors.New("invalid environment id: 'qwerty'"),
 		},
 		{
 			name: "repository not found",

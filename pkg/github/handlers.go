@@ -518,8 +518,21 @@ func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, f
 		return err
 	}
 
-	_, _, err = c.getEnvironment(ctx, owner, repo, ref)
-	return err
+	envID, err := strconv.ParseInt(ref, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid environment id: '%s'", ref)
+	}
+
+	envs, _, err := c.ListEnvironments(ctx, owner, repo, nil)
+	if err != nil {
+		return err
+	}
+	for _, env := range envs.Environments {
+		if *env.ID == envID {
+			return nil
+		}
+	}
+	return errs.NewNotFoundMessage(fmt.Sprintf("environment with id:%s not found", ref))
 }
 
 func mapGHError(url string, err error) error {
