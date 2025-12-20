@@ -484,6 +484,34 @@ func handleOrgExist(ctx context.Context, c client, owner, _, _, _, _ string) err
 	return err
 }
 
+// Get a gist.
+//
+// GitHub API docs: https://docs.github.com/rest/gists/gists#get-a-gist
+// GitHub API docs: https://docs.github.com/rest/gists/gists#get-a-gist-revision
+// GitHub API docs: https://docs.github.com/rest/gists/comments#get-a-gist-comment
+//
+//meta:operation GET /gists/{gist_id}
+//meta:operation GET /gists/{gist_id}/{sha}
+//meta:operation GET /gists/{gist_id}/comments/{comment_id}
+func handleGist(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	if ref != "" {
+		_, _, err := c.getGistRevision(ctx, repo, ref)
+		return err
+	}
+
+	if strings.HasPrefix(fragment, "gistcomment-") {
+		commentID, err := strconv.ParseInt(strings.TrimPrefix(fragment, "gistcomment-"), 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid gist comment id: '%s'", fragment)
+		}
+		_, _, err = c.getGistComment(ctx, repo, commentID)
+		return err
+	}
+
+	_, _, err := c.getGist(ctx, repo)
+	return err
+}
+
 func mapGHError(url string, err error) error {
 	if err == nil {
 		return nil

@@ -27,6 +27,9 @@ type client interface {
 	getReleaseByTag(ctx context.Context, owner, repo, tag string) (*github.RepositoryRelease, *github.Response, error)
 	listLabels(ctx context.Context, owner, repo string, opts *github.ListOptions) ([]*github.Label, *github.Response, error)
 	getOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error)
+	getGist(ctx context.Context, gistID string) (*github.Gist, *github.Response, error)
+	getGistRevision(ctx context.Context, gistID, sha string) (*github.Gist, *github.Response, error)
+	getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)
 }
 
 type wrapper struct {
@@ -111,4 +114,16 @@ func (w *wrapper) listLabels(ctx context.Context, owner, repo string, opts *gith
 
 func (w *wrapper) getOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error) {
 	return w.client.Organizations.Get(ctx, org)
+}
+
+func (w *wrapper) getGist(ctx context.Context, gistID string) (*github.Gist, *github.Response, error) {
+	return w.client.Gists.Get(ctx, gistID)
+}
+
+func (w *wrapper) getGistRevision(ctx context.Context, gistID, sha string) (*github.Gist, *github.Response, error) {
+	return w.client.Gists.GetRevision(ctx, gistID, sha)
+}
+
+func (w *wrapper) getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error) {
+	return w.client.Gists.GetComment(ctx, gistID, commentID)
 }

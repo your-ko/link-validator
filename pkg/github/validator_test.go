@@ -179,6 +179,17 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://github.com/your-ko/link-validator",
 			},
 		},
+		{
+			name: "captures gist URLs from gist.github.com",
+			line: `
+				Check out this gist: https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7
+				And this one: https://gist.github.com/user/123456789abcdef
+			`,
+			want: []string{
+				"https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7",
+				"https://gist.github.com/user/123456789abcdef",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -994,17 +1005,38 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				path: "v3/repos/xxxx",
 			},
 		},
-		//// Gist URLs - these should return nil as they use gist.github.com
-		//{
-		//	name: "gist root",
-		//	url:  "https://gist.github.com/your-ko/e8c76f357ca09860f5a0a9afb461190e",
-		//	want: nil, // gist.github.com is not handled by current parser
-		//},
-		//{
-		//	name: "gists",
-		//	url:  "https://gist.github.com/your-ko",
-		//	want: nil, // gist.github.com is not handled by current parser
-		//},
+		{
+			name: "gist.github.com",
+			url:  "https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7",
+			want: &ghURL{
+				host:  "gist.github.com",
+				owner: "your-ko",
+				typ:   "gist",
+				repo:  "e7ed9b8d381113399342e3d6953d9da7",
+			},
+		},
+		{
+			name: "gist with revision",
+			url:  "https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7/ad9fe8be4adf55922e36904e6cc7745e83d10d10",
+			want: &ghURL{
+				host:  "gist.github.com",
+				owner: "your-ko",
+				typ:   "gist",
+				repo:  "e7ed9b8d381113399342e3d6953d9da7",
+				ref:   "ad9fe8be4adf55922e36904e6cc7745e83d10d10",
+			},
+		},
+		{
+			name: "gist.github.com with comment fragment",
+			url:  "https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7#gistcomment-12345",
+			want: &ghURL{
+				host:   "gist.github.com",
+				owner:  "your-ko",
+				typ:    "gist",
+				repo:   "e7ed9b8d381113399342e3d6953d9da7",
+				anchor: "gistcomment-12345",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

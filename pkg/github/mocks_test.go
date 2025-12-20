@@ -334,6 +334,246 @@ func (_c *mockclient_getContents_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// getGist provides a mock function for the type mockclient
+func (_mock *mockclient) getGist(ctx context.Context, gistID string) (*github.Gist, *github.Response, error) {
+	ret := _mock.Called(ctx, gistID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getGist")
+	}
+
+	var r0 *github.Gist
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*github.Gist, *github.Response, error)); ok {
+		return returnFunc(ctx, gistID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *github.Gist); ok {
+		r0 = returnFunc(ctx, gistID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Gist)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) *github.Response); ok {
+		r1 = returnFunc(ctx, gistID)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = returnFunc(ctx, gistID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getGist_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getGist'
+type mockclient_getGist_Call struct {
+	*mock.Call
+}
+
+// getGist is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gistID string
+func (_e *mockclient_Expecter) getGist(ctx interface{}, gistID interface{}) *mockclient_getGist_Call {
+	return &mockclient_getGist_Call{Call: _e.mock.On("getGist", ctx, gistID)}
+}
+
+func (_c *mockclient_getGist_Call) Run(run func(ctx context.Context, gistID string)) *mockclient_getGist_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getGist_Call) Return(gist *github.Gist, response *github.Response, err error) *mockclient_getGist_Call {
+	_c.Call.Return(gist, response, err)
+	return _c
+}
+
+func (_c *mockclient_getGist_Call) RunAndReturn(run func(ctx context.Context, gistID string) (*github.Gist, *github.Response, error)) *mockclient_getGist_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getGistComment provides a mock function for the type mockclient
+func (_mock *mockclient) getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error) {
+	ret := _mock.Called(ctx, gistID, commentID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getGistComment")
+	}
+
+	var r0 *github.GistComment
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (*github.GistComment, *github.Response, error)); ok {
+		return returnFunc(ctx, gistID, commentID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) *github.GistComment); ok {
+		r0 = returnFunc(ctx, gistID, commentID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.GistComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) *github.Response); ok {
+		r1 = returnFunc(ctx, gistID, commentID)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, int64) error); ok {
+		r2 = returnFunc(ctx, gistID, commentID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getGistComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getGistComment'
+type mockclient_getGistComment_Call struct {
+	*mock.Call
+}
+
+// getGistComment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gistID string
+//   - commentID int64
+func (_e *mockclient_Expecter) getGistComment(ctx interface{}, gistID interface{}, commentID interface{}) *mockclient_getGistComment_Call {
+	return &mockclient_getGistComment_Call{Call: _e.mock.On("getGistComment", ctx, gistID, commentID)}
+}
+
+func (_c *mockclient_getGistComment_Call) Run(run func(ctx context.Context, gistID string, commentID int64)) *mockclient_getGistComment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getGistComment_Call) Return(gistComment *github.GistComment, response *github.Response, err error) *mockclient_getGistComment_Call {
+	_c.Call.Return(gistComment, response, err)
+	return _c
+}
+
+func (_c *mockclient_getGistComment_Call) RunAndReturn(run func(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)) *mockclient_getGistComment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getGistRevision provides a mock function for the type mockclient
+func (_mock *mockclient) getGistRevision(ctx context.Context, gistID string, sha string) (*github.Gist, *github.Response, error) {
+	ret := _mock.Called(ctx, gistID, sha)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getGistRevision")
+	}
+
+	var r0 *github.Gist
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*github.Gist, *github.Response, error)); ok {
+		return returnFunc(ctx, gistID, sha)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *github.Gist); ok {
+		r0 = returnFunc(ctx, gistID, sha)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Gist)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, gistID, sha)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
+		r2 = returnFunc(ctx, gistID, sha)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getGistRevision_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getGistRevision'
+type mockclient_getGistRevision_Call struct {
+	*mock.Call
+}
+
+// getGistRevision is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gistID string
+//   - sha string
+func (_e *mockclient_Expecter) getGistRevision(ctx interface{}, gistID interface{}, sha interface{}) *mockclient_getGistRevision_Call {
+	return &mockclient_getGistRevision_Call{Call: _e.mock.On("getGistRevision", ctx, gistID, sha)}
+}
+
+func (_c *mockclient_getGistRevision_Call) Run(run func(ctx context.Context, gistID string, sha string)) *mockclient_getGistRevision_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getGistRevision_Call) Return(gist *github.Gist, response *github.Response, err error) *mockclient_getGistRevision_Call {
+	_c.Call.Return(gist, response, err)
+	return _c
+}
+
+func (_c *mockclient_getGistRevision_Call) RunAndReturn(run func(ctx context.Context, gistID string, sha string) (*github.Gist, *github.Response, error)) *mockclient_getGistRevision_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // getIssue provides a mock function for the type mockclient
 func (_mock *mockclient) getIssue(ctx context.Context, owner string, repo string, number int) (*github.Issue, *github.Response, error) {
 	ret := _mock.Called(ctx, owner, repo, number)
