@@ -4,8 +4,8 @@ import "regexp"
 
 // this package contains no tests because the regexes are being tested in the corresponding packages in *_ExtractLinks tests
 
-// GitHub captures almost all GitHub urls
-var GitHub = regexp.MustCompile(`(?i)https://github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]~"\\<>]*[^\s.,:;!?()\[\]{}\x60~"\\<>])?`)
+// GitHub captures almost all GitHub urls including gist.github.com
+var GitHub = regexp.MustCompile(`(?i)https://(?:gist\.)?github\.(?:com|[a-z0-9-]+\.[a-z0-9.-]+)(?:/[^\s\x60\]~"\\<>]*[^\s.,:;!?()\[\]{}\x60~"\\<>])?`)
 
 // EnterpriseGitHub captures only enterprise GitHub urls and used to distinguish between public and enterprise.
 var EnterpriseGitHub = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)

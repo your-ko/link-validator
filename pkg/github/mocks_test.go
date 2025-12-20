@@ -82,7 +82,7 @@ type mockclient_compareCommits_Call struct {
 // compareCommits is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - base string
 //   - head string
 //   - opts *github.ListOptions
@@ -182,7 +182,7 @@ type mockclient_getCommit_Call struct {
 // getCommit is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - sha string
 //   - opts *github.ListOptions
 func (_e *mockclient_Expecter) getCommit(ctx interface{}, owner interface{}, repo interface{}, sha interface{}, opts interface{}) *mockclient_getCommit_Call {
@@ -284,7 +284,7 @@ type mockclient_getContents_Call struct {
 // getContents is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - ref string
 //   - path string
 func (_e *mockclient_Expecter) getContents(ctx interface{}, owner interface{}, repo interface{}, ref interface{}, path interface{}) *mockclient_getContents_Call {
@@ -334,6 +334,246 @@ func (_c *mockclient_getContents_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// getGist provides a mock function for the type mockclient
+func (_mock *mockclient) getGist(ctx context.Context, gistID string) (*github.Gist, *github.Response, error) {
+	ret := _mock.Called(ctx, gistID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getGist")
+	}
+
+	var r0 *github.Gist
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*github.Gist, *github.Response, error)); ok {
+		return returnFunc(ctx, gistID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *github.Gist); ok {
+		r0 = returnFunc(ctx, gistID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Gist)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) *github.Response); ok {
+		r1 = returnFunc(ctx, gistID)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = returnFunc(ctx, gistID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getGist_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getGist'
+type mockclient_getGist_Call struct {
+	*mock.Call
+}
+
+// getGist is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gistID string
+func (_e *mockclient_Expecter) getGist(ctx interface{}, gistID interface{}) *mockclient_getGist_Call {
+	return &mockclient_getGist_Call{Call: _e.mock.On("getGist", ctx, gistID)}
+}
+
+func (_c *mockclient_getGist_Call) Run(run func(ctx context.Context, gistID string)) *mockclient_getGist_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getGist_Call) Return(gist *github.Gist, response *github.Response, err error) *mockclient_getGist_Call {
+	_c.Call.Return(gist, response, err)
+	return _c
+}
+
+func (_c *mockclient_getGist_Call) RunAndReturn(run func(ctx context.Context, gistID string) (*github.Gist, *github.Response, error)) *mockclient_getGist_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getGistComment provides a mock function for the type mockclient
+func (_mock *mockclient) getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error) {
+	ret := _mock.Called(ctx, gistID, commentID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getGistComment")
+	}
+
+	var r0 *github.GistComment
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (*github.GistComment, *github.Response, error)); ok {
+		return returnFunc(ctx, gistID, commentID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) *github.GistComment); ok {
+		r0 = returnFunc(ctx, gistID, commentID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.GistComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) *github.Response); ok {
+		r1 = returnFunc(ctx, gistID, commentID)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, int64) error); ok {
+		r2 = returnFunc(ctx, gistID, commentID)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getGistComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getGistComment'
+type mockclient_getGistComment_Call struct {
+	*mock.Call
+}
+
+// getGistComment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gistID string
+//   - commentID int64
+func (_e *mockclient_Expecter) getGistComment(ctx interface{}, gistID interface{}, commentID interface{}) *mockclient_getGistComment_Call {
+	return &mockclient_getGistComment_Call{Call: _e.mock.On("getGistComment", ctx, gistID, commentID)}
+}
+
+func (_c *mockclient_getGistComment_Call) Run(run func(ctx context.Context, gistID string, commentID int64)) *mockclient_getGistComment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getGistComment_Call) Return(gistComment *github.GistComment, response *github.Response, err error) *mockclient_getGistComment_Call {
+	_c.Call.Return(gistComment, response, err)
+	return _c
+}
+
+func (_c *mockclient_getGistComment_Call) RunAndReturn(run func(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)) *mockclient_getGistComment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getGistRevision provides a mock function for the type mockclient
+func (_mock *mockclient) getGistRevision(ctx context.Context, gistID string, sha string) (*github.Gist, *github.Response, error) {
+	ret := _mock.Called(ctx, gistID, sha)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getGistRevision")
+	}
+
+	var r0 *github.Gist
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*github.Gist, *github.Response, error)); ok {
+		return returnFunc(ctx, gistID, sha)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *github.Gist); ok {
+		r0 = returnFunc(ctx, gistID, sha)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Gist)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, gistID, sha)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
+		r2 = returnFunc(ctx, gistID, sha)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getGistRevision_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getGistRevision'
+type mockclient_getGistRevision_Call struct {
+	*mock.Call
+}
+
+// getGistRevision is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gistID string
+//   - sha string
+func (_e *mockclient_Expecter) getGistRevision(ctx interface{}, gistID interface{}, sha interface{}) *mockclient_getGistRevision_Call {
+	return &mockclient_getGistRevision_Call{Call: _e.mock.On("getGistRevision", ctx, gistID, sha)}
+}
+
+func (_c *mockclient_getGistRevision_Call) Run(run func(ctx context.Context, gistID string, sha string)) *mockclient_getGistRevision_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getGistRevision_Call) Return(gist *github.Gist, response *github.Response, err error) *mockclient_getGistRevision_Call {
+	_c.Call.Return(gist, response, err)
+	return _c
+}
+
+func (_c *mockclient_getGistRevision_Call) RunAndReturn(run func(ctx context.Context, gistID string, sha string) (*github.Gist, *github.Response, error)) *mockclient_getGistRevision_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // getIssue provides a mock function for the type mockclient
 func (_mock *mockclient) getIssue(ctx context.Context, owner string, repo string, number int) (*github.Issue, *github.Response, error) {
 	ret := _mock.Called(ctx, owner, repo, number)
@@ -378,7 +618,7 @@ type mockclient_getIssue_Call struct {
 // getIssue is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - number int
 func (_e *mockclient_Expecter) getIssue(ctx interface{}, owner interface{}, repo interface{}, number interface{}) *mockclient_getIssue_Call {
 	return &mockclient_getIssue_Call{Call: _e.mock.On("getIssue", ctx, owner, repo, number)}
@@ -466,7 +706,7 @@ type mockclient_getIssueComment_Call struct {
 // getIssueComment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - commentID int64
 func (_e *mockclient_Expecter) getIssueComment(ctx interface{}, owner interface{}, repo interface{}, commentID interface{}) *mockclient_getIssueComment_Call {
 	return &mockclient_getIssueComment_Call{Call: _e.mock.On("getIssueComment", ctx, owner, repo, commentID)}
@@ -554,7 +794,7 @@ type mockclient_getLatestRelease_Call struct {
 // getLatestRelease is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 func (_e *mockclient_Expecter) getLatestRelease(ctx interface{}, owner interface{}, repo interface{}) *mockclient_getLatestRelease_Call {
 	return &mockclient_getLatestRelease_Call{Call: _e.mock.On("getLatestRelease", ctx, owner, repo)}
 }
@@ -636,7 +876,7 @@ type mockclient_getMilestone_Call struct {
 // getMilestone is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - number int
 func (_e *mockclient_Expecter) getMilestone(ctx interface{}, owner interface{}, repo interface{}, number interface{}) *mockclient_getMilestone_Call {
 	return &mockclient_getMilestone_Call{Call: _e.mock.On("getMilestone", ctx, owner, repo, number)}
@@ -800,7 +1040,7 @@ type mockclient_getPR_Call struct {
 // getPR is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - number int
 func (_e *mockclient_Expecter) getPR(ctx interface{}, owner interface{}, repo interface{}, number interface{}) *mockclient_getPR_Call {
 	return &mockclient_getPR_Call{Call: _e.mock.On("getPR", ctx, owner, repo, number)}
@@ -888,7 +1128,7 @@ type mockclient_getPRComment_Call struct {
 // getPRComment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - commentID int64
 func (_e *mockclient_Expecter) getPRComment(ctx interface{}, owner interface{}, repo interface{}, commentID interface{}) *mockclient_getPRComment_Call {
 	return &mockclient_getPRComment_Call{Call: _e.mock.On("getPRComment", ctx, owner, repo, commentID)}
@@ -976,7 +1216,7 @@ type mockclient_getReleaseByTag_Call struct {
 // getReleaseByTag is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - tag string
 func (_e *mockclient_Expecter) getReleaseByTag(ctx interface{}, owner interface{}, repo interface{}, tag interface{}) *mockclient_getReleaseByTag_Call {
 	return &mockclient_getReleaseByTag_Call{Call: _e.mock.On("getReleaseByTag", ctx, owner, repo, tag)}
@@ -1064,7 +1304,7 @@ type mockclient_getRepository_Call struct {
 // getRepository is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 func (_e *mockclient_Expecter) getRepository(ctx interface{}, owner interface{}, repo interface{}) *mockclient_getRepository_Call {
 	return &mockclient_getRepository_Call{Call: _e.mock.On("getRepository", ctx, owner, repo)}
 }
@@ -1222,7 +1462,7 @@ type mockclient_getWorkflowByFileName_Call struct {
 // getWorkflowByFileName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - workflowFileName string
 func (_e *mockclient_Expecter) getWorkflowByFileName(ctx interface{}, owner interface{}, repo interface{}, workflowFileName interface{}) *mockclient_getWorkflowByFileName_Call {
 	return &mockclient_getWorkflowByFileName_Call{Call: _e.mock.On("getWorkflowByFileName", ctx, owner, repo, workflowFileName)}
@@ -1310,7 +1550,7 @@ type mockclient_getWorkflowJobByID_Call struct {
 // getWorkflowJobByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - jobID int64
 func (_e *mockclient_Expecter) getWorkflowJobByID(ctx interface{}, owner interface{}, repo interface{}, jobID interface{}) *mockclient_getWorkflowJobByID_Call {
 	return &mockclient_getWorkflowJobByID_Call{Call: _e.mock.On("getWorkflowJobByID", ctx, owner, repo, jobID)}
@@ -1398,7 +1638,7 @@ type mockclient_getWorkflowRunByID_Call struct {
 // getWorkflowRunByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - runID int64
 func (_e *mockclient_Expecter) getWorkflowRunByID(ctx interface{}, owner interface{}, repo interface{}, runID interface{}) *mockclient_getWorkflowRunByID_Call {
 	return &mockclient_getWorkflowRunByID_Call{Call: _e.mock.On("getWorkflowRunByID", ctx, owner, repo, runID)}
@@ -1486,7 +1726,7 @@ type mockclient_listCommits_Call struct {
 // listCommits is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - number int
 //   - opts *github.ListOptions
 func (_e *mockclient_Expecter) listCommits(ctx interface{}, owner interface{}, repo interface{}, number interface{}, opts interface{}) *mockclient_listCommits_Call {
@@ -1580,7 +1820,7 @@ type mockclient_listLabels_Call struct {
 // listLabels is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - opts *github.ListOptions
 func (_e *mockclient_Expecter) listLabels(ctx interface{}, owner interface{}, repo interface{}, opts interface{}) *mockclient_listLabels_Call {
 	return &mockclient_listLabels_Call{Call: _e.mock.On("listLabels", ctx, owner, repo, opts)}
@@ -1668,7 +1908,7 @@ type mockclient_listRepositorySecurityAdvisories_Call struct {
 // listRepositorySecurityAdvisories is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - opt *github.ListRepositorySecurityAdvisoriesOptions
 func (_e *mockclient_Expecter) listRepositorySecurityAdvisories(ctx interface{}, owner interface{}, repo interface{}, opt interface{}) *mockclient_listRepositorySecurityAdvisories_Call {
 	return &mockclient_listRepositorySecurityAdvisories_Call{Call: _e.mock.On("listRepositorySecurityAdvisories", ctx, owner, repo, opt)}
@@ -1756,7 +1996,7 @@ type mockclient_listWorkflowJobsAttempt_Call struct {
 // listWorkflowJobsAttempt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - repo string
+//   - gist string
 //   - runID int64
 //   - attemptNumber int64
 //   - opts *github.ListOptions

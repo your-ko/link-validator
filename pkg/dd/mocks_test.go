@@ -8,7 +8,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/DataDog/datadog-api-client-go/v2/api/datadog"
 	"github.com/DataDog/datadog-api-client-go/v2/api/datadogV1"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -282,52 +281,6 @@ func (_c *mockclient_ListNotebooks_Call) Return(notebooksResponse datadogV1.Note
 }
 
 func (_c *mockclient_ListNotebooks_Call) RunAndReturn(run func(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)) *mockclient_ListNotebooks_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// getClient provides a mock function for the type mockclient
-func (_mock *mockclient) getClient() *datadog.APIClient {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for getClient")
-	}
-
-	var r0 *datadog.APIClient
-	if returnFunc, ok := ret.Get(0).(func() *datadog.APIClient); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*datadog.APIClient)
-		}
-	}
-	return r0
-}
-
-// mockclient_getClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getClient'
-type mockclient_getClient_Call struct {
-	*mock.Call
-}
-
-// getClient is a helper method to define mock.On call
-func (_e *mockclient_Expecter) getClient() *mockclient_getClient_Call {
-	return &mockclient_getClient_Call{Call: _e.mock.On("getClient")}
-}
-
-func (_c *mockclient_getClient_Call) Run(run func()) *mockclient_getClient_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *mockclient_getClient_Call) Return(aPIClient *datadog.APIClient) *mockclient_getClient_Call {
-	_c.Call.Return(aPIClient)
-	return _c
-}
-
-func (_c *mockclient_getClient_Call) RunAndReturn(run func() *datadog.APIClient) *mockclient_getClient_Call {
 	_c.Call.Return(run)
 	return _c
 }

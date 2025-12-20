@@ -1633,7 +1633,6 @@ func Test_handleWiki(t *testing.T) {
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("wiki is not enabled for repository your-ko/link-validator"),
 		},
@@ -1801,6 +1800,116 @@ func Test_handlePackages(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			err := handlePackages(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			}
+		})
+	}
+}
+
+func Test_handleGist(t *testing.T) {
+	type args struct {
+		owner    string
+		gist     string
+		ref      string
+		path     string
+		fragment string
+	}
+	tests := []struct {
+		name      string
+		setupMock func(*mockclient)
+		args      args
+		wantErr   error
+	}{
+		{
+			name: "existing gist",
+			args: args{"your-ko", "gist123", "", "", ""},
+			setupMock: func(m *mockclient) {
+				gist := &github.Gist{ID: github.Ptr("your-ko")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getGist(mock.Anything, "gist123").Return(gist, resp, nil)
+			},
+		},
+		{
+			name: "gist with revision",
+			args: args{"your-ko", "gist123", "12345", "", ""},
+			setupMock: func(m *mockclient) {
+				gist := &github.Gist{ID: github.Ptr("your-ko")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getGistRevision(mock.Anything, "gist123", "12345").Return(gist, resp, nil)
+			},
+		},
+		{
+			name: "gist with comment fragment",
+			args: args{"your-ko", "gist123", "", "", "gistcomment-12345"},
+			setupMock: func(m *mockclient) {
+				comment := &github.GistComment{ID: github.Ptr(int64(12345))}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getGistComment(mock.Anything, "gist123", int64(12345)).Return(comment, resp, nil)
+			},
+		},
+		{
+			name: "gist not found - 404",
+			args: args{"your-ko", "nonexistent", "", "", ""},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getGist(mock.Anything, "nonexistent").Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
+		},
+		{
+			name:      "invalid comment ID in fragment",
+			args:      args{"your-ko", "gist123", "", "", "gistcomment-invalid"},
+			setupMock: func(m *mockclient) {},
+			wantErr:   errors.New("invalid gist comment id: 'gistcomment-invalid'"),
+		},
+		{
+			name: "comment not found - 404",
+			args: args{"your-ko", "gist123", "", "", "gistcomment-99999"},
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getGistComment(mock.Anything, "gist123", int64(99999)).Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			err := handleGist(context.Background(), mockClient, tt.args.owner, tt.args.gist, tt.args.ref, tt.args.path, tt.args.fragment)
 
 			if !mockClient.AssertExpectations(t) {
 				return

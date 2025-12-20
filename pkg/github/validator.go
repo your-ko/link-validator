@@ -41,6 +41,7 @@ var handlers = map[string]handlerEntry{
 	"issues":     {name: "issues", fn: handleIssue},
 	"releases":   {name: "releases", fn: handleReleases},
 	"label":      {name: "labels", fn: handleLabel},
+	"gist":       {name: "gist", fn: handleGist},
 
 	// Generic lists  — we just validate the repo exists
 	"repo":         {name: "repo-exist", fn: handleRepoExist},
@@ -148,7 +149,7 @@ func parseUrl(link string) (*ghURL, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !strings.HasPrefix(u.Hostname(), "github.") {
+	if !strings.HasPrefix(u.Hostname(), "github.") && u.Hostname() != "gist.github.com" {
 		return nil, fmt.Errorf("not a GitHub URL")
 	}
 	if strings.HasSuffix(u.Hostname(), "api.github") ||
@@ -194,6 +195,14 @@ func parseUrl(link string) (*ghURL, error) {
 	gh.repo = parts[1]
 	gh.typ = parts[2]
 
+	// Handle gist.github.com URLs
+	if u.Hostname() == "gist.github.com" {
+		if len(parts) < 2 || parts[0] == "" {
+			return nil, fmt.Errorf("invalid gist URL: missing user/gist parts")
+		}
+		gh.typ = "gist"
+	}
+
 	switch gh.typ {
 	case "":
 		if gh.repo == "" {
@@ -227,6 +236,8 @@ func parseUrl(link string) (*ghURL, error) {
 		"attestations", "actions":
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
+	case "gist":
+		gh.ref = parts[2]
 	case "security":
 		// I validate only 'advisories' existence, the rest is goes by 'handleRepoExist'
 		if parts[3] == "advisories" && parts[4] != "" {
