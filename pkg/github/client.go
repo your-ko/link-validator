@@ -31,6 +31,8 @@ type client interface {
 	getGistRevision(ctx context.Context, gistID, sha string) (*github.Gist, *github.Response, error)
 	getGistComment(ctx context.Context, gistID string, commentID int64) (*github.GistComment, *github.Response, error)
 	ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)
+	GetUserProject(ctx context.Context, username string, projectNumber int) (*github.ProjectV2, *github.Response, error)
+	GetOrganizationProject(ctx context.Context, org string, projectNumber int) (*github.ProjectV2, *github.Response, error)
 }
 
 type wrapper struct {
@@ -131,4 +133,12 @@ func (w *wrapper) getGistComment(ctx context.Context, gistID string, commentID i
 
 func (w *wrapper) ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error) {
 	return w.client.Repositories.ListEnvironments(ctx, owner, repo, opts)
+}
+
+func (w *wrapper) GetUserProject(ctx context.Context, owner string, projectNumber int) (*github.ProjectV2, *github.Response, error) {
+	return w.client.Projects.GetUserProject(ctx, owner, projectNumber)
+}
+
+func (w *wrapper) GetOrganizationProject(ctx context.Context, org string, projectNumber int) (*github.ProjectV2, *github.Response, error) {
+	return w.client.Projects.GetOrganizationProject(ctx, org, projectNumber)
 }

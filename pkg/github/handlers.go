@@ -540,6 +540,22 @@ func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, f
 	return errs.NewNotFoundMessage(fmt.Sprintf("environment with id:%s not found", ref))
 }
 
+func handleProjects(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+	prNumber, err := strconv.Atoi(ref)
+	if err != nil {
+		return err
+	}
+
+	//project, resp, err := c.GetOrganizationProject(ctx, owner, prNumber)
+	//fmt.Sprintln(project, resp, err)
+	project, resp, err := c.GetUserProject(ctx, owner, prNumber)
+	fmt.Sprintln(project, resp, err)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func mapGHError(url string, err error) error {
 	if err == nil {
 		return nil

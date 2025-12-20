@@ -43,6 +43,7 @@ var handlers = map[string]handlerEntry{
 	"label":        {name: "labels", fn: handleLabel},
 	"gist":         {name: "gist", fn: handleGist},
 	"environments": {name: "environments", fn: handleEnvironments},
+	"projects":     {name: "repo-exist", fn: handleProjects},
 
 	// Generic lists  — we just validate the repo exists
 	"repo":         {name: "repo-exist", fn: handleRepoExist},
@@ -56,7 +57,6 @@ var handlers = map[string]handlerEntry{
 	"attestations": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
 	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
 	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
-	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
 	"security":     {name: "repo-exist", fn: handleRepoExist},
 	"packages":     {name: "repo-exist", fn: handleRepoExist},
 	"search":       {name: "repo-exist", fn: handleRepoExist},
@@ -214,7 +214,7 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.typ = "repo"
 		}
 	case "branches", "tags", "labels", "packages",
-		"pulls", "milestones", "projects", "pkgs", "search":
+		"pulls", "milestones", "pkgs", "search":
 	// these above go to simple 'if repo exists' validation
 	case "blob", "tree", "blame", "raw":
 		gh.ref = parts[3]
@@ -242,6 +242,13 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.typ = parts[3]
 			gh.ref = parts[4]
 			gh.path = parts[5]
+		}
+	case "projects":
+		if parts[2] == "projects" {
+			gh.owner = gh.repo
+			gh.repo = ""
+			gh.ref = parts[3]
+			gh.path = parts[4]
 		}
 	case "gist":
 		gh.ref = parts[2]
