@@ -190,6 +190,17 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://docs.github.com/en/actions",
 			},
 		},
+		{
+			name: "correctly processed links in html",
+			line: `test
+				<https://www.site.com/><br/><https://site2.com/><br/><https://site3.com/>
+				test`,
+			want: []string{
+				"https://www.site.com/",
+				"https://site2.com/",
+				"https://site3.com/",
+			},
+		},
 	}
 
 	for _, tt := range tests {
