@@ -512,6 +512,11 @@ func handleGist(ctx context.Context, c client, owner, repo, ref, path, fragment 
 	return err
 }
 
+// handleEnvironments checks whether the env with the given ID exists
+//
+// GitHub API docs: https://docs.github.com/rest/deployments/environments#list-environments
+//
+//meta:operation GET /repos/{owner}/{repo}/environments
 func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
 	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
 	if err != nil {
