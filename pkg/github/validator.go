@@ -56,7 +56,7 @@ var handlers = map[string]handlerEntry{
 	"attestations": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
 	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
 	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
-	"projects":     {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
+	"projects":     {name: "repo-exist", fn: handleRepoExist}, // Classic GitHub projects are not available via GitHub API, only ProjectV2
 	"security":     {name: "repo-exist", fn: handleRepoExist},
 	"packages":     {name: "repo-exist", fn: handleRepoExist},
 	"search":       {name: "repo-exist", fn: handleRepoExist},
