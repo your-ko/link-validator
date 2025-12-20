@@ -82,7 +82,7 @@ type mockclient_compareCommits_Call struct {
 // compareCommits is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - base string
 //   - head string
 //   - opts *github.ListOptions
@@ -182,7 +182,7 @@ type mockclient_getCommit_Call struct {
 // getCommit is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - sha string
 //   - opts *github.ListOptions
 func (_e *mockclient_Expecter) getCommit(ctx interface{}, owner interface{}, repo interface{}, sha interface{}, opts interface{}) *mockclient_getCommit_Call {
@@ -284,7 +284,7 @@ type mockclient_getContents_Call struct {
 // getContents is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - ref string
 //   - path string
 func (_e *mockclient_Expecter) getContents(ctx interface{}, owner interface{}, repo interface{}, ref interface{}, path interface{}) *mockclient_getContents_Call {
@@ -618,7 +618,7 @@ type mockclient_getIssue_Call struct {
 // getIssue is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - number int
 func (_e *mockclient_Expecter) getIssue(ctx interface{}, owner interface{}, repo interface{}, number interface{}) *mockclient_getIssue_Call {
 	return &mockclient_getIssue_Call{Call: _e.mock.On("getIssue", ctx, owner, repo, number)}
@@ -706,7 +706,7 @@ type mockclient_getIssueComment_Call struct {
 // getIssueComment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - commentID int64
 func (_e *mockclient_Expecter) getIssueComment(ctx interface{}, owner interface{}, repo interface{}, commentID interface{}) *mockclient_getIssueComment_Call {
 	return &mockclient_getIssueComment_Call{Call: _e.mock.On("getIssueComment", ctx, owner, repo, commentID)}
@@ -794,7 +794,7 @@ type mockclient_getLatestRelease_Call struct {
 // getLatestRelease is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 func (_e *mockclient_Expecter) getLatestRelease(ctx interface{}, owner interface{}, repo interface{}) *mockclient_getLatestRelease_Call {
 	return &mockclient_getLatestRelease_Call{Call: _e.mock.On("getLatestRelease", ctx, owner, repo)}
 }
@@ -876,7 +876,7 @@ type mockclient_getMilestone_Call struct {
 // getMilestone is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - number int
 func (_e *mockclient_Expecter) getMilestone(ctx interface{}, owner interface{}, repo interface{}, number interface{}) *mockclient_getMilestone_Call {
 	return &mockclient_getMilestone_Call{Call: _e.mock.On("getMilestone", ctx, owner, repo, number)}
@@ -1040,7 +1040,7 @@ type mockclient_getPR_Call struct {
 // getPR is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - number int
 func (_e *mockclient_Expecter) getPR(ctx interface{}, owner interface{}, repo interface{}, number interface{}) *mockclient_getPR_Call {
 	return &mockclient_getPR_Call{Call: _e.mock.On("getPR", ctx, owner, repo, number)}
@@ -1128,7 +1128,7 @@ type mockclient_getPRComment_Call struct {
 // getPRComment is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - commentID int64
 func (_e *mockclient_Expecter) getPRComment(ctx interface{}, owner interface{}, repo interface{}, commentID interface{}) *mockclient_getPRComment_Call {
 	return &mockclient_getPRComment_Call{Call: _e.mock.On("getPRComment", ctx, owner, repo, commentID)}
@@ -1216,7 +1216,7 @@ type mockclient_getReleaseByTag_Call struct {
 // getReleaseByTag is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - tag string
 func (_e *mockclient_Expecter) getReleaseByTag(ctx interface{}, owner interface{}, repo interface{}, tag interface{}) *mockclient_getReleaseByTag_Call {
 	return &mockclient_getReleaseByTag_Call{Call: _e.mock.On("getReleaseByTag", ctx, owner, repo, tag)}
@@ -1304,7 +1304,7 @@ type mockclient_getRepository_Call struct {
 // getRepository is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 func (_e *mockclient_Expecter) getRepository(ctx interface{}, owner interface{}, repo interface{}) *mockclient_getRepository_Call {
 	return &mockclient_getRepository_Call{Call: _e.mock.On("getRepository", ctx, owner, repo)}
 }
@@ -1462,7 +1462,7 @@ type mockclient_getWorkflowByFileName_Call struct {
 // getWorkflowByFileName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - workflowFileName string
 func (_e *mockclient_Expecter) getWorkflowByFileName(ctx interface{}, owner interface{}, repo interface{}, workflowFileName interface{}) *mockclient_getWorkflowByFileName_Call {
 	return &mockclient_getWorkflowByFileName_Call{Call: _e.mock.On("getWorkflowByFileName", ctx, owner, repo, workflowFileName)}
@@ -1550,7 +1550,7 @@ type mockclient_getWorkflowJobByID_Call struct {
 // getWorkflowJobByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - jobID int64
 func (_e *mockclient_Expecter) getWorkflowJobByID(ctx interface{}, owner interface{}, repo interface{}, jobID interface{}) *mockclient_getWorkflowJobByID_Call {
 	return &mockclient_getWorkflowJobByID_Call{Call: _e.mock.On("getWorkflowJobByID", ctx, owner, repo, jobID)}
@@ -1638,7 +1638,7 @@ type mockclient_getWorkflowRunByID_Call struct {
 // getWorkflowRunByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - runID int64
 func (_e *mockclient_Expecter) getWorkflowRunByID(ctx interface{}, owner interface{}, repo interface{}, runID interface{}) *mockclient_getWorkflowRunByID_Call {
 	return &mockclient_getWorkflowRunByID_Call{Call: _e.mock.On("getWorkflowRunByID", ctx, owner, repo, runID)}
@@ -1726,7 +1726,7 @@ type mockclient_listCommits_Call struct {
 // listCommits is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - number int
 //   - opts *github.ListOptions
 func (_e *mockclient_Expecter) listCommits(ctx interface{}, owner interface{}, repo interface{}, number interface{}, opts interface{}) *mockclient_listCommits_Call {
@@ -1820,7 +1820,7 @@ type mockclient_listLabels_Call struct {
 // listLabels is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - opts *github.ListOptions
 func (_e *mockclient_Expecter) listLabels(ctx interface{}, owner interface{}, repo interface{}, opts interface{}) *mockclient_listLabels_Call {
 	return &mockclient_listLabels_Call{Call: _e.mock.On("listLabels", ctx, owner, repo, opts)}
@@ -1908,7 +1908,7 @@ type mockclient_listRepositorySecurityAdvisories_Call struct {
 // listRepositorySecurityAdvisories is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - opt *github.ListRepositorySecurityAdvisoriesOptions
 func (_e *mockclient_Expecter) listRepositorySecurityAdvisories(ctx interface{}, owner interface{}, repo interface{}, opt interface{}) *mockclient_listRepositorySecurityAdvisories_Call {
 	return &mockclient_listRepositorySecurityAdvisories_Call{Call: _e.mock.On("listRepositorySecurityAdvisories", ctx, owner, repo, opt)}
@@ -1996,7 +1996,7 @@ type mockclient_listWorkflowJobsAttempt_Call struct {
 // listWorkflowJobsAttempt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - owner string
-//   - gist string
+//   - repo string
 //   - runID int64
 //   - attemptNumber int64
 //   - opts *github.ListOptions
