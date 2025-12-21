@@ -12,6 +12,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Vault struct {
+	Env   string
+	Url   string
+	Token string
+}
+
 type Config struct {
 	PAT            string
 	CorpPAT        string
@@ -25,6 +31,7 @@ type Config struct {
 	LookupPath     string        `yaml:"lookupPath"`
 	Timeout        time.Duration `yaml:"timeout"`
 	IgnoredDomains []string      `yaml:"ignoredDomains"`
+	Vaults         []Vault       `yaml:"vaults"`
 	reader         io.Reader
 }
 
@@ -35,6 +42,7 @@ func Default() *Config {
 		LookupPath: ".",
 		FileMasks:  []string{"*.md"},
 		Timeout:    3 * time.Second,
+		Vaults:     []Vault{},
 	}
 }
 
@@ -47,7 +55,7 @@ func (cfg *Config) WithReader(r io.Reader) *Config {
 
 // Load loads the config in the following sequence:
 // Default < Config file < ENV variables
-// If there is no config file, then it is skipped
+// Vault tokens are read from environment after all other merging is complete
 func (cfg *Config) Load() (*Config, error) {
 	var tmp *Config
 	var err error
@@ -65,6 +73,12 @@ func (cfg *Config) Load() (*Config, error) {
 		return nil, err
 	}
 	cfg.merge(tmp)
+
+	// After all merging, populate vault tokens from environment variables
+	if len(cfg.Vaults) > 0 {
+		cfg.Vaults = readVaultTokensFromEnv(cfg.Vaults)
+	}
+
 	return cfg, nil
 }
 
@@ -136,8 +150,28 @@ func readFromEnv() (*Config, error) {
 		}
 		cfg.IgnoredDomains = ignoredDomains
 	}
-
+	// Note: Vault tokens are handled in the end phase
 	return cfg, nil
+}
+
+// readVaultTokensFromEnv reads vault tokens from environment variables for configured vaults
+func readVaultTokensFromEnv(configVaults []Vault) []Vault {
+	if len(configVaults) == 0 {
+		return []Vault{}
+	}
+
+	vaults := make([]Vault, len(configVaults))
+	copy(vaults, configVaults)
+
+	for i := range vaults {
+		tokenKey := "VAULT_TOKEN_" + strings.ToUpper(vaults[i].Env)
+		if token := os.Getenv(tokenKey); token != "" {
+			vaults[i].Token = token
+		} else {
+			slog.Error("Missing Vault token for %s", vaults[i].Env)
+		}
+	}
+	return vaults
 }
 
 // merge merges this config with another config
@@ -182,6 +216,9 @@ func (cfg *Config) merge(config *Config) {
 	}
 	if len(config.IgnoredDomains) != 0 {
 		cfg.IgnoredDomains = config.IgnoredDomains
+	}
+	if len(config.Vaults) != 0 {
+		cfg.Vaults = config.Vaults
 	}
 }
 

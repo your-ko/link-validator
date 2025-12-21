@@ -1340,3 +1340,84 @@ func TestWalkFilesPipeline(t *testing.T) {
 		})
 	}
 }
+
+func Test_getIgnoredDomainsForHttp(t *testing.T) {
+	type args struct {
+		cfg *config.Config
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "nil config returns empty slice",
+			args: args{cfg: nil},
+			want: []string{},
+		},
+		{
+			name: "empty config returns empty slice",
+			args: args{
+				cfg: &config.Config{},
+			},
+			want: []string{},
+		},
+		{
+			name: "only ignored domains",
+			args: args{
+				cfg: &config.Config{
+					IgnoredDomains: []string{"example.com", "test.org"},
+				},
+			},
+			want: []string{"example.com", "test.org"},
+		},
+		{
+			name: "only vault URLs",
+			args: args{
+				cfg: &config.Config{
+					Vaults: []config.Vault{
+						{Env: "pre", Url: "https://vault.pre.example.com"},
+						{Env: "prod", Url: "https://vault.prod.example.com"},
+					},
+				},
+			},
+			want: []string{"https://vault.pre.example.com", "https://vault.prod.example.com"},
+		},
+		{
+			name: "ignored domains and vault URLs combined",
+			args: args{
+				cfg: &config.Config{
+					IgnoredDomains: []string{"ignore.com", "skip.org"},
+					Vaults: []config.Vault{
+						{Env: "dev", Url: "https://vault.dev.internal"},
+						{Env: "staging", Url: "https://vault.staging.internal"},
+					},
+				},
+			},
+			want: []string{"ignore.com", "skip.org", "https://vault.dev.internal", "https://vault.staging.internal"},
+		},
+		{
+			name: "duplicate domains are deduped",
+			args: args{
+				cfg: &config.Config{
+					IgnoredDomains: []string{"example.com", "test.org", "example.com"},
+					Vaults: []config.Vault{
+						{Env: "env1", Url: "https://vault.example.com"},
+						{Env: "env2", Url: "https://vault.example.com"}, // duplicate URL
+					},
+				},
+			},
+			want: []string{"example.com", "test.org", "https://vault.example.com"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getIgnoredDomainsForHttp(tt.args.cfg)
+			// Since the order of elements in the result is not deterministic due to map iteration,
+			// we need to compare the sets rather than the slices directly
+			if !equalSets(got, tt.want) {
+				t.Errorf("getIgnoredDomainsForHttp() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

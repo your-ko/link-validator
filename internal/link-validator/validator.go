@@ -10,8 +10,8 @@ import (
 	"link-validator/pkg/dd"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
-	"link-validator/pkg/http"
 	"link-validator/pkg/local-path"
+	"link-validator/pkg/vault"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -50,8 +50,15 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	} else {
 		processors = append(processors, ddValidator)
 	}
+	vaultProcessor, err := vault.New(cfg.Vaults, cfg.Timeout)
+	if err != nil {
+		slog.With("error", err).Info("skip Vault validator initialisation due to %s")
+	} else {
+		processors = append(processors, vaultProcessor)
+	}
+
 	processors = append(processors, local_path.New())
-	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains))
+	//processors = append(processors, http.New(cfg.Timeout, getIgnoredDomainsForHttp(cfg))) TODO: Fix me
 
 	if len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
@@ -163,7 +170,7 @@ func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 	for _, p := range v.processors {
 		links := p.ExtractLinks(line)
 		for _, link := range links {
-			found[link] = p
+			found[link] = p // Vault validator gets overwritten by http
 		}
 	}
 	return found
@@ -300,6 +307,25 @@ func subtraction(left, right []string) []string {
 	}
 	for _, r := range right {
 		delete(accu, r)
+	}
+	result := make([]string, 0, len(accu))
+	for k := range accu {
+		result = append(result, k)
+	}
+	return result
+}
+
+// getIgnoredDomainsForHttp adds vault urls to the configured ignored domains
+func getIgnoredDomainsForHttp(cfg *config.Config) []string {
+	accu := make(map[string]bool)
+	if cfg == nil {
+		return []string{}
+	}
+	for i := range cfg.IgnoredDomains {
+		accu[cfg.IgnoredDomains[i]] = true
+	}
+	for i := range cfg.Vaults {
+		accu[cfg.Vaults[i].Url] = true
 	}
 	result := make([]string, 0, len(accu))
 	for k := range accu {
