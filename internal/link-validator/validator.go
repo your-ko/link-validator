@@ -12,6 +12,7 @@ import (
 	"link-validator/pkg/github"
 	"link-validator/pkg/http"
 	"link-validator/pkg/local-path"
+	"link-validator/pkg/vault"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -62,6 +63,15 @@ func New(cfg *config.Config) (*LinkValidator, error) {
 	}
 	if cfg.Validators.LocalPath.IsEnabled() {
 		processors = append(processors, local_path.New())
+	}
+
+	if cfg.Validators.Vaults.IsEnabled() {
+		vaultProcessor, err := vault.New(cfg.Vaults, cfg.Timeout)
+		if err != nil {
+			slog.With("error", err).Info("skip Vault validator initialisation due to %s")
+		} else {
+			processors = append(processors, vaultProcessor)
+		}
 	}
 
 	if cfg.Validators.HTTP.IsEnabled() {
