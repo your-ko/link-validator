@@ -52,7 +52,7 @@ runs:
           -e 'DD_API_KEY=${{ inputs.ddApiKey }}' \
           -e 'DD_APP_KEY=${{ inputs.ddAppKey }}' \
           -e 'CORP_URL=${{ inputs.corp-url }}' \
-          -e 'FILES="${{ inputs.files }}' \
+          -e 'FILES=${{ inputs.files }}' \
           -e 'TIMEOUT=${{ inputs.timeout }}' \
           -e 'IGNORED_DOMAINS=${{ inputs.ignored-domains }}' \
           -v "${{ github.workspace }}:/work" \
