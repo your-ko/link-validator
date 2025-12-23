@@ -26,6 +26,7 @@ type LinkProcessor interface {
 }
 
 type HttpValidatorExcluder interface {
+	// Excludes returns true if the url should be ignored by http validator as it is validated by another validator
 	Excludes(url string) bool
 }
 
