@@ -87,17 +87,13 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
 			if err != nil {
-				slog.With("error", err).Warn("can't close response body for %s", url)
+				slog.With("error", err).Warn("can't close response body", slog.String("url", url))
 			}
 		}(resp.Body)
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		if err != nil {
 			// we can't read body, something is off
 			return err
-		}
-		err = resp.Body.Close()
-		if err != nil {
-			slog.Info("error closing body: %s", slog.Any("error", err))
 		}
 
 		if len(bodyBytes) == 0 {
