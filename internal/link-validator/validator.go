@@ -25,7 +25,7 @@ type LinkProcessor interface {
 }
 
 type HttpValidatorExcluder interface {
-	Includes(url string) bool
+	Excludes(url string) bool
 }
 
 type Stats struct {
@@ -43,27 +43,27 @@ type LinkValidador struct {
 
 func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
-	belongers := make([]HttpValidatorExcluder, 0)
+	httpExcluders := make([]HttpValidatorExcluder, 0)
 	ghValidator, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
 	}
-	belongers = append(belongers, ghValidator)
+	httpExcluders = append(httpExcluders, ghValidator)
 	processors = append(processors, ghValidator)
 	ddValidator, err := dd.New(cfg)
 	if err != nil {
 		slog.Info("skip DataDog validator initialisation, DD_API_KEY/DD_APP_KEY are not set")
 	} else {
 		processors = append(processors, ddValidator)
-		belongers = append(belongers, ddValidator)
+		httpExcluders = append(httpExcluders, ddValidator)
 	}
 	processors = append(processors, local_path.New())
 
 	// Create exclusion function for HTTP processor
 	// This function checks if any other processor can handle the URL
 	excluder := func(url string) bool {
-		for _, belonger := range belongers {
-			if belonger.Includes(url) {
+		for _, excluder := range httpExcluders {
+			if excluder.Excludes(url) {
 				return true
 			}
 		}
