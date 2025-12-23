@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"link-validator/pkg/errs"
+	"link-validator/pkg/regex"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -207,8 +208,11 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			proc := New(10, nil, nil)
+			excluder := func(url string) bool {
+				return regex.DataDog.MatchString(url) ||
+					(regex.GitHub.MatchString(url) && !regex.GitHubExcluded.MatchString(url))
+			}
+			proc := New(10, nil, excluder)
 			got := proc.ExtractLinks(tt.line)
 
 			if !reflect.DeepEqual(got, tt.want) {
