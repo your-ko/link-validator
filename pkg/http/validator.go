@@ -49,11 +49,6 @@ func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	slog.Debug("Validating external url", slog.String("url", url))
 
-	if proc.urlShouldBeIgnored(url) {
-		slog.Debug("url should be ignored", slog.String("url", url))
-		return nil
-	}
-
 	url = strings.TrimSuffix(url, "/")
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
@@ -119,13 +114,20 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	for _, raw := range parts {
 		u, err := url.Parse(raw)
 		if err != nil || u.Hostname() == "" {
+			slog.Debug("url seems to be malformed", slog.String("url", raw))
 			continue // skip malformed
 		}
 		if strings.Contains(raw, "localhost") {
+			slog.Debug("localhost is ignored", slog.String("url", raw))
 			continue // no need to validate localhost
 		}
 		if strings.ContainsAny(raw, "[]{}()") {
-			continue // seems it is the templated url
+			slog.Debug("url seems to be templated", slog.String("url", raw))
+			continue
+		}
+		if proc.urlShouldBeIgnored(raw) {
+			slog.Debug("url should be ignored", slog.String("url", raw))
+			continue
 		}
 		if regex.GitHub.MatchString(raw) && !regex.GitHubExcluded.MatchString(raw) {
 			continue // skip GitHub urls except for non-API ones
@@ -141,7 +143,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 
 func (proc *LinkProcessor) urlShouldBeIgnored(url string) bool {
 	for _, d := range proc.ignoredDomains {
-		if strings.Contains(url, d) {
+		if strings.HasPrefix(url, d) {
 			return true
 		}
 	}
