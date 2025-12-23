@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"link-validator/pkg/errs"
+	"link-validator/pkg/regex"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -207,8 +208,11 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			proc := New(10, nil)
+			excluder := func(url string) bool {
+				return regex.DataDog.MatchString(url) ||
+					(regex.GitHub.MatchString(url) && !regex.GitHubExcluded.MatchString(url))
+			}
+			proc := New(10, nil, excluder)
 			got := proc.ExtractLinks(tt.line)
 
 			if !reflect.DeepEqual(got, tt.want) {
@@ -344,7 +348,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 			}))
 			t.Cleanup(testServer.Close)
 
-			proc := New(time.Second, nil)
+			proc := New(time.Second, nil, nil)
 			// Make sure we don't follow redirects (aligns with your policy).
 			proc.httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse

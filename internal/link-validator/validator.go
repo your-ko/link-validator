@@ -25,6 +25,10 @@ type LinkProcessor interface {
 	ExtractLinks(line string) []string
 }
 
+type HttpValidatorExcluder interface {
+	Excludes(url string) bool
+}
+
 type Stats struct {
 	Lines         int
 	TotalLinks    int
@@ -40,16 +44,19 @@ type LinkValidador struct {
 
 func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
+	httpExcluders := make([]HttpValidatorExcluder, 0)
 	ghValidator, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
 	}
+	httpExcluders = append(httpExcluders, ghValidator)
 	processors = append(processors, ghValidator)
 	ddValidator, err := dd.New(cfg)
 	if err != nil {
 		slog.Info("skip DataDog validator initialisation, DD_API_KEY/DD_APP_KEY are not set")
 	} else {
 		processors = append(processors, ddValidator)
+		httpExcluders = append(httpExcluders, ddValidator)
 	}
 	vaultProcessor, err := vault.New(cfg.Vaults, cfg.Timeout)
 	if err != nil {
@@ -59,7 +66,19 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	}
 
 	processors = append(processors, local_path.New())
-	processors = append(processors, http.New(cfg.Timeout, getIgnoredDomainsForHttp(cfg)))
+
+	// Create exclusion function for HTTP processor
+	// This function checks if any other processor can handle the URL
+	excluder := func(url string) bool {
+		for _, excluder := range httpExcluders {
+			if excluder.Excludes(url) {
+				return true
+			}
+		}
+		return false
+	}
+
+	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, excluder))
 
 	if len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
@@ -310,27 +329,6 @@ func subtraction(left, right []string) []string {
 	}
 	for _, r := range right {
 		delete(accu, r)
-	}
-	result := make([]string, 0, len(accu))
-	for k := range accu {
-		result = append(result, k)
-	}
-	return result
-}
-
-// getIgnoredDomainsForHttp adds vault urls to the configured ignored domains
-func getIgnoredDomainsForHttp(cfg *config.Config) []string {
-	accu := make(map[string]bool)
-	if cfg == nil {
-		return []string{}
-	}
-	for i := range cfg.IgnoredDomains {
-		accu[cfg.IgnoredDomains[i]] = true
-	}
-	for i := range cfg.Vaults {
-		for j := range cfg.Vaults[i].Urls {
-			accu[cfg.Vaults[i].Urls[j]] = true
-		}
 	}
 	result := make([]string, 0, len(accu))
 	for k := range accu {
