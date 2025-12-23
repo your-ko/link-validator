@@ -123,3 +123,12 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	}
 	return result
 }
+
+func (proc *LinkProcessor) Excludes(url string) bool {
+	for k := range proc.clients {
+		if strings.HasPrefix(url, k) {
+			return true
+		}
+	}
+	return false
+}
