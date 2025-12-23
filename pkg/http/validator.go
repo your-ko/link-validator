@@ -127,7 +127,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			slog.Debug("http: url should be ignored", slog.String("url", raw))
 			continue
 		}
-		if proc.excluder(raw) {
+		if proc.excluder != nil && proc.excluder(raw) {
 			continue // belongs to the other validators
 		}
 
