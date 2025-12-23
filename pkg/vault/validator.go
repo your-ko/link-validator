@@ -22,19 +22,21 @@ type LinkProcessor struct {
 
 func New(vaults []config.Vault, timeout time.Duration) (*LinkProcessor, error) {
 	processor := LinkProcessor{clients: make(map[string]vaultClient)}
-	for i := range vaults {
-		vaultClient, err := vault.New(
-			vault.WithAddress(vaults[i].Url),
-			vault.WithRequestTimeout(timeout),
-		)
-		if err != nil {
-			return nil, err
+	for _, v := range vaults {
+		for _, vaultUrl := range v.Urls {
+			vaultClient, err := vault.New(
+				vault.WithAddress(vaultUrl),
+				vault.WithRequestTimeout(timeout),
+			)
+			if err != nil {
+				return nil, err
+			}
+			err = vaultClient.SetToken(v.Token)
+			if err != nil {
+				return nil, err
+			}
+			processor.clients[vaultUrl] = &wrapper{vaultClient}
 		}
-		err = vaultClient.SetToken(vaults[i].Token)
-		if err != nil {
-			return nil, err
-		}
-		processor.clients[vaults[i].Url] = &wrapper{vaultClient}
 	}
 	return &processor, nil
 }

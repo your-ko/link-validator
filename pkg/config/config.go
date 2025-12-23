@@ -13,8 +13,8 @@ import (
 )
 
 type Vault struct {
-	Env   string
-	Url   string
+	Name  string
+	Urls  []string
 	Token string
 }
 
@@ -164,11 +164,11 @@ func readVaultTokensFromEnv(configVaults []Vault) []Vault {
 	copy(vaults, configVaults)
 
 	for i := range vaults {
-		tokenKey := "VAULT_TOKEN_" + strings.ToUpper(vaults[i].Env)
+		tokenKey := "VAULT_TOKEN_" + strings.ToUpper(vaults[i].Name)
 		if token := os.Getenv(tokenKey); token != "" {
 			vaults[i].Token = token
 		} else {
-			slog.Error("Missing Vault token for %s", vaults[i].Env)
+			slog.Error("Missing Vault token for %s", slog.String("vault", vaults[i].Name))
 		}
 	}
 	return vaults

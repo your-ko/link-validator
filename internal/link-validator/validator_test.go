@@ -1376,8 +1376,8 @@ func Test_getIgnoredDomainsForHttp(t *testing.T) {
 			args: args{
 				cfg: &config.Config{
 					Vaults: []config.Vault{
-						{Env: "pre", Url: "https://vault.pre.example.com"},
-						{Env: "prod", Url: "https://vault.prod.example.com"},
+						{Name: "pre", Urls: []string{"https://vault.pre.example.com"}},
+						{Name: "prod", Urls: []string{"https://vault.prod.example.com"}},
 					},
 				},
 			},
@@ -1389,8 +1389,8 @@ func Test_getIgnoredDomainsForHttp(t *testing.T) {
 				cfg: &config.Config{
 					IgnoredDomains: []string{"ignore.com", "skip.org"},
 					Vaults: []config.Vault{
-						{Env: "dev", Url: "https://vault.dev.internal"},
-						{Env: "staging", Url: "https://vault.staging.internal"},
+						{Name: "dev", Urls: []string{"https://vault.dev.internal"}},
+						{Name: "staging", Urls: []string{"https://vault.staging.internal"}},
 					},
 				},
 			},
@@ -1402,8 +1402,8 @@ func Test_getIgnoredDomainsForHttp(t *testing.T) {
 				cfg: &config.Config{
 					IgnoredDomains: []string{"example.com", "test.org", "example.com"},
 					Vaults: []config.Vault{
-						{Env: "env1", Url: "https://vault.example.com"},
-						{Env: "env2", Url: "https://vault.example.com"}, // duplicate URL
+						{Name: "env1", Urls: []string{"https://vault.example.com"}},
+						{Name: "env2", Urls: []string{"https://vault.example.com"}}, // duplicate URL
 					},
 				},
 			},

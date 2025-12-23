@@ -21,7 +21,7 @@ func TestConfig_merge(t *testing.T) {
 		want   *Config
 	}{
 		{
-			name: "merge_nil_config_does_nothing",
+			name: "merge nil config does nothing",
 			fields: fields{
 				cfg: &Config{
 					PAT:       "existing-pat",
@@ -39,7 +39,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_empty_config_does_nothing",
+			name: "merge empty config does nothing",
 			fields: fields{
 				cfg: &Config{
 					PAT:       "existing-pat",
@@ -57,7 +57,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_overwrites_non_empty_values",
+			name: "merge overwrites non empty values",
 			fields: fields{
 				cfg: &Config{
 					PAT:           "old-pat",
@@ -86,7 +86,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_preserves_existing_when_merge_config_has_empty_values",
+			name: "merge preserves existing when merge config has empty values",
 			fields: fields{
 				cfg: &Config{
 					PAT:            "existing-pat",
@@ -96,6 +96,11 @@ func TestConfig_merge(t *testing.T) {
 					LookupPath:     "existing-path",
 					Timeout:        5 * time.Second,
 					IgnoredDomains: []string{"existing.com"},
+					Vaults: []Vault{{
+						Name:  "vault",
+						Urls:  []string{"url0"},
+						Token: "xxxxx",
+					}},
 				},
 			},
 			args: args{
@@ -111,10 +116,15 @@ func TestConfig_merge(t *testing.T) {
 				LookupPath:     "existing-path",
 				Timeout:        5 * time.Second,
 				IgnoredDomains: []string{"existing.com"},
+				Vaults: []Vault{{
+					Name:  "vault",
+					Urls:  []string{"url0"},
+					Token: "xxxxx",
+				}},
 			},
 		},
 		{
-			name: "merge_handles_zero_timeout_correctly",
+			name: "merge handles zero timeout correctly",
 			fields: fields{
 				cfg: &Config{
 					Timeout: 5 * time.Second,
@@ -132,7 +142,7 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
-			name: "merge_empty_slices_do_not_override",
+			name: "merge empty slices do not override",
 			fields: fields{
 				cfg: &Config{
 					FileMasks:      []string{"*.md", "*.txt"},
@@ -175,7 +185,7 @@ func TestConfig_loadFromReader(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "empty_config_returns_nil",
+			name: "empty config returns nil",
 			fields: fields{
 				config: "",
 			},
@@ -183,7 +193,7 @@ func TestConfig_loadFromReader(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "whitespace_only_config_returns_nil",
+			name: "whitespace only config returns nil",
 			fields: fields{
 				config: "   \n\n  ",
 			},
@@ -191,7 +201,7 @@ func TestConfig_loadFromReader(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "valid_yaml_config_parsed_successfully",
+			name: "valid yaml config parsed successfully",
 			fields: fields{
 				config: `fileMasks:
   - "*.md"
@@ -211,7 +221,7 @@ ignoredDomains:
 			wantErr: false,
 		},
 		{
-			name: "partial_config_loads_only_specified_fields",
+			name: "partial config loads only specified fields",
 			fields: fields{
 				config: `timeout: 10s
 fileMasks:
@@ -224,17 +234,17 @@ fileMasks:
 			wantErr: false,
 		},
 		{
-			name: "malformed_yaml_returns_error",
+			name: "malformed yaml returns error",
 			fields: fields{
 				config: `fileMasks:
   - "*.md"
-timeout: invalid_yaml: {`,
+timeout: invalid yaml: {`,
 			},
 			want:    nil,
 			wantErr: true,
 		},
 		{
-			name: "unknown_field_returns_error",
+			name: "unknown field returns error",
 			fields: fields{
 				config: `fileMasks:
   - "*.md"
@@ -245,7 +255,7 @@ unknownField: "should cause error"`,
 			wantErr: true,
 		},
 		{
-			name: "invalid_duration_format_returns_error",
+			name: "invalid duration format returns error",
 			fields: fields{
 				config: `timeout: "not-a-duration"`,
 			},
@@ -253,7 +263,7 @@ unknownField: "should cause error"`,
 			wantErr: true,
 		},
 		{
-			name: "yaml_with_comments_parses_successfully",
+			name: "yaml with comments parses successfully",
 			fields: fields{
 				config: `# Configuration file
 fileMasks:  # File patterns to match

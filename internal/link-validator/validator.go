@@ -325,7 +325,9 @@ func getIgnoredDomainsForHttp(cfg *config.Config) []string {
 		accu[cfg.IgnoredDomains[i]] = true
 	}
 	for i := range cfg.Vaults {
-		accu[cfg.Vaults[i].Url] = true
+		for j := range cfg.Vaults[i].Urls {
+			accu[cfg.Vaults[i].Urls[j]] = true
+		}
 	}
 	result := make([]string, 0, len(accu))
 	for k := range accu {
