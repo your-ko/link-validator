@@ -164,7 +164,7 @@ func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 		links := p.ExtractLinks(line)
 		for _, link := range links {
 			if _, exist := found[link]; exist {
-				slog.Warn("two processor compete for the link", slog.String("link", link))
+				slog.Warn("two processors compete for the link", slog.String("link", link))
 			}
 			found[link] = p
 		}
