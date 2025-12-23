@@ -10,6 +10,7 @@ import (
 	"link-validator/pkg/dd"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/github"
+	"link-validator/pkg/http"
 	"link-validator/pkg/local-path"
 	"link-validator/pkg/vault"
 	"log/slog"
@@ -58,7 +59,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	}
 
 	processors = append(processors, local_path.New())
-	//processors = append(processors, http.New(cfg.Timeout, getIgnoredDomainsForHttp(cfg))) TODO: Fix me
+	processors = append(processors, http.New(cfg.Timeout, getIgnoredDomainsForHttp(cfg)))
 
 	if len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
