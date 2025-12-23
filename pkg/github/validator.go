@@ -321,3 +321,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 
 	return urls
 }
+
+func (proc *LinkProcessor) Excludes(url string) bool {
+	return regex.GitHub.MatchString(url) && !regex.GitHubExcluded.MatchString(url)
+}
