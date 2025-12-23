@@ -18,9 +18,10 @@ import (
 type LinkProcessor struct {
 	httpClient     *http.Client
 	ignoredDomains []string
+	excluder       func(url string) bool
 }
 
-func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
+func New(timeout time.Duration, ignoredDomains []string, excluder func(url string) bool) *LinkProcessor {
 	httpClient := &http.Client{
 		Timeout: timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -43,6 +44,7 @@ func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 	return &LinkProcessor{
 		httpClient:     httpClient,
 		ignoredDomains: ignoredDomains,
+		excluder:       excluder,
 	}
 }
 
@@ -125,11 +127,8 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			slog.Debug("http: url should be ignored", slog.String("url", raw))
 			continue
 		}
-		if regex.GitHub.MatchString(raw) && !regex.GitHubExcluded.MatchString(raw) {
-			continue // skip GitHub urls except for non-API ones
-		}
-		if regex.DataDog.MatchString(raw) {
-			continue // skip DataDog urls
+		if proc.excluder(raw) {
+			continue // belongs to the other validators
 		}
 
 		urls = append(urls, raw)

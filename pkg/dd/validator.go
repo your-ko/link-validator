@@ -250,6 +250,10 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	return urls
 }
 
+func (proc *LinkProcessor) Includes(url string) bool {
+	return regex.DataDog.MatchString(url)
+}
+
 func (proc *LinkProcessor) Route(resourceType string, handler ddHandler) *LinkProcessor {
 	proc.routes[resourceType] = handler
 	return proc
