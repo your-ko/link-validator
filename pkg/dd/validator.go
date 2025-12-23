@@ -63,7 +63,7 @@ func (proc *LinkProcessor) registerDefaultHandlers() *LinkProcessor {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) error {
-	slog.Debug("Validating DataDog URL", slog.String("url", link))
+	slog.Debug("datadog: starting validation", slog.String("url", link))
 
 	// Parse URL
 	resource, err := parseDataDogURL(link)
