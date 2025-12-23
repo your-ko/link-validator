@@ -39,7 +39,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 }
 
 func (proc *LinkProcessor) Process(_ context.Context, link string, testFileName string) error {
-	slog.Debug("validating local url", slog.String("filename", link))
+	slog.Debug("local: starting validation", slog.String("filename", link))
 
 	// Parse link into file path and optional header
 	linkPath, header, err := proc.parseLink(link)
