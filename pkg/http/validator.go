@@ -5,6 +5,7 @@ package http
 import (
 	"bytes"
 	"context"
+	"io"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/regex"
 	"log/slog"
@@ -82,7 +83,28 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		slog.Info("ignoring the url validation due to problems on the remote server", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
-		// everything seems to be alright
+		// check just the first 1 KB of the body
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				slog.With("error", err).Warn("can't close response body for %s", url)
+			}
+		}(resp.Body)
+		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		if err != nil {
+			// we can't read body, something is off
+			return err
+		}
+		err = resp.Body.Close()
+		if err != nil {
+			slog.Info("error closing body: %s", slog.Any("error", err))
+		}
+
+		if len(bodyBytes) == 0 {
+			// body is empty, doesn't count as a healthy URL
+			return errs.NewEmptyBody(url)
+		}
+
 		return nil
 	default:
 		slog.Warn("unexpected status", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
