@@ -47,7 +47,7 @@ func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
-	slog.Debug("Validating external url", slog.String("url", url))
+	slog.Debug("http: starting validation", slog.String("url", url))
 
 	url = strings.TrimSuffix(url, "/")
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))

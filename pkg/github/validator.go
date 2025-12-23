@@ -122,7 +122,7 @@ type ghURL struct {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
-	slog.Debug("Validating github url", slog.String("url", url))
+	slog.Debug("github: starting validation:", slog.String("url", url))
 
 	gh, err := parseUrl(url)
 	if err != nil {
