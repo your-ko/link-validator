@@ -413,12 +413,6 @@ func TestLinkProcessor_urlShouldBeIgnored(t *testing.T) {
 			args:   args{url: "https://github.com"},
 			want:   true,
 		},
-		{
-			name:   "ignored github",
-			fields: fields{ignoredDomains: []string{"github"}},
-			args:   args{url: "https://github.com"},
-			want:   true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

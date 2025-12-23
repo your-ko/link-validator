@@ -171,7 +171,10 @@ func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
 	for _, p := range v.processors {
 		links := p.ExtractLinks(line)
 		for _, link := range links {
-			found[link] = p // Vault validator gets overwritten by http
+			if _, exist := found[link]; exist {
+				slog.Warn("two processors compete for the link", slog.String("link", link))
+			}
+			found[link] = p
 		}
 	}
 	return found
