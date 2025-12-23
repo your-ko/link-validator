@@ -42,7 +42,7 @@ func New(vaults []config.Vault, timeout time.Duration) (*LinkProcessor, error) {
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, link string, _ string) error {
-	slog.Debug("Validating vault url", slog.String("url", link))
+	slog.Debug("vault: starting validation", slog.String("url", link))
 	u, err := url.Parse(link)
 	if err != nil {
 		return err
@@ -76,11 +76,12 @@ func validateSecret(ctx context.Context, client vaultClient, secretPath string) 
 	if err != nil {
 		if errors.As(err, &vaultError) {
 			if vaultError.StatusCode != http.StatusNotFound {
-				return err
+				return errs.NewNotFound(secretPath)
 			}
+			return err
 		}
 	}
-	return errs.NewNotFound(secretPath)
+	return nil
 }
 
 // transformPath strips the UI path '/ui/vault/secrets/' and removes '/show/' if present in the UI path
