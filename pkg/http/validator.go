@@ -84,14 +84,16 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
 		// check just the first 1 KB of the body
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				slog.With("error", err).Warn("can't close response body", slog.String("url", url))
+			}
+		}(resp.Body)
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		if err != nil {
 			// we can't read body, something is off
 			return err
-		}
-		err = resp.Body.Close()
-		if err != nil {
-			slog.Info("error closing body: %s", slog.Any("error", err))
 		}
 
 		if len(bodyBytes) == 0 {
@@ -99,13 +101,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 			return errs.NewEmptyBody(url)
 		}
 
-		body := strings.ToLower(string(bodyBytes))
-		if strings.Contains(body, "page not found") {
-			// TODO: this needs to be improved
-			return errs.NewNotFound(url)
-		} else {
-			return nil
-		}
+		return nil
 	default:
 		slog.Warn("unexpected status", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
