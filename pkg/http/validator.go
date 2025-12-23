@@ -27,7 +27,7 @@ func New(timeout time.Duration, ignoredDomains []string) *LinkProcessor {
 			slog.Debug("redirecting", slog.String("to", req.URL.String()), slog.Int("hops", len(via)))
 			redirectLimit := 3
 			if len(via) > redirectLimit {
-				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit), slog.String("url", req.URL.String()))
+				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit), slog.String("url", via[0].URL.String()))
 			}
 			for k, vs := range via[0].Header {
 				if req.Header.Get(k) == "" {
@@ -66,23 +66,23 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	case resp.StatusCode == 401 || resp.StatusCode == 403:
 		// we can proceed without authentication, so we don't know whether the url is alive.
 		// maybe in the future this will be improved
-		slog.Info("requires auth", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
+		slog.Info("http: requires auth", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	case resp.StatusCode == 404 || resp.StatusCode == 410:
-		slog.Debug("not found", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
+		slog.Debug("http: not found", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return errs.NewNotFound(url)
 	case resp.StatusCode == 429:
-		slog.Info("probably rate limit", slog.String("ra", resp.Header.Get("Retry-After")), slog.String("url", url))
+		slog.Info("http: probably rate limit", slog.String("ra", resp.Header.Get("Retry-After")), slog.String("url", url))
 		return nil
 	case resp.StatusCode >= 500 && resp.StatusCode <= 599:
-		slog.Info("ignoring the url validation due to problems on the remote server", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
+		slog.Info("http: ignoring the url validation due to problems on the remote server", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
 		// check just the first 1 KB of the body
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
 			if err != nil {
-				slog.With("error", err).Warn("can't close response body", slog.String("url", url))
+				slog.With("error", err).Warn("http: can't close response body", slog.String("url", url))
 			}
 		}(resp.Body)
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
@@ -98,7 +98,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 
 		return nil
 	default:
-		slog.Warn("unexpected status", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
+		slog.Warn("http: unexpected status", slog.Int("statusCode", resp.StatusCode), slog.String("url", url))
 		return nil
 	}
 }
@@ -110,19 +110,19 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 	for _, raw := range parts {
 		u, err := url.Parse(raw)
 		if err != nil || u.Hostname() == "" {
-			slog.Debug("url seems to be malformed", slog.String("url", raw))
+			slog.Debug("http: url seems to be malformed", slog.String("url", raw))
 			continue // skip malformed
 		}
 		if strings.Contains(raw, "localhost") {
-			slog.Debug("localhost is ignored", slog.String("url", raw))
+			slog.Debug("http: localhost is ignored", slog.String("url", raw))
 			continue // no need to validate localhost
 		}
 		if strings.ContainsAny(raw, "[]{}()") {
-			slog.Debug("url seems to be templated", slog.String("url", raw))
+			slog.Debug("http: url seems to be templated", slog.String("url", raw))
 			continue
 		}
 		if proc.urlShouldBeIgnored(raw) {
-			slog.Debug("url should be ignored", slog.String("url", raw))
+			slog.Debug("http: url should be ignored", slog.String("url", raw))
 			continue
 		}
 		if regex.GitHub.MatchString(raw) && !regex.GitHubExcluded.MatchString(raw) {

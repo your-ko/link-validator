@@ -142,7 +142,7 @@ func parseSLO(resource *ddResource, segments []string) {
 	if len(resource.query) != 0 && resource.query.Has("sp") {
 		var sps []sloSPElement
 		if err := json.Unmarshal([]byte(resource.query.Get("sp")), &sps); err != nil {
-			slog.With("error", err).Error("can't parse SLO query string, leave SLO id empty")
+			slog.With("error", err).Error("datadog: can't parse SLO query string, leave SLO id empty")
 			return
 		}
 		resource.id = sps[0].P.ID
