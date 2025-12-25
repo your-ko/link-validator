@@ -133,7 +133,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		return fmt.Errorf("the url '%s' looks like a corp url, but CORP_URL is not set", url)
 	}
 	client := proc.client
-	if gh.host == proc.corpGitHubUrl {
+	if proc.corpGitHubUrl == strings.TrimPrefix(gh.host, "gist.") {
 		client = proc.corpClient
 	}
 
