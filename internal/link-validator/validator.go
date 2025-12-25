@@ -131,10 +131,10 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 				}
 
 				if errors.Is(err, errs.ErrNotFound) {
-					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines+1))
+					slog.Warn("not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines+1))
 					stats.NotFoundLinks++
 				} else if errors.Is(err, errs.ErrEmptyBody) {
-					slog.Warn("link not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines+1))
+					slog.Warn("not found", slog.String("link", link), slog.String("error", err.Error()), slog.String("filename", fileName), slog.Int("line", lines+1))
 					stats.NotFoundLinks++
 				} else {
 					stats.Errors++
