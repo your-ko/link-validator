@@ -64,6 +64,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		slog.With("error", err).Info("skip Vault validator initialisation due to %s")
 	} else {
 		processors = append(processors, vaultProcessor)
+		httpExcluders = append(httpExcluders, vaultProcessor)
 	}
 
 	processors = append(processors, local_path.New())
