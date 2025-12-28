@@ -51,7 +51,6 @@ func New(timeout time.Duration, ignoredDomains []string, excluder func(url strin
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	slog.Debug("http: starting validation", slog.String("url", url))
 
-	url = strings.TrimSuffix(url, "/")
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
 		return err
@@ -131,6 +130,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			continue // belongs to the other validators
 		}
 
+		//urls = append(urls, strings.TrimSuffix(raw, "/"))
 		urls = append(urls, raw)
 	}
 	return urls

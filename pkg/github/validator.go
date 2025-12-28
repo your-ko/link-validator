@@ -133,7 +133,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		return fmt.Errorf("the url '%s' looks like a corp url, but CORP_URL is not set", url)
 	}
 	client := proc.client
-	if gh.host == proc.corpGitHubUrl {
+	if proc.corpGitHubUrl == strings.TrimPrefix(gh.host, "gist.") {
 		client = proc.corpClient
 	}
 
@@ -150,14 +150,6 @@ func parseUrl(link string) (*ghURL, error) {
 	u, err := url.Parse(strings.TrimSuffix(link, ".git"))
 	if err != nil {
 		return nil, err
-	}
-	if !strings.HasPrefix(u.Hostname(), "github.") && u.Hostname() != "gist.github.com" {
-		return nil, fmt.Errorf("not a GitHub URL")
-	}
-	if strings.HasSuffix(u.Hostname(), "api.github") ||
-		strings.HasPrefix(u.Hostname(), "uploads.github") {
-		// TODO: Improve
-		return nil, fmt.Errorf("API/uploads subdomain not supported")
 	}
 
 	parts := strings.Split(strings.TrimPrefix(u.Path, "/"), "/")
@@ -200,7 +192,7 @@ func parseUrl(link string) (*ghURL, error) {
 	gh.typ = parts[2]
 
 	// Handle gist.github.com URLs
-	if u.Hostname() == "gist.github.com" {
+	if strings.HasPrefix(u.Hostname(), "gist.") {
 		if len(parts) < 2 || parts[0] == "" {
 			return nil, fmt.Errorf("invalid gist URL: missing user/gist parts")
 		}
@@ -316,7 +308,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			continue
 		}
 
-		urls = append(urls, raw)
+		urls = append(urls, strings.TrimPrefix(raw, "/"))
 	}
 
 	return urls

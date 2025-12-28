@@ -158,11 +158,11 @@ func parseMonitorsResource(resource *ddResource, segments []string) {
 
 	resource.typ = "monitor"
 	switch segments[1] {
-	case "settings":
+	case "settings", "triggered", "quality":
 		resource.typ = "monitors"
 		resource.subType = segments[1]
 		resource.action = segments[2]
-	case "manage", "edit":
+	case "manage", "edit", "create":
 		resource.action = segments[1]
 	default:
 		resource.id = segments[1]

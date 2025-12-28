@@ -70,14 +70,14 @@ Then your PR pipeline should contain following steps:
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
 
-          CHANGED_FILES=$(git diff --name-only $BASE_SHA..$HEAD_SHA)
+          # Get only added and modified files (exclude deleted files)
+          CHANGED_FILES=$(git diff --name-only --diff-filter=AM $BASE_SHA..$HEAD_SHA)
 
-          echo "Changed files in this PR:"
+          echo "Changed files in this PR (excluding deleted):"
           echo "$CHANGED_FILES"
 
           FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
-
       - name: Link validation
         uses: your-ko/link-validator@1.9.0
         with:
