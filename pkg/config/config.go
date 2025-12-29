@@ -17,15 +17,28 @@ type Config struct {
 	CorpPAT        string
 	DDApiKey       string
 	DDAppKey       string
-	LogLevel       slog.Level    `yaml:"logLevel"`
-	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
-	FileMasks      []string      `yaml:"fileMasks"`
-	Files          []string      `yaml:"files"`
-	Exclude        []string      `yaml:"exclude"`
-	LookupPath     string        `yaml:"lookupPath"`
-	Timeout        time.Duration `yaml:"timeout"`
-	IgnoredDomains []string      `yaml:"ignoredDomains"`
-	reader         io.Reader
+	LogLevel       slog.Level       `yaml:"logLevel"`
+	CorpGitHubUrl  string           `yaml:"corpGitHubUrl"`
+	FileMasks      []string         `yaml:"fileMasks"`
+	Files          []string         `yaml:"files"`
+	Exclude        []string         `yaml:"exclude"`
+	LookupPath     string           `yaml:"lookupPath"`
+	Timeout        time.Duration    `yaml:"timeout"`
+	IgnoredDomains []string         `yaml:"ignoredDomains"`
+	Validators     ValidatorsConfig `yaml:"validators"`
+
+	reader io.Reader
+}
+
+type ValidatorConfig struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+type ValidatorsConfig struct {
+	GitHub    ValidatorConfig `yaml:"github"`
+	DataDog   ValidatorConfig `yaml:"datadog"`
+	LocalPath ValidatorConfig `yaml:"localPath"`
+	HTTP      ValidatorConfig `yaml:"http"`
 }
 
 // Default generates default config
