@@ -1,6 +1,16 @@
 package vault
 
-import "testing"
+import (
+	"context"
+	"errors"
+	"net/http"
+	"testing"
+
+	"github.com/hashicorp/vault-client-go"
+	"github.com/stretchr/testify/mock"
+)
+
+var gotVaultErr *vault.ResponseError
 
 func Test_transformPath(t *testing.T) {
 	type args struct {
@@ -91,6 +101,79 @@ func Test_transformPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := transformPath(tt.args.path); got != tt.want {
 				t.Errorf("transformPath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_validateSecret(t *testing.T) {
+	type args struct {
+		secretPath string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		setupMock func(*mockvaultClient)
+		wantErr   error
+	}{
+		{
+			name: "secret exists",
+			args: args{"/secret/general/big-secret"},
+			setupMock: func(m *mockvaultClient) {
+				listNotFoundErr := &vault.ResponseError{
+					StatusCode: http.StatusNotFound,
+				}
+				resp := &vault.Response[map[string]interface{}]{
+					Data: map[string]interface{}{
+						"keys": []string{"some-secret"},
+					},
+				}
+				m.EXPECT().List(mock.Anything, "/secret/general/big-secret").Return(nil, listNotFoundErr)
+				m.EXPECT().Read(mock.Anything, "/secret/general/big-secret").Return(resp, nil)
+			},
+		},
+		{
+			name: "secret doesn't exist",
+			args: args{"/secret/general/big-secret"},
+			setupMock: func(m *mockvaultClient) {
+				NotFoundErr := &vault.ResponseError{
+					StatusCode: http.StatusNotFound,
+				}
+				m.EXPECT().List(mock.Anything, "/secret/general/big-secret").Return(nil, NotFoundErr)
+				m.EXPECT().Read(mock.Anything, "/secret/general/big-secret").Return(nil, NotFoundErr)
+			},
+			wantErr: &vault.ResponseError{
+				StatusCode: http.StatusNotFound,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := newMockvaultClient(t)
+			tt.setupMock(mockClient)
+
+			err := validateSecret(context.Background(), mockClient, tt.args.secretPath)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
+			if errors.As(tt.wantErr, &gotVaultErr) && !errors.As(err, &gotVaultErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}
 		})
 	}
