@@ -65,6 +65,11 @@ func validateSecret(ctx context.Context, client vaultClient, secretPath string) 
 		return nil
 	}
 	if errors.As(err, &vaultError) {
+		if vaultError.StatusCode == http.StatusForbidden && secretPath == "/" {
+			// valid situation. The secret path is incorrect, it doesn't contain a path to the secret itself
+			// it is either points to dashboard, or Vault itself, so 403 means that the connection test is passed
+			return nil
+		}
 		if vaultError.StatusCode != http.StatusNotFound {
 			return err
 		}
@@ -86,12 +91,19 @@ func validateSecret(ctx context.Context, client vaultClient, secretPath string) 
 
 // transformPath strips the UI path '/ui/vault/secrets/' and removes '/show/' if present in the UI path
 func transformPath(path string) string {
+	if !strings.HasPrefix(path, "/ui/vault/secrets/") {
+		// the secret path, actually, leads to somewhere else, but not a secret
+		return "/"
+	}
 	secretPath := strings.TrimPrefix(path, "/ui/vault/secrets/")
 	parts := strings.Split(secretPath, "/")
-	if parts[1] == "show" {
+	if parts[1] == "show" || parts[1] == "list" {
 		parts = append(parts[:1], parts[2:]...)
 	}
 	secretPath = strings.Join(parts, "/")
+	if secretPath == "/" {
+		return secretPath
+	}
 	return fmt.Sprintf("/%s", secretPath)
 }
 
