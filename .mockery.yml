@@ -13,6 +13,9 @@ require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
+  link-validator/pkg/dd:
+    config:
+      all: true
   link-validator/pkg/github:
     config:
       all: true
