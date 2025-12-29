@@ -24,5 +24,4 @@ docker-build:
 	docker build . -t link-validator
 
 generate-mocks:
-	docker run --rm -v "$$PWD:/src" -w /src/pkg/github vektra/mockery:${MOCKERY_VERSION}
-	docker run --rm -v "$$PWD:/src" -w /src/pkg/dd vektra/mockery:${MOCKERY_VERSION}
+	docker run --rm -v "$$PWD:/src" -w /src/ vektra/mockery:${MOCKERY_VERSION}
