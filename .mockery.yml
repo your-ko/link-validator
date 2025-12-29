@@ -19,3 +19,6 @@ packages:
   link-validator/pkg/github:
     config:
       all: true
+  link-validator/pkg/vault:
+    config:
+      all: true
