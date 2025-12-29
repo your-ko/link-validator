@@ -146,6 +146,42 @@ func Test_validateSecret(t *testing.T) {
 				StatusCode: http.StatusNotFound,
 			},
 		},
+		{
+			name: "secret folder exists",
+			args: args{"/secret/general/"},
+			setupMock: func(m *mockvaultClient) {
+				resp := &vault.Response[map[string]interface{}]{
+					Data: map[string]interface{}{
+						"keys": []string{"some-secret"},
+					},
+				}
+				m.EXPECT().List(mock.Anything, "/secret/general/").Return(resp, nil)
+			},
+		},
+		{
+			name: "secret folder not found",
+			args: args{"/secret/general/"},
+			setupMock: func(m *mockvaultClient) {
+				NotFoundErr := &vault.ResponseError{
+					StatusCode: http.StatusNotFound,
+				}
+				m.EXPECT().List(mock.Anything, "/secret/general/").Return(nil, NotFoundErr)
+				m.EXPECT().Read(mock.Anything, "/secret/general/").Return(nil, NotFoundErr)
+			},
+			wantErr: &vault.ResponseError{
+				StatusCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "requested no particular path, so just connectivity check",
+			args: args{"/"},
+			setupMock: func(m *mockvaultClient) {
+				forbidderErr := &vault.ResponseError{
+					StatusCode: http.StatusForbidden,
+				}
+				m.EXPECT().List(mock.Anything, "/").Return(nil, forbidderErr)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
