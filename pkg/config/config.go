@@ -19,15 +19,16 @@ func Load(reader io.Reader) (*Config, error) {
 	cfgDefault := Default()
 	var tmp *Config
 	var err error
-	if reader != nil {
+	if reader == nil {
+		tmp = Default()
+	} else {
 		tmp, err = loadFromReader(reader)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if tmp != nil {
-		cfgDefault.merge(tmp)
-	}
+	cfgDefault.merge(tmp)
+
 	tmp, err = readFromEnv()
 	if err != nil {
 		return nil, err

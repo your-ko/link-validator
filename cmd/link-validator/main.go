@@ -13,18 +13,23 @@ var Version string
 var BuildDate string
 
 func main() {
+	var cfg *config.Config
+	var err error
 
 	cfgReader, err := os.Open(".link-validator.yaml")
-	if err != nil {
-		slog.Warn("can't open config file .link-validator.yaml, skipping it")
-	}
-	defer func() {
-		_ = cfgReader.Close()
-	}()
-	cfg, err := config.Load(cfgReader)
-	if err != nil {
-		slog.With("error", err).Error("can't initialise, exiting")
-		os.Exit(1)
+	if err == nil {
+		defer func() {
+			_ = cfgReader.Close()
+		}()
+		cfg, err = config.Load(cfgReader)
+		if err != nil {
+			slog.With("error", err).Error("can't initialise, exiting")
+			os.Exit(1)
+		}
+
+	} else {
+		slog.Warn("can't open config file .link-validator.yaml, using default and ENV variables")
+		cfg, err = config.Load(nil)
 	}
 
 	sLogger := slog.New(link_validator.InitLogger(cfg))
