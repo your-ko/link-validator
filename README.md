@@ -224,8 +224,8 @@ Unfortunately Datadog API are limited so not many resources are validated at the
 To avoid a lot of false negatives, I just perform "mock" validation on those URLs that are not supported by the API.
 
 #### HashiCorp Vault
-Unfortunately, due to limitation of KVv1 API, the validator needs to actually, read the secret, but the result of Read(..) call is ignored.
-For the KVv2 API it can be done in the more secure way, this will be implemented later. 
+Unfortunately, due to the limitation of KVv1 API, the validator needs to actually read the secret, but the result of the Read(..) call is ignored.
+For the KVv2 API, it can be done more securely; this will be implemented later. 
 
 For better security, a Vault policy with "read-only" and "list" permissions needs to be assigned to the token.
 
