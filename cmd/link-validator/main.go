@@ -26,10 +26,13 @@ func main() {
 			slog.With("error", err).Error("can't initialise, exiting")
 			os.Exit(1)
 		}
-
 	} else {
 		slog.Warn("can't open config file .link-validator.yaml, using default and ENV variables")
 		cfg, err = config.Load(nil)
+		if err != nil {
+			slog.With("error", err).Error("can't initialise config from ENV variables, exiting")
+			os.Exit(1)
+		}
 	}
 
 	sLogger := slog.New(link_validator.InitLogger(cfg))
