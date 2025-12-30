@@ -149,6 +149,36 @@ jobs:
 | `EXCLUDE`         | exclude        | No       | List of files or folders to exclude from validation. Is useful to exclude, for example, `/vendor` or `*/charts` because these folders can contain 3rd party documentation, which we don't need to validate. Files also possible to exclude. The path should be relative from the repository root | `[]`    |
 | `LOOKUP_PATH`     | lookupPath     | No       | A path to look for the files up (read below)                                                                                                                                                                                                                                                     | `./`    |
 
+### Config file
+The config file needs to be called `.link-validator.yaml` and must be located in the repository root.
+The file can contain all configuration properties, except tokens. If a token is declared in the config file,
+it is ignored, because it is a bad security practice to have tokens checked into Git.
+
+Config file example:
+```yaml
+fileMasks:
+  - "*.md"
+timeout: 5s
+validators:
+  github:
+    enabled: true          # If enabled, PAT/CORP_PAT must be set in ENV variables
+  datadog:
+    enabled: true          # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
+  localPath:
+    enabled: true          # Usually always enabled
+  http:
+    enabled: true          # Usually always enabled (fallback)
+    ignoredDomains:
+      - https://blah.blah.org
+
+```
+
+How is the configuration applied?
+* First, the config is populated with default values.
+* Then, values from the config file are applied. If the file is not present, then this step is ignored.
+* Finally, environment variables are applied.
+
+
 ### Additional explanation
 
 #### IGNORED_DOMAINS 
@@ -171,6 +201,12 @@ LOOKUP_PATH=./docs
 ```
 then you get a successfully passed validation with no files.
 
+## GitHub
+
+**GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
+
+**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The Personal Access Token (PAT) needs read access to repositories referenced in your documentation.
+
 ### Datadog
 To get APP/API keys you should go to 
 * Integrations -> Organisation Setting -> Service Accounts and create a service account with the `Datadog Read Only Role`
@@ -179,7 +215,7 @@ To get APP/API keys you should go to
 Create `Read Only`, following the principle of the least privilege. 
 
 Unfortunately Datadog API are limited so not many resources are validated at the moment. 
-To avoid a lot of false positives, I just perform "mock" validation.
+To avoid a lot of false negatives, I just perform "mock" validation on those URLs that are not supported by the API.
 
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:
@@ -194,30 +230,6 @@ You can configure the link-validator either via environment variables:
             -w /work \
             ${DOCKER_VALIDATOR}
 ```
-or via config file.
-
-#### Config file
-The config file needs to be called `.link-validator.yaml` and must be located in the repository root.
-The file can contain all configuration properties, except tokens. If a token is declared in the config file,
-it is ignored, because it is a bad security practice to have tokens checked into Git. 
-
-Config file example:
-```yaml
-fileMasks:
-  - "*.md"
-timeout: 2s
-```
-
-How is the configuration applied?
-* First, the config is populated with default values.
-* Then, values from the config file are applied. If the file is not present, then this step is ignored.
-* Finally, environment variables are applied. 
-
-## Authentication
-
-**GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
-
-**GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The Personal Access Token (PAT) needs read access to repositories referenced in your documentation.
 
 ## Implementation Details
 
@@ -258,12 +270,15 @@ This usually indicates authentication or proxy configuration issues. Enable debu
 
 Image size: ~10MB
 
-Pinning to specific versions (e.g., `0.18.0`) is recommended rather than using `latest` for reproducible builds.
+Pinning to specific versions (e.g., `1.0.0`) is recommended rather than using `latest` for reproducible builds.
 
 ## Security
 
-For security considerations, vulnerability reporting, supply chain security details, and verification instructions, see [SECURITY.md](./SECURITY.md). 
+The keys and tokens should *ONLY* be passed as ENV variables!
+These tokens are used only to instantiate corresponding clients (such as GitHub, DataDog, etc) and nothing else. 
+They are not logged, they are not sent anywhere else. 
 
+For security considerations, vulnerability reporting, supply chain security details, and verification instructions, see [SECURITY.md](./SECURITY.md).
 
 ## Versioning
 
