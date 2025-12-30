@@ -78,6 +78,10 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		processors = append(processors, http.New(cfg.Timeout, cfg.Validators.HTTP.IgnoredDomains, excluder))
 	}
 
+	if len(processors) == 0 {
+		slog.Warn("you have no validators set up, what are you trying to validate? :)")
+	}
+
 	if len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
 	}

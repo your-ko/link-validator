@@ -16,7 +16,7 @@ import (
 // Default < Config file < ENV variables
 // If there is no config file, then it is skipped
 func Load(reader io.Reader) (*Config, error) {
-	cfgDefault := Default()
+	cfg := Default()
 	var tmp *Config
 	var err error
 	if reader == nil {
@@ -27,14 +27,14 @@ func Load(reader io.Reader) (*Config, error) {
 			return nil, err
 		}
 	}
-	cfgDefault.merge(tmp)
+	cfg.merge(tmp)
 
 	tmp, err = readFromEnv()
 	if err != nil {
 		return nil, err
 	}
-	cfgDefault.merge(tmp)
-	return tmp, nil
+	cfg.merge(tmp)
+	return cfg, nil
 }
 
 func loadFromReader(reader io.Reader) (*Config, error) {
