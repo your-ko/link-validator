@@ -1,5 +1,14 @@
 fileMasks:
   - "*.md"
-timeout: 2s
-ignoredDomains:
-  - token.actions.githubusercontent.com
+timeout: 5s
+validators:
+  github:
+    enabled: true          # If enabled, PAT/CORP_PAT must be set in ENV variables
+  datadog:
+    enabled: false         # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
+  localPath:
+    enabled: true          # Usually always enabled
+  http:
+    enabled: true          # Usually always enabled (fallback)
+    ignoredDomains:
+    - token.actions.githubusercontent.com

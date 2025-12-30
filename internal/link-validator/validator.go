@@ -44,33 +44,43 @@ type LinkValidador struct {
 func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
 	httpExcluders := make([]HttpValidatorExcluder, 0)
-	ghValidator, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
-	if err != nil {
-		return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
+	if cfg.Validators.GitHub.Enabled {
+		ghValidator, err := github.New(cfg.Validators.GitHub.CorpGitHubUrl, cfg.Validators.GitHub.CorpPAT, cfg.Validators.GitHub.PAT, cfg.Timeout)
+		if err != nil {
+			return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
+		}
+		httpExcluders = append(httpExcluders, ghValidator)
+		processors = append(processors, ghValidator)
 	}
-	httpExcluders = append(httpExcluders, ghValidator)
-	processors = append(processors, ghValidator)
-	ddValidator, err := dd.New(cfg)
-	if err != nil {
-		slog.Info("skip DataDog validator initialisation, DD_API_KEY/DD_APP_KEY are not set")
-	} else {
+	if cfg.Validators.DataDog.Enabled {
+		ddValidator, err := dd.New(cfg)
+		if err != nil {
+			return nil, err
+		}
 		processors = append(processors, ddValidator)
 		httpExcluders = append(httpExcluders, ddValidator)
 	}
-	processors = append(processors, local_path.New())
-
-	// Create exclusion function for HTTP processor
-	// This function checks if any other processor can handle the URL
-	excluder := func(url string) bool {
-		for _, excluder := range httpExcluders {
-			if excluder.Excludes(url) {
-				return true
-			}
-		}
-		return false
+	if cfg.Validators.LocalPath.Enabled {
+		processors = append(processors, local_path.New())
 	}
 
-	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, excluder))
+	if cfg.Validators.HTTP.Enabled {
+		// Create exclusion function for HTTP processor
+		// This function checks if any other processor can handle the URL
+		excluder := func(url string) bool {
+			for _, excluder := range httpExcluders {
+				if excluder.Excludes(url) {
+					return true
+				}
+			}
+			return false
+		}
+		processors = append(processors, http.New(cfg.Timeout, cfg.Validators.HTTP.IgnoredDomains, excluder))
+	}
+
+	if len(processors) == 0 {
+		slog.Warn("you have no validators set up, what are you trying to validate? :)")
+	}
 
 	if len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil

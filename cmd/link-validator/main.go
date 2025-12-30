@@ -13,20 +13,26 @@ var Version string
 var BuildDate string
 
 func main() {
+	var cfg *config.Config
+	var err error
 
-	cfg := config.Default()
-	if cfgReader, err := os.Open(".link-validator.yaml"); err == nil {
-		cfg = cfg.WithReader(cfgReader)
+	cfgReader, err := os.Open(".link-validator.yaml")
+	if err == nil {
 		defer func() {
 			_ = cfgReader.Close()
 		}()
+		cfg, err = config.Load(cfgReader)
+		if err != nil {
+			slog.With("error", err).Error("can't initialise, exiting")
+			os.Exit(1)
+		}
 	} else {
-		slog.Warn("can't open config file .link-validator.yaml, skipping it")
-	}
-	cfg, err := cfg.Load()
-	if err != nil {
-		slog.With("error", err).Error("can't initialise, exiting")
-		os.Exit(1)
+		slog.Warn("can't open config file .link-validator.yaml, using default and ENV variables")
+		cfg, err = config.Load(nil)
+		if err != nil {
+			slog.With("error", err).Error("can't initialise config from ENV variables, exiting")
+			os.Exit(1)
+		}
 	}
 
 	sLogger := slog.New(link_validator.InitLogger(cfg))
@@ -38,20 +44,20 @@ func main() {
 		slog.String("git commit", GitCommit),
 	)
 
-	if cfg.CorpGitHubUrl != "" && cfg.CorpPAT == "" {
-		slog.Warn("it seems you set CORP_URL but didn't provide CORP_PAT. Expect false negatives because the " +
-			"link won't be able to fetch corl github without pat")
+	res := cfg.Validate()
+	for _, err = range res {
+		slog.With("error", err).Error("initialisation error:")
+		os.Exit(1)
 	}
 
 	slog.Debug("Running with",
 		slog.String("LOG_LEVEL", os.Getenv("LOG_LEVEL")),
-		slog.String("CORP_URL", cfg.CorpGitHubUrl),
+		slog.String("CORP_URL", cfg.Validators.GitHub.CorpGitHubUrl),
 		slog.String("LOOKUP_PATH", cfg.LookupPath),
 		slog.Any("FILE_MASKS", cfg.FileMasks),
 		slog.Duration("TIMEOUT", cfg.Timeout),
 		slog.Any("EXCLUDE", cfg.Exclude),
 		slog.Any("FILES", cfg.Files),
-		slog.Any("IGNORED_DOMAINS", cfg.IgnoredDomains),
 	)
 
 	validator, err := link_validator.New(cfg)
