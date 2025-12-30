@@ -1,6 +1,6 @@
 fileMasks:
   - "*.md"
-timeout: 2s
+timeout: 5s
 validators:
   github:
     enabled: true          # If enabled, PAT/CORP_PAT must be set in ENV variables
@@ -10,6 +10,5 @@ validators:
     enabled: true          # Usually always enabled
   http:
     enabled: true          # Usually always enabled (fallback)
-
-ignoredDomains:
-  - token.actions.githubusercontent.com
+    ignoredDomains:
+    - token.actions.githubusercontent.com

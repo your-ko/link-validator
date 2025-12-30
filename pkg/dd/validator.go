@@ -29,7 +29,7 @@ type ddResource struct {
 }
 
 func New(cfg *config.Config) (*LinkProcessor, error) {
-	if cfg.DDApiKey == "" || cfg.DDAppKey == "" {
+	if cfg.Validators.DataDog.ApiKey == "" || cfg.Validators.DataDog.AppKey == "" {
 		return nil, fmt.Errorf("can't initialise DataDog client, DD_API_KEY/DD_APP_KEY are not set")
 	}
 	configuration := datadog.NewConfiguration()
@@ -38,8 +38,8 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 	proc := &LinkProcessor{
 		client: &wrapper{
 			client: apiClient,
-			apiKey: cfg.DDApiKey,
-			appKey: cfg.DDAppKey,
+			apiKey: cfg.Validators.DataDog.ApiKey,
+			appKey: cfg.Validators.DataDog.AppKey,
 		},
 		routes: make(map[string]ddHandler),
 	}

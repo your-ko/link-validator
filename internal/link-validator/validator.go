@@ -44,7 +44,7 @@ type LinkValidador struct {
 func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
 	httpExcluders := make([]HttpValidatorExcluder, 0)
-	ghValidator, err := github.New(cfg.CorpGitHubUrl, cfg.CorpPAT, cfg.PAT, cfg.Timeout)
+	ghValidator, err := github.New(cfg.Validators.GitHub.CorpGitHubUrl, cfg.Validators.GitHub.CorpPAT, cfg.Validators.GitHub.PAT, cfg.Timeout)
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
 	}
@@ -70,7 +70,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		return false
 	}
 
-	processors = append(processors, http.New(cfg.Timeout, cfg.IgnoredDomains, excluder))
+	processors = append(processors, http.New(cfg.Timeout, cfg.Validators.HTTP.IgnoredDomains, excluder))
 
 	if len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
