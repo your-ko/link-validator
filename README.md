@@ -6,23 +6,14 @@
 # Link Validator
 
 Validates links and URLs in Markdown files by checking:
-- GitHub links (files, PRs, issues, releases, workflows, etc.)
-- External HTTP(S) URLs
+- GitHub links (files, PRs, issues, releases, workflows, etc.) via API calls
+- HTTPS link checking with redirect following
 - Local file references (`./README.md`, `../docs/intro.md`)
 - Datadog URLs (monitors, dashboards, etc)
 - HashiCorp Vault secret URLs
-
-Supports both public GitHub.com and GitHub Enterprise Server (GHES).
-
-## Features
-
-- GitHub link validation via API calls
-- HTTP(S) link checking with redirect following
-- Local Markdown file path verification
-- GitHub Enterprise Server support
-- Authentication and rate limiting
 - Dockerized for CI integration
 
+Supports both public GitHub.com and GitHub Enterprise Server (GHES).
 
 ## Why Use This?
 
