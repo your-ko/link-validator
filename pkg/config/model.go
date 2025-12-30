@@ -74,6 +74,23 @@ type ValidatorsConfig struct {
 	HTTP      HttpConfig      `yaml:"http"`
 }
 
+func (v ValidatorsConfig) validate() []error {
+	validators := []validator{
+		v.GitHub,
+		v.DataDog,
+		v.LocalPath,
+		v.HTTP,
+	}
+
+	var result []error
+	for _, validator := range validators {
+		if err := validator.validate(); err != nil {
+			result = append(result, err)
+		}
+	}
+	return result
+}
+
 // Default generates default config
 func Default() *Config {
 	return &Config{

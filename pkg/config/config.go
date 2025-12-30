@@ -191,10 +191,5 @@ func mergeSlices(left []string, right []string) []string {
 }
 
 func (cfg *Config) Validate() []error {
-	res := make([]error, 0)
-	res = append(res, cfg.Validators.GitHub.validate())
-	res = append(res, cfg.Validators.HTTP.validate())
-	res = append(res, cfg.Validators.LocalPath.validate())
-	res = append(res, cfg.Validators.DataDog.validate())
-	return res
+	return cfg.Validators.validate()
 }

@@ -58,7 +58,6 @@ func main() {
 		slog.Duration("TIMEOUT", cfg.Timeout),
 		slog.Any("EXCLUDE", cfg.Exclude),
 		slog.Any("FILES", cfg.Files),
-		slog.Any("IGNORED_DOMAINS", cfg.Validators.HTTP.IgnoredDomains),
 	)
 
 	validator, err := link_validator.New(cfg)
