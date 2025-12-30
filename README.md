@@ -10,6 +10,7 @@ Validates links and URLs in Markdown files by checking:
 - External HTTP(S) URLs
 - Local file references (`./README.md`, `../docs/intro.md`)
 - Datadog URLs (monitors, dashboards, etc)
+- HashiCorp Vault secret URLs
 
 Supports both public GitHub.com and GitHub Enterprise Server (GHES).
 
