@@ -2,7 +2,9 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 )
 
@@ -63,15 +65,29 @@ type HttpConfig struct {
 	IgnoredDomains []string `yaml:"ignoredDomains"`
 }
 
-func (h HttpConfig) validate() error {
+func (cfg HttpConfig) validate() error {
+	return nil
+}
+
+type VaultValidatorConfig struct {
+	Name  string   `yaml:"name"`
+	Urls  []string `yaml:"urls"`
+	Token string
+}
+
+func (cfg VaultValidatorConfig) validate() error {
+	if cfg.Token == "" {
+		return fmt.Errorf("vault '%s' validator is enabled but VAULT_TOKEN_%s is not set", cfg.Name, strings.ToUpper(cfg.Name))
+	}
 	return nil
 }
 
 type ValidatorsConfig struct {
-	GitHub    GitHubConfig    `yaml:"github"`
-	DataDog   DataDogConfig   `yaml:"datadog"`
-	LocalPath ValidatorConfig `yaml:"localPath"`
-	HTTP      HttpConfig      `yaml:"http"`
+	GitHub    GitHubConfig           `yaml:"github"`
+	DataDog   DataDogConfig          `yaml:"datadog"`
+	LocalPath ValidatorConfig        `yaml:"localPath"`
+	Vaults    []VaultValidatorConfig `yaml:"vaults"`
+	HTTP      HttpConfig             `yaml:"http"`
 }
 
 func (v ValidatorsConfig) validate() []error {
@@ -88,6 +104,11 @@ func (v ValidatorsConfig) validate() []error {
 			result = append(result, err)
 		}
 	}
+	for _, vault := range v.Vaults {
+		if err := vault.validate(); err != nil {
+			result = append(result, err)
+		}
+	}
 	return result
 }
 
@@ -98,5 +119,6 @@ func Default() *Config {
 		LookupPath: ".",
 		FileMasks:  []string{"*.md"},
 		Timeout:    3 * time.Second,
+		Validators: ValidatorsConfig{Vaults: []VaultValidatorConfig{}},
 	}
 }

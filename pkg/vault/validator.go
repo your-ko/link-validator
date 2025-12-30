@@ -20,7 +20,7 @@ type LinkProcessor struct {
 	clients map[string]vaultClient
 }
 
-func New(vaults []config.Vault, timeout time.Duration) (*LinkProcessor, error) {
+func New(vaults []config.VaultValidatorConfig, timeout time.Duration) (*LinkProcessor, error) {
 	processor := LinkProcessor{clients: make(map[string]vaultClient)}
 	for _, v := range vaults {
 		for _, vaultUrl := range v.Urls {

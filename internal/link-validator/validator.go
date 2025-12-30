@@ -66,14 +66,14 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		processors = append(processors, local_path.New())
 	}
 
-	vaultProcessor, err := vault.New(cfg.Vaults, cfg.Timeout)
-	if err != nil {
-		slog.With("error", err).Info("skip Vault validator initialisation due to %s")
-	} else {
+	if len(cfg.Validators.Vaults) != 0 { // if array is not empty it means that vault validator is enabled
+		vaultProcessor, err := vault.New(cfg.Validators.Vaults, cfg.Timeout)
+		if err != nil {
+			return nil, fmt.Errorf("vaults validator initialisation error: %w", err)
+		}
 		processors = append(processors, vaultProcessor)
 		httpExcluders = append(httpExcluders, vaultProcessor)
 	}
-
 
 	if cfg.Validators.HTTP.Enabled {
 		// Create exclusion function for HTTP processor

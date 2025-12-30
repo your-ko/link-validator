@@ -34,6 +34,9 @@ func Load(reader io.Reader) (*Config, error) {
 		return nil, err
 	}
 	cfg.merge(tmp)
+
+	cfg.Validators.Vaults = readVaultTokensFromEnv(cfg.Validators.Vaults)
+
 	return cfg, nil
 }
 
@@ -101,29 +104,27 @@ func readFromEnv() (*Config, error) {
 		ignoredDomains := strings.Split(strings.TrimSuffix(ignoredDomainsStr, ","), ",")
 
 		for i, s := range ignoredDomains {
-			ignoredDomains[i] = strings.ToLower(s)
+			ignoredDomains[i] = strings.Trim(strings.ToLower(s), "")
 		}
 		cfg.Validators.HTTP.IgnoredDomains = ignoredDomains
 	}
-	// Note: Vault tokens are handled in the end phase
+	// Note: Vaults tokens are handled in the end because of more complex structure
 	return cfg, nil
 }
 
 // readVaultTokensFromEnv reads vault tokens from environment variables for configured vaults
-func readVaultTokensFromEnv(configVaults []Vault) []Vault {
+func readVaultTokensFromEnv(configVaults []VaultValidatorConfig) []VaultValidatorConfig {
 	if len(configVaults) == 0 {
-		return []Vault{}
+		return []VaultValidatorConfig{}
 	}
 
-	vaults := make([]Vault, len(configVaults))
+	vaults := make([]VaultValidatorConfig, len(configVaults))
 	copy(vaults, configVaults)
 
 	for i := range vaults {
 		tokenKey := "VAULT_TOKEN_" + strings.ToUpper(vaults[i].Name)
 		if token := os.Getenv(tokenKey); token != "" {
 			vaults[i].Token = token
-		} else {
-			slog.Error("Missing Vault token for %s", slog.String("vault", vaults[i].Name))
 		}
 	}
 	return vaults
@@ -162,6 +163,11 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.Validators.HTTP.Enabled = true
 	}
 	cfg.Validators.HTTP.IgnoredDomains = mergeSlices(cfg.Validators.HTTP.IgnoredDomains, merge.Validators.HTTP.IgnoredDomains)
+
+	if len(merge.Validators.Vaults) != 0 {
+		cfg.Validators.Vaults = merge.Validators.Vaults
+		// TODO: merge it in a smart way
+	}
 
 	if merge.LookupPath != "" {
 		cfg.LookupPath = merge.LookupPath

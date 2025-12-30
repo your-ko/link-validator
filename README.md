@@ -166,6 +166,12 @@ validators:
     enabled: true          # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
   localPath:
     enabled: true          # Usually always enabled
+  vaults:
+    - name: NAME            # If enabled, VAULT_TOKEN_[NAME] must be set in ENV variables
+      urls:
+        - https://vault0.your.org
+        - https://vault1.your.org
+        - https://vault2.your.org
   http:
     enabled: true          # Usually always enabled (fallback)
     ignoredDomains:
