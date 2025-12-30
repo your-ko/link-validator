@@ -207,13 +207,13 @@ LOOKUP_PATH=./docs
 ```
 then you get a successfully passed validation with no files.
 
-## GitHub
+#### GitHub
 
 **GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
 
 **GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The Personal Access Token (PAT) needs read access to repositories referenced in your documentation.
 
-### Datadog
+#### Datadog
 To get APP/API keys you should go to 
 * Integrations -> Organisation Setting -> Service Accounts and create a service account with the `Datadog Read Only Role`
 * Then make sure that both API and APP keys are created and use these values in the env vars of the app.
@@ -222,6 +222,12 @@ Create `Read Only`, following the principle of the least privilege.
 
 Unfortunately Datadog API are limited so not many resources are validated at the moment. 
 To avoid a lot of false negatives, I just perform "mock" validation on those URLs that are not supported by the API.
+
+#### HashiCorp Vault
+Unfortunately, due to limitation of KVv1 API, the validator needs to actually, read the secret, but the result of Read(..) call is ignored.
+For the KVv2 API it can be done in the more secure way, this will be implemented later. 
+
+For better security, a Vault policy with "read-only" and "list" permissions needs to be assigned to the token.
 
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:
