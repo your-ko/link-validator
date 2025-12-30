@@ -5,7 +5,7 @@ validators:
   github:
     enabled: true          # If enabled, PAT/CORP_PAT must be set in ENV variables
   datadog:
-    enabled: true          # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
+    enabled: false         # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
   localPath:
     enabled: true          # Usually always enabled
   http:
