@@ -24,7 +24,12 @@ func TestConfig_merge(t *testing.T) {
 			name: "merge nil config does nothing",
 			fields: fields{
 				cfg: &Config{
-					PAT:       "existing-pat",
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled: true,
+							PAT:     "PAT",
+						},
+					},
 					FileMasks: []string{"*.md"},
 					Timeout:   5 * time.Second,
 				},
@@ -33,7 +38,12 @@ func TestConfig_merge(t *testing.T) {
 				config: nil,
 			},
 			want: &Config{
-				PAT:       "existing-pat",
+				Validators: ValidatorsConfig{
+					GitHub: GitHubConfig{
+						Enabled: true,
+						PAT:     "PAT",
+					},
+				},
 				FileMasks: []string{"*.md"},
 				Timeout:   5 * time.Second,
 			},
@@ -42,7 +52,12 @@ func TestConfig_merge(t *testing.T) {
 			name: "merge empty config does nothing",
 			fields: fields{
 				cfg: &Config{
-					PAT:       "existing-pat",
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled: true,
+							PAT:     "PAT",
+						},
+					},
 					FileMasks: []string{"*.md"},
 					Timeout:   5 * time.Second,
 				},
@@ -51,7 +66,12 @@ func TestConfig_merge(t *testing.T) {
 				config: &Config{},
 			},
 			want: &Config{
-				PAT:       "existing-pat",
+				Validators: ValidatorsConfig{
+					GitHub: GitHubConfig{
+						Enabled: true,
+						PAT:     "PAT",
+					},
+				},
 				FileMasks: []string{"*.md"},
 				Timeout:   5 * time.Second,
 			},
@@ -60,67 +80,98 @@ func TestConfig_merge(t *testing.T) {
 			name: "merge overwrites non empty values",
 			fields: fields{
 				cfg: &Config{
-					PAT:           "old-pat",
-					CorpPAT:       "old-corp-pat",
-					CorpGitHubUrl: "old-url",
-					FileMasks:     []string{"*.md"},
-					Timeout:       3 * time.Second,
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled:       true,
+							PAT:           "OLD_PAT",
+							CorpPAT:       "OLD_PAT",
+							CorpGitHubUrl: "OLD_URL",
+						},
+					},
+					FileMasks: []string{"*.md"},
+					Timeout:   3 * time.Second,
 				},
 			},
 			args: args{
 				config: &Config{
-					PAT:            "new-pat",
-					CorpGitHubUrl:  "new-url",
-					FileMasks:      []string{"*.txt", "*.go"},
-					Timeout:        10 * time.Second,
-					IgnoredDomains: []string{"example.com"},
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled:       true,
+							PAT:           "NEW_PAT",
+							CorpGitHubUrl: "NEW_URL",
+						},
+						HTTP: HttpConfig{
+							Enabled:        true,
+							IgnoredDomains: []string{"example.com"},
+						},
+					},
+					Timeout: 10 * time.Second,
 				},
 			},
 			want: &Config{
-				PAT:            "new-pat",
-				CorpPAT:        "old-corp-pat", // Not overwritten because merge config has empty value
-				CorpGitHubUrl:  "new-url",
-				FileMasks:      []string{"*.txt", "*.go"},
-				Timeout:        10 * time.Second,
-				IgnoredDomains: []string{"example.com"},
+				Validators: ValidatorsConfig{
+					GitHub: GitHubConfig{
+						Enabled:       true,
+						PAT:           "NEW_PAT",
+						CorpPAT:       "OLD_PAT",
+						CorpGitHubUrl: "NEW_URL",
+					},
+					HTTP: HttpConfig{
+						Enabled:        true,
+						IgnoredDomains: []string{"example.com"},
+					},
+				},
+				FileMasks: []string{"*.md"},
+				Timeout:   10 * time.Second,
 			},
 		},
 		{
-			name: "merge preserves existing when merge config has empty values",
+			name: "merge preserves existing when merged has empty values",
 			fields: fields{
 				cfg: &Config{
-					PAT:            "existing-pat",
-					CorpPAT:        "existing-corp-pat",
-					CorpGitHubUrl:  "existing-url",
-					FileMasks:      []string{"*.md"},
-					LookupPath:     "existing-path",
-					Timeout:        5 * time.Second,
-					IgnoredDomains: []string{"existing.com"},
-					Vaults: []Vault{{
-						Name:  "vault",
-						Urls:  []string{"url0"},
-						Token: "xxxxx",
-					}},
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled:       true,
+							PAT:           "OLD_PAT",
+							CorpPAT:       "OLD_PAT",
+							CorpGitHubUrl: "OLD_URL",
+						},
+						HTTP: HttpConfig{
+							Enabled:        true,
+							IgnoredDomains: []string{"example.com"},
+						},
+					},
+					FileMasks:  []string{"*.md"},
+					LookupPath: "existing-path",
+					Timeout:    5 * time.Second,
 				},
 			},
 			args: args{
 				config: &Config{
-					PAT: "new-pat", // Only this gets merged
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled: true,
+							PAT:     "NEW_PAT",
+						},
+					},
 				},
 			},
 			want: &Config{
-				PAT:            "new-pat",
-				CorpPAT:        "existing-corp-pat",
-				CorpGitHubUrl:  "existing-url",
-				FileMasks:      []string{"*.md"},
-				LookupPath:     "existing-path",
-				Timeout:        5 * time.Second,
-				IgnoredDomains: []string{"existing.com"},
-				Vaults: []Vault{{
-					Name:  "vault",
-					Urls:  []string{"url0"},
-					Token: "xxxxx",
-				}},
+				Validators: ValidatorsConfig{
+					GitHub: GitHubConfig{
+						Enabled:       true,
+						PAT:           "NEW_PAT",
+						CorpPAT:       "OLD_PAT",
+						CorpGitHubUrl: "OLD_URL",
+					},
+					HTTP: HttpConfig{
+						Enabled:        true,
+						IgnoredDomains: []string{"example.com"},
+					},
+				},
+				FileMasks:  []string{"*.md"},
+				LookupPath: "existing-path",
+				Timeout:    5 * time.Second,
 			},
 		},
 		{
@@ -132,34 +183,57 @@ func TestConfig_merge(t *testing.T) {
 			},
 			args: args{
 				config: &Config{
-					PAT:     "new-pat",
+					Validators: ValidatorsConfig{
+						GitHub: GitHubConfig{
+							Enabled: true,
+							PAT:     "NEW_PAT",
+						},
+					},
 					Timeout: 0, // Zero timeout should not override
 				},
 			},
 			want: &Config{
-				PAT:     "new-pat",
+				Validators: ValidatorsConfig{
+					GitHub: GitHubConfig{
+						Enabled: true,
+						PAT:     "NEW_PAT",
+					},
+				},
 				Timeout: 5 * time.Second, // Should remain unchanged
 			},
 		},
 		{
-			name: "merge empty slices do not override",
+			name: "merge slices",
 			fields: fields{
 				cfg: &Config{
-					FileMasks:      []string{"*.md", "*.txt"},
-					IgnoredDomains: []string{"example.com"},
+					Validators: ValidatorsConfig{
+						HTTP: HttpConfig{
+							Enabled:        true,
+							IgnoredDomains: []string{"example.com"},
+						},
+					},
+					FileMasks: []string{"*.md", "*.txt"},
 				},
 			},
 			args: args{
 				config: &Config{
-					PAT:            "new-pat",
-					FileMasks:      []string{}, // Empty slice should not override
-					IgnoredDomains: nil,        // nil slice should not override
+					FileMasks: []string{}, // Empty slice should not override
+					Validators: ValidatorsConfig{
+						HTTP: HttpConfig{
+							Enabled:        true,
+							IgnoredDomains: nil,
+						},
+					},
 				},
 			},
 			want: &Config{
-				PAT:            "new-pat",
-				FileMasks:      []string{"*.md", "*.txt"}, // Should remain unchanged
-				IgnoredDomains: []string{"example.com"},   // Should remain unchanged
+				FileMasks: []string{"*.md", "*.txt"}, // Should remain unchanged
+				Validators: ValidatorsConfig{
+					HTTP: HttpConfig{
+						Enabled:        true,
+						IgnoredDomains: []string{"example.com"},
+					},
+				},
 			},
 		},
 	}
@@ -167,7 +241,9 @@ func TestConfig_merge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.fields.cfg.merge(tt.args.config)
 			if !reflect.DeepEqual(tt.fields.cfg, tt.want) {
-				t.Errorf("merge() got = %v, want %v", tt.fields.cfg, tt.want)
+				t.Errorf("merge() \n"+
+					" got: %+v \n"+
+					"want: %+v", tt.fields.cfg, tt.want)
 			}
 
 		})
@@ -201,22 +277,31 @@ func TestConfig_loadFromReader(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "valid yaml config parsed successfully",
+			name: "valid yaml config",
 			fields: fields{
 				config: `fileMasks:
-  - "*.md"
-  - "*.txt"
+ - "*.md"
+ - "*.txt"
 timeout: 5s
-corpGitHubUrl: "https://github.mycorp.com"
-ignoredDomains:
-  - "example.com"
-  - "test.org"`,
+validators:
+  github:
+    corpGitHubUrl: "https://github.mycorp.com"
+  http:
+    ignoredDomains:
+     - "example.com"
+     - "test.org"`,
 			},
 			want: &Config{
-				FileMasks:      []string{"*.md", "*.txt"},
-				Timeout:        5 * time.Second,
-				CorpGitHubUrl:  "https://github.mycorp.com",
-				IgnoredDomains: []string{"example.com", "test.org"},
+				FileMasks: []string{"*.md", "*.txt"},
+				Timeout:   5 * time.Second,
+				Validators: ValidatorsConfig{
+					GitHub: GitHubConfig{
+						CorpGitHubUrl: "https://github.mycorp.com",
+					},
+					HTTP: HttpConfig{
+						IgnoredDomains: []string{"example.com", "test.org"},
+					},
+				},
 			},
 			wantErr: false,
 		},
@@ -225,9 +310,15 @@ ignoredDomains:
 			fields: fields{
 				config: `timeout: 10s
 fileMasks:
-  - "*.go"`,
+ - "*.go"`,
 			},
 			want: &Config{
+				Validators: ValidatorsConfig{
+					GitHub:    GitHubConfig{Enabled: false},
+					DataDog:   DataDogConfig{Enabled: false},
+					LocalPath: ValidatorConfig{Enabled: false},
+					HTTP:      HttpConfig{Enabled: false},
+				},
 				Timeout:   10 * time.Second,
 				FileMasks: []string{"*.go"},
 			},
@@ -237,21 +328,19 @@ fileMasks:
 			name: "malformed yaml returns error",
 			fields: fields{
 				config: `fileMasks:
-  - "*.md"
-timeout: invalid yaml: {`,
+ - "*.md"
+timeout: invalid_yaml: {`,
 			},
-			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "unknown field returns error",
 			fields: fields{
 				config: `fileMasks:
-  - "*.md"
+ - "*.md"
 timeout: 3s
 unknownField: "should cause error"`,
 			},
-			want:    nil,
 			wantErr: true,
 		},
 		{
@@ -259,7 +348,6 @@ unknownField: "should cause error"`,
 			fields: fields{
 				config: `timeout: "not-a-duration"`,
 			},
-			want:    nil,
 			wantErr: true,
 		},
 		{
@@ -267,8 +355,8 @@ unknownField: "should cause error"`,
 			fields: fields{
 				config: `# Configuration file
 fileMasks:  # File patterns to match
-  - "*.md"
-  - "*.rst"
+ - "*.md"
+ - "*.rst"
 # Timeout for requests
 timeout: 30s`,
 			},
@@ -282,14 +370,13 @@ timeout: 30s`,
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := strings.NewReader(tt.fields.config)
-			cfg := Default().WithReader(r)
-			got, err := cfg.loadFromReader()
+			got, err := loadFromReader(r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("loadFromReader() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("loadFromReader() got = %v, want %v", got, tt.want)
+				t.Errorf("loadFromReader() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}

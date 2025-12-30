@@ -12,78 +12,33 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Vault struct {
-	Name  string
-	Urls  []string
-	Token string
-}
-
-type Config struct {
-	PAT            string
-	CorpPAT        string
-	DDApiKey       string
-	DDAppKey       string
-	LogLevel       slog.Level    `yaml:"logLevel"`
-	CorpGitHubUrl  string        `yaml:"corpGitHubUrl"`
-	FileMasks      []string      `yaml:"fileMasks"`
-	Files          []string      `yaml:"files"`
-	Exclude        []string      `yaml:"exclude"`
-	LookupPath     string        `yaml:"lookupPath"`
-	Timeout        time.Duration `yaml:"timeout"`
-	IgnoredDomains []string      `yaml:"ignoredDomains"`
-	Vaults         []Vault       `yaml:"vaults"`
-	reader         io.Reader
-}
-
-// Default generates default config
-func Default() *Config {
-	return &Config{
-		LogLevel:   slog.LevelInfo,
-		LookupPath: ".",
-		FileMasks:  []string{"*.md"},
-		Timeout:    3 * time.Second,
-		Vaults:     []Vault{},
-	}
-}
-
-func (cfg *Config) WithReader(r io.Reader) *Config {
-	if r != nil {
-		cfg.reader = r
-	}
-	return cfg
-}
-
 // Load loads the config in the following sequence:
 // Default < Config file < ENV variables
-// Vault tokens are read from environment after all other merging is complete
-func (cfg *Config) Load() (*Config, error) {
+// If there is no config file, then it is skipped
+func Load(reader io.Reader) (*Config, error) {
+	cfg := Default()
 	var tmp *Config
 	var err error
-	if cfg.reader != nil {
-		tmp, err = cfg.loadFromReader()
+	if reader == nil {
+		tmp = Default()
+	} else {
+		tmp, err = loadFromReader(reader)
 		if err != nil {
 			return nil, err
 		}
 	}
-	if tmp != nil {
-		cfg.merge(tmp)
-	}
+	cfg.merge(tmp)
+
 	tmp, err = readFromEnv()
 	if err != nil {
 		return nil, err
 	}
 	cfg.merge(tmp)
-
-	// After all merging, populate vault tokens from environment variables
-	if len(cfg.Vaults) > 0 {
-		cfg.Vaults = readVaultTokensFromEnv(cfg.Vaults)
-	}
-
 	return cfg, nil
 }
 
-func (cfg *Config) loadFromReader() (*Config, error) {
-	decoder := yaml.NewDecoder(cfg.reader)
+func loadFromReader(reader io.Reader) (*Config, error) {
+	decoder := yaml.NewDecoder(reader)
 	decoder.KnownFields(true)
 	tmp := &Config{}
 	err := decoder.Decode(tmp)
@@ -98,23 +53,23 @@ func (cfg *Config) loadFromReader() (*Config, error) {
 }
 
 func readFromEnv() (*Config, error) {
-	cfg := &Config{}
+	cfg := Default()
 
 	// Only set values if environment variables are actually set
 	if corpURL := GetEnv("CORP_URL", ""); corpURL != "" {
-		cfg.CorpGitHubUrl = corpURL
+		cfg.Validators.GitHub.CorpGitHubUrl = corpURL
 	}
 	if pat := GetEnv("PAT", ""); pat != "" {
-		cfg.PAT = pat
-	}
-	if ddApiKey := GetEnv("DD_API_KEY", ""); ddApiKey != "" {
-		cfg.DDApiKey = ddApiKey
-	}
-	if ddAppKey := GetEnv("DD_APP_KEY", ""); ddAppKey != "" {
-		cfg.DDAppKey = ddAppKey
+		cfg.Validators.GitHub.PAT = pat
 	}
 	if corpPAT := GetEnv("CORP_PAT", ""); corpPAT != "" {
-		cfg.CorpPAT = corpPAT
+		cfg.Validators.GitHub.CorpPAT = corpPAT
+	}
+	if ddApiKey := GetEnv("DD_API_KEY", ""); ddApiKey != "" {
+		cfg.Validators.DataDog.ApiKey = ddApiKey
+	}
+	if ddAppKey := GetEnv("DD_APP_KEY", ""); ddAppKey != "" {
+		cfg.Validators.DataDog.AppKey = ddAppKey
 	}
 	if LogLevelStr := GetEnv("LOG_LEVEL", ""); LogLevelStr != "" {
 		slogLevel, err := ParseLevel(LogLevelStr)
@@ -148,7 +103,7 @@ func readFromEnv() (*Config, error) {
 		for i, s := range ignoredDomains {
 			ignoredDomains[i] = strings.ToLower(s)
 		}
-		cfg.IgnoredDomains = ignoredDomains
+		cfg.Validators.HTTP.IgnoredDomains = ignoredDomains
 	}
 	// Note: Vault tokens are handled in the end phase
 	return cfg, nil
@@ -176,50 +131,49 @@ func readVaultTokensFromEnv(configVaults []Vault) []Vault {
 
 // merge merges this config with another config
 // if another config has empty values, then original values are not overwritten
-func (cfg *Config) merge(config *Config) {
-	defCfg := Default()
-	if config == nil {
+func (cfg *Config) merge(merge *Config) {
+	if merge == nil {
 		return
 	}
-	if config.CorpGitHubUrl != defCfg.CorpGitHubUrl {
-		cfg.CorpGitHubUrl = config.CorpGitHubUrl
+	if merge.Validators.GitHub.Enabled {
+		cfg.Validators.GitHub.Enabled = true
 	}
-	if config.CorpPAT != defCfg.CorpPAT {
-		cfg.CorpPAT = config.CorpPAT
+	if merge.Validators.GitHub.CorpGitHubUrl != "" {
+		cfg.Validators.GitHub.CorpGitHubUrl = merge.Validators.GitHub.CorpGitHubUrl
 	}
-	if config.PAT != defCfg.PAT {
-		cfg.PAT = config.PAT
+	if merge.Validators.GitHub.CorpPAT != "" {
+		cfg.Validators.GitHub.CorpPAT = merge.Validators.GitHub.CorpPAT
 	}
-	if config.DDApiKey != "" {
-		cfg.DDApiKey = config.DDApiKey
+	if merge.Validators.GitHub.PAT != "" {
+		cfg.Validators.GitHub.PAT = merge.Validators.GitHub.PAT
 	}
-	if config.DDAppKey != "" {
-		cfg.DDAppKey = config.DDAppKey
+
+	if merge.Validators.DataDog.Enabled {
+		cfg.Validators.DataDog.Enabled = true
 	}
-	if config.LogLevel != defCfg.LogLevel {
-		cfg.LogLevel = config.LogLevel
+	if merge.Validators.DataDog.ApiKey != "" {
+		cfg.Validators.DataDog.ApiKey = merge.Validators.DataDog.ApiKey
 	}
-	if config.LookupPath != defCfg.LookupPath && config.LookupPath != "" {
-		cfg.LookupPath = config.LookupPath
+	if merge.Validators.DataDog.AppKey != "" {
+		cfg.Validators.DataDog.AppKey = merge.Validators.DataDog.AppKey
 	}
-	if config.Timeout != 0 {
-		cfg.Timeout = config.Timeout
+
+	if merge.Validators.HTTP.Enabled {
+		cfg.Validators.HTTP.Enabled = true
 	}
-	if len(config.FileMasks) != 0 {
-		cfg.FileMasks = config.FileMasks
+	cfg.Validators.HTTP.IgnoredDomains = mergeSlices(cfg.Validators.HTTP.IgnoredDomains, merge.Validators.HTTP.IgnoredDomains)
+
+	if merge.LookupPath != "" {
+		cfg.LookupPath = merge.LookupPath
 	}
-	if len(config.Files) != 0 {
-		cfg.Files = config.Files
+	if merge.Timeout != 0 {
+		cfg.Timeout = merge.Timeout
 	}
-	if len(config.Exclude) != 0 {
-		cfg.Exclude = config.Exclude
-	}
-	if len(config.IgnoredDomains) != 0 {
-		cfg.IgnoredDomains = config.IgnoredDomains
-	}
-	if len(config.Vaults) != 0 {
-		cfg.Vaults = config.Vaults
-	}
+	cfg.LogLevel = merge.LogLevel
+	cfg.FileMasks = mergeSlices(cfg.FileMasks, merge.FileMasks)
+	cfg.Files = mergeSlices(cfg.Files, merge.Files)
+	cfg.Exclude = mergeSlices(cfg.Exclude, merge.Exclude)
+
 }
 
 func GetEnv(key, defaultValue string) string {
@@ -233,4 +187,29 @@ func ParseLevel(s string) (slog.Level, error) {
 	var level slog.Level
 	var err = level.UnmarshalText([]byte(s))
 	return level, err
+}
+
+func mergeSlices(left []string, right []string) []string {
+	if len(left) == 0 {
+		return right
+	}
+	if len(right) == 0 {
+		return left
+	}
+	accu := make(map[string]bool)
+	for i := range left {
+		accu[left[i]] = true
+	}
+	for i := range right {
+		accu[right[i]] = true
+	}
+	result := make([]string, len(accu))
+	for k := range accu {
+		result = append(result, k)
+	}
+	return result
+}
+
+func (cfg *Config) Validate() []error {
+	return cfg.Validators.validate()
 }
