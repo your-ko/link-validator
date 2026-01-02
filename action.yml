@@ -36,7 +36,7 @@ inputs:
     description: "HTTP request timeout."
     default: "5s"
   vault-tokens:
-    description: "JSON object mapping vault names to tokens, e.g., '{\"pre\":\"token1\",\"prod\":\"token2\"}'"
+    description: "Comma-separated vault name:token pairs, e.g., 'pre:token1,prod:token2'"
     default: ""
 runs:
   using: 'composite'
@@ -47,16 +47,22 @@ runs:
         DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
         DOCKER_VALIDATOR_VERSION: 1.20.0
       run: |
-        # Parse vault tokens JSON and create environment variables
+        # Parse vault tokens (comma-separated name:token pairs) and create environment variables
         vault_env_vars=""
-        if [[ -n "${{ inputs.vault-tokens }}" && "${{ inputs.vault-tokens }}" != "{}" ]]; then
-          # Parse JSON using jq to create VAULT_TOKEN_* environment variables
-          while IFS="=" read -r key value; do
-            if [[ -n "$key" && -n "$value" ]]; then
-              vault_key="VAULT_TOKEN_$(echo "$key" | tr '[:lower:]' '[:upper:]')"
-              vault_env_vars="$vault_env_vars -e '$vault_key=$value'"
+        if [[ -n "${{ inputs.vault-tokens }}" ]]; then
+          # Split by commas and process each name:token pair
+          IFS=',' read -ra VAULT_PAIRS <<< "${{ inputs.vault-tokens }}"
+          for pair in "${VAULT_PAIRS[@]}"; do
+            # Trim whitespace from pair
+            pair=$(echo "$pair" | xargs)
+            if [[ "$pair" =~ ^([^:]+):(.+)$ ]]; then
+              vault_name="${BASH_REMATCH[1]}"
+              vault_token="${BASH_REMATCH[2]}"
+              # Convert vault name to uppercase for environment variable
+              vault_key="VAULT_TOKEN_$(echo "$vault_name" | tr '[:lower:]' '[:upper:]')"
+              vault_env_vars="$vault_env_vars -e '$vault_key=$vault_token'"
             fi
-          done < <(echo '${{ inputs.vault-tokens }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"' 2>/dev/null || echo "")
+          done
         fi
 
         # Run docker with vault environment variables
