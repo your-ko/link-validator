@@ -34,7 +34,7 @@ inputs:
     default: ""
   timeout:
     description: "HTTP request timeout."
-    default: "3s"
+    default: "5s"
   vault-tokens:
     description: "JSON object mapping vault names to tokens, e.g., '{\"pre\":\"token1\",\"prod\":\"token2\"}'"
     default: ""
