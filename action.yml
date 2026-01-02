@@ -34,7 +34,7 @@ inputs:
     default: ""
   timeout:
     description: "HTTP request timeout."
-    default: "3s"
+    default: "5s"
 runs:
   using: 'composite'
   steps:
