@@ -2146,6 +2146,15 @@ func Test_handleTeams(t *testing.T) {
 			},
 		},
 		{
+			name: "team is not specified",
+			args: args{"mycorp", "", "", "", ""},
+			setupMock: func(m *mockclient) {
+				org := &github.Organization{Name: github.Ptr("mycorp")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
+			},
+		},
+		{
 			name: "team not found",
 			args: args{"mycorp", "", "sre", "", ""},
 			setupMock: func(m *mockclient) {
