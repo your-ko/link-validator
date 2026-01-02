@@ -564,6 +564,9 @@ func handleTeams(ctx context.Context, c client, owner, repo, ref, path, fragment
 	if err != nil {
 		return err
 	}
+	if ref == "" {
+		return nil
+	}
 	_, _, err = c.GetTeamBySlug(ctx, owner, ref)
 	return err
 }
