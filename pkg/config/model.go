@@ -32,7 +32,7 @@ type GitHubConfig struct {
 	Enabled       bool `yaml:"enabled"`
 	PAT           string
 	CorpPAT       string
-	CorpGitHubUrl string `yaml:"corpGitHubUrl"`
+	CorpGitHubUrl string `yaml:"corpUrl"`
 }
 
 func (cfg GitHubConfig) validate() error {
