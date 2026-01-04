@@ -62,6 +62,12 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	if err != nil {
 		return err
 	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			slog.With("error", err).Warn("http: can't close response body", slog.String("url", url))
+		}
+	}(resp.Body)
 
 	switch {
 	case resp.StatusCode == 401 || resp.StatusCode == 403:
@@ -80,12 +86,6 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
 		// check just the first 1 KB of the body
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				slog.With("error", err).Warn("http: can't close response body", slog.String("url", url))
-			}
-		}(resp.Body)
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		if err != nil {
 			// we can't read body, something is off
