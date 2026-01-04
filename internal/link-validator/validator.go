@@ -12,6 +12,7 @@ import (
 	"link-validator/pkg/github"
 	"link-validator/pkg/http"
 	"link-validator/pkg/local-path"
+	"link-validator/pkg/vault"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -25,6 +26,7 @@ type LinkProcessor interface {
 }
 
 type HttpValidatorExcluder interface {
+	// Excludes returns true if the url should be ignored by http validator as it is validated by another validator
 	Excludes(url string) bool
 }
 
@@ -62,6 +64,15 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	}
 	if cfg.Validators.LocalPath.Enabled {
 		processors = append(processors, local_path.New())
+	}
+
+	if len(cfg.Validators.Vaults) != 0 { // if array is not empty it means that vault validator is enabled
+		vaultProcessor, err := vault.New(cfg.Validators.Vaults, cfg.Timeout)
+		if err != nil {
+			return nil, fmt.Errorf("vaults validator initialisation error: %w", err)
+		}
+		processors = append(processors, vaultProcessor)
+		httpExcluders = append(httpExcluders, vaultProcessor)
 	}
 
 	if cfg.Validators.HTTP.Enabled {

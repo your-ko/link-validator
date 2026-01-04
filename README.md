@@ -6,22 +6,14 @@
 # Link Validator
 
 Validates links and URLs in Markdown files by checking:
-- GitHub links (files, PRs, issues, releases, workflows, etc.)
-- External HTTP(S) URLs
+- GitHub links (files, PRs, issues, releases, workflows, etc.) via API calls
+- HTTPS link checking with redirect following
 - Local file references (`./README.md`, `../docs/intro.md`)
 - Datadog URLs (monitors, dashboards, etc)
-
-Supports both public GitHub.com and GitHub Enterprise Server (GHES).
-
-## Features
-
-- GitHub link validation via API calls
-- HTTP(S) link checking with redirect following
-- Local Markdown file path verification
-- GitHub Enterprise Server support
-- Authentication and rate limiting
+- HashiCorp Vault secret URLs
 - Dockerized for CI integration
 
+Supports both public GitHub.com and GitHub Enterprise Server (GHES).
 
 ## Why Use This?
 
@@ -166,6 +158,12 @@ validators:
     enabled: true          # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
   localPath:
     enabled: true          # Usually always enabled
+  vaults:
+    - name: NAME            # If enabled, VAULT_TOKEN_[NAME] must be set in ENV variables
+      urls:
+        - https://vault0.your.org
+        - https://vault1.your.org
+        - https://vault2.your.org
   http:
     enabled: true          # Usually always enabled (fallback)
     ignoredDomains:
@@ -201,13 +199,13 @@ LOOKUP_PATH=./docs
 ```
 then you get a successfully passed validation with no files.
 
-## GitHub
+#### GitHub
 
 **GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope. Authentication is optional, but recommended to avoid rate limiting.
 
 **GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The Personal Access Token (PAT) needs read access to repositories referenced in your documentation.
 
-### Datadog
+#### Datadog
 To get APP/API keys you should go to 
 * Integrations -> Organisation Setting -> Service Accounts and create a service account with the `Datadog Read Only Role`
 * Then make sure that both API and APP keys are created and use these values in the env vars of the app.
@@ -216,6 +214,12 @@ Create `Read Only`, following the principle of the least privilege.
 
 Unfortunately Datadog API are limited so not many resources are validated at the moment. 
 To avoid a lot of false negatives, I just perform "mock" validation on those URLs that are not supported by the API.
+
+#### HashiCorp Vault
+Unfortunately, due to the limitation of KVv1 API, the validator needs to actually read the secret, but the result of the Read(..) call is ignored.
+For the KVv2 API, it can be done more securely; this will be implemented later. 
+
+For better security, a Vault policy with "read-only" and "list" permissions needs to be assigned to the token.
 
 ### Config file vs ENV variables
 You can configure the link-validator either via environment variables:
