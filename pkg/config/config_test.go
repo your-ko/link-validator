@@ -285,7 +285,7 @@ func TestConfig_loadFromReader(t *testing.T) {
 timeout: 5s
 validators:
   github:
-    corpGitHubUrl: "https://github.mycorp.com"
+    corpUrl: "https://github.mycorp.com"
   http:
     ignoredDomains:
      - "example.com"

@@ -47,9 +47,9 @@ the step will fail (this will be improved in future releases).
 
 ```yaml
     - name: Link validation
-      uses: your-ko/link-validator@1.0.0
+      uses: your-ko/link-validator@2.0.0
       with:
-        log-level: 'info'
+        logLevel: 'info'
         pat: ${{ secrets.GITHUB_TOKEN }}
 ```
 In case if you run validator in a repo, containing a lot of documentation and you don't want your PR be constantly failing,
@@ -79,9 +79,9 @@ Then your PR pipeline should contain following steps:
           FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
       - name: Link validation
-        uses: your-ko/link-validator@1.9.0
+        uses: your-ko/link-validator@2.0.0
         with:
-          log-level: 'debug'
+          logLevel: 'debug'
           files: ${{ steps.changed-files.outputs.files}}
           pat: ${{ secrets.GITHUB_TOKEN }}
 
@@ -101,7 +101,7 @@ permissions:
   contents: read  # Required to checkout code and read files
 
 env:
-  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:1.0.0 # pin a version or use 'latest'
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:2.0.0 # pin a version or use 'latest'
 
 jobs:
   link-validator:
@@ -126,28 +126,28 @@ jobs:
 ```yaml
 jobs:
   link-validation:
-    uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@1.0.0
+    uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@2.0.0
     with:
-      log-level: info
+      logLevel: info
 ```
 
 
 ## Configuration
 
-| Env Variable      | Config         | Required | Description                                                                                                                                                                                                                                                                                      | Default |
-|-------------------|----------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
-| `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                                                                                                                    | `info`  |
-| `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan                                                                                                                                                                                                                                                            | `*.md`  |
-| `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                                                                                                          | `""`    |
-| `CORP_URL`        | corpGitHubUrl  | No       | GitHub Enterprise base URL, for example https://github.[mycorp].com                                                                                                                                                                                                                              | `""`    |
-| `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                                                                                                                                                                                                                          | `""`    |
-| `DD_API_KEY`      |                | No       | DataDog API key                                                                                                                                                                                                                                                                                  | `""`    |
-| `DD_APP_KEY`      |                | No       | DataDog APP key                                                                                                                                                                                                                                                                                  | `""`    |
-| `IGNORED_DOMAINS` | ignoredDomains | No       | Comma-separated list of domains or their parts that should be ignored during validation.                                                                                                                                                                                                         | `[]`    |
-| `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                                                                                                                                                                             | `5s`    |
-| `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements                                                                                                                                                      | `[]`    |
-| `EXCLUDE`         | exclude        | No       | List of files or folders to exclude from validation. Is useful to exclude, for example, `/vendor` or `*/charts` because these folders can contain 3rd party documentation, which we don't need to validate. Files also possible to exclude. The path should be relative from the repository root | `[]`    |
-| `LOOKUP_PATH`     | lookupPath     | No       | A path to look for the files up (read below)                                                                                                                                                                                                                                                     | `./`    |
+| Env Variable      | Config         | Required | Description                                                                                                                                                                                                                                                                                                                                    | Default |
+|-------------------|----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `LOG_LEVEL`       |                | No       | Controls verbosity (debug, info, warn, error)                                                                                                                                                                                                                                                                                                  | `info`  |
+| `FILE_MASKS`      | fileMasks      | No       | Comma-separated file patterns to scan. Only md and tf are tested in the current version.                                                                                                                                                                                                                                                       | `*.md`  |
+| `PAT`             |                | No       | GitHub.com personal access token. Optional. Used to avoid rate limiting                                                                                                                                                                                                                                                                        | `""`    |
+| `CORP_URL`        | corpUrl        | No       | GitHub Enterprise base URL, for example https://github.[mycorp].com                                                                                                                                                                                                                                                                            | `""`    |
+| `CORP_PAT`        |                | No       | GitHub Enterprise personal access token                                                                                                                                                                                                                                                                                                        | `""`    |
+| `DD_API_KEY`      |                | No       | DataDog API key                                                                                                                                                                                                                                                                                                                                | `""`    |
+| `DD_APP_KEY`      |                | No       | DataDog APP key                                                                                                                                                                                                                                                                                                                                | `""`    |
+| `IGNORED_DOMAINS` | ignoredDomains | No       | List of domains or their parts that should be ignored during validation. Comma-separated, if passed to GitHub action.                                                                                                                                                                                                                          | `[]`    |
+| `TIMEOUT`         | timeout        | No       | HTTP request timeout                                                                                                                                                                                                                                                                                                                           | `5s`    |
+| `FILES`           | files          | No       | List of files to run validation on. FileMask is applied on the list, <br/>so resulting list will contain files satisfying both requirements. Comma-separated, if passed to GitHub action.                                                                                                                                                      | `[]`    |
+| `EXCLUDE`         | exclude        | No       | List of files or folders to exclude from validation. Is useful to exclude, for example, `/vendor` or `*/charts` because these folders can contain 3rd party documentation, which we don't need to validate. Files also possible to exclude. The path should be relative from the repository root. Comma-separated, if passed to GitHub action. | `[]`    |
+| `LOOKUP_PATH`     | lookupPath     | No       | A path to look for the files up (read below).                                                                                                                                                                                                                                                                                                  | `./`    |
 
 ### Config file
 The config file needs to be called `.link-validator.yaml` and must be located in the repository root.
@@ -270,7 +270,7 @@ This usually indicates authentication or proxy configuration issues. Enable debu
 
 Image size: ~10MB
 
-Pinning to specific versions (e.g., `1.0.0`) is recommended rather than using `latest` for reproducible builds.
+Pinning to specific versions (e.g., `2.0.0`) is recommended rather than using `latest` for reproducible builds.
 
 ## Security
 
