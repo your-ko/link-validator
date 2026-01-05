@@ -47,9 +47,9 @@ the step will fail (this will be improved in future releases).
 
 ```yaml
     - name: Link validation
-      uses: your-ko/link-validator@1.0.0
+      uses: your-ko/link-validator@2.0.0
       with:
-        log-level: 'info'
+        logLevel: 'info'
         pat: ${{ secrets.GITHUB_TOKEN }}
 ```
 In case if you run validator in a repo, containing a lot of documentation and you don't want your PR be constantly failing,
@@ -79,9 +79,9 @@ Then your PR pipeline should contain following steps:
           FILES_LIST=$(echo "$CHANGED_FILES" | tr '\n' ',' | sed 's/,$//')
           echo "files=$FILES_LIST" >> $GITHUB_OUTPUT
       - name: Link validation
-        uses: your-ko/link-validator@1.9.0
+        uses: your-ko/link-validator@2.0.0
         with:
-          log-level: 'debug'
+          logLevel: 'debug'
           files: ${{ steps.changed-files.outputs.files}}
           pat: ${{ secrets.GITHUB_TOKEN }}
 
@@ -101,7 +101,7 @@ permissions:
   contents: read  # Required to checkout code and read files
 
 env:
-  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:1.0.0 # pin a version or use 'latest'
+  DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator:2.0.0 # pin a version or use 'latest'
 
 jobs:
   link-validator:
@@ -126,9 +126,9 @@ jobs:
 ```yaml
 jobs:
   link-validation:
-    uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@1.0.0
+    uses: your-ko/link-validator/.github/workflows/link-validator-workflow.yaml@2.0.0
     with:
-      log-level: info
+      logLevel: info
 ```
 
 
@@ -270,7 +270,7 @@ This usually indicates authentication or proxy configuration issues. Enable debu
 
 Image size: ~10MB
 
-Pinning to specific versions (e.g., `1.0.0`) is recommended rather than using `latest` for reproducible builds.
+Pinning to specific versions (e.g., `2.0.0`) is recommended rather than using `latest` for reproducible builds.
 
 ## Security
 
