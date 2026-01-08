@@ -158,7 +158,7 @@ func (cfg *Config) merge(merge *Config) {
 
 func GetEnv(key, defaultValue string) string {
 	if val, ok := os.LookupEnv(key); ok {
-		return strings.ReplaceAll(val, " ", "")
+		return strings.TrimSpace(val)
 	}
 	return defaultValue
 }
