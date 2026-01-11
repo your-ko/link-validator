@@ -5,22 +5,14 @@
 
 # Link Validator
 
-Validates links and URLs in Markdown files by checking:
-
-- GitHub links (files, PRs, issues, releases, workflows, etc.)
-- External HTTP(S) URLs
-- Local file references (`./README.md`, `../docs/intro.md`)
-- Datadog URLs (monitors, dashboards, etc)
-
-Supports both public GitHub.com and GitHub Enterprise Server (GHES).
-
 ## Features
 
-- GitHub link validation via API calls
-- HTTP(S) link checking with redirect following
-- Local Markdown file path verification
-- GitHub Enterprise Server support
+- GitHub links validation (files, PRs, issues, releases, workflows, etc.) via API calls.
+- Supports both public GitHub.com and GitHub Enterprise Server (GHES).
 - Authentication and rate limiting
+- HTTP(S) link checking with redirect following
+- Local Markdown file path verification (`./README.md`, `../docs/intro.md`)
+- Datadog URLs (monitors, dashboards, etc)
 - Dockerized for CI integration
 
 ## Why Use This?
@@ -217,7 +209,7 @@ LOOKUP_PATH=./docs
 
 then you get a successfully passed validation with no files.
 
-## GitHub
+#### GitHub
 
 **GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope.
 Authentication is optional, but recommended to avoid rate limiting.
@@ -225,7 +217,7 @@ Authentication is optional, but recommended to avoid rate limiting.
 **GitHub Enterprise**: Requires `CORP_URL` and `CORP_PAT`. The Personal Access Token (PAT) needs read access to
 repositories referenced in your documentation.
 
-### Datadog
+#### Datadog
 
 To get APP/API keys you should go to
 
