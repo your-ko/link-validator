@@ -44,6 +44,9 @@ inputs:
   lookupPath:
     description: "A path to look for the files up."
     default: "./"
+  vaultTokens:
+    description: "Comma-separated vault name:token pairs, e.g., 'pre:token1,prod:token2'"
+    default: ""
 runs:
   using: 'composite'
   steps:
@@ -53,7 +56,26 @@ runs:
         DOCKER_VALIDATOR: ghcr.io/your-ko/link-validator
         DOCKER_VALIDATOR_VERSION: 1.20.0
       run: |
-        docker run --rm \
+        # Parse vault tokens (comma-separated name:token pairs) and create environment variables
+        vault_env_vars=""
+        if [[ -n "${{ inputs.vault-tokens }}" ]]; then
+        # Split by commas and process each name:token pair
+        IFS=',' read -ra VAULT_PAIRS <<< "${{ inputs.vault-tokens }}"
+        for pair in "${VAULT_PAIRS[@]}"; do
+        # Trim whitespace from pair
+        pair=$(echo "$pair" | xargs)
+        if [[ "$pair" =~ ^([^:]+):(.+)$ ]]; then
+        vault_name="${BASH_REMATCH[1]}"
+        vault_token="${BASH_REMATCH[2]}"
+        # Convert vault name to uppercase for environment variable
+        vault_key="VAULT_TOKEN_$(echo "$vault_name" | tr '[:lower:]' '[:upper:]')"
+        vault_env_vars="$vault_env_vars -e '$vault_key=$vault_token'"
+        fi
+        done
+        fi
+
+        # Run docker with vault environment variables
+        eval "docker run --rm \
           -e LOG_LEVEL=${{ inputs.logLevel }} \
           -e 'FILE_MASKS=${{ inputs.fileMasks }}' \
           -e 'PAT=${{ inputs.pat }}' \
@@ -67,6 +89,7 @@ runs:
           -e 'REDIRECTS=${{ inputs.redirects }}' \
           -e 'EXCLUDE=${{ inputs.exlude }}' \
           -e 'lookupPath=${{ inputs.lookupPath }}' \
+          $vault_env_vars \
           -v "${{ github.workspace }}:/work" \
           -w /work \
-          ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
+          ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}"

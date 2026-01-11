@@ -11,6 +11,7 @@ Validates links and URLs in Markdown files by checking:
 - External HTTP(S) URLs
 - Local file references (`./README.md`, `../docs/intro.md`)
 - Datadog URLs (monitors, dashboards, etc)
+- HashiCorp Vault secret URLs
 
 Supports both public GitHub.com and GitHub Enterprise Server (GHES).
 
@@ -177,6 +178,12 @@ validators:
     enabled: true          # If enabled, DD_API_KEY/DD_APP_KEY must be set in ENV variables
   localPath:
     enabled: true          # Usually always enabled
+  vaults:
+    - name: NAME            # If enabled, VAULT_TOKEN_[NAME] must be set in ENV variables
+      urls:
+        - https://vault0.your.org
+        - https://vault1.your.org
+        - https://vault2.your.org
   http:
     enabled: true          # Usually always enabled (fallback)
     ignoredDomains:
@@ -217,7 +224,7 @@ LOOKUP_PATH=./docs
 
 then you get a successfully passed validation with no files.
 
-## GitHub
+#### GitHub
 
 **GitHub.com**: Use `GITHUB_TOKEN` in CI or a Personal Access Token (PAT) with `public_repo`/`repo` scope.
 Authentication is optional, but recommended to avoid rate limiting.
@@ -227,8 +234,7 @@ repositories referenced in your documentation.
 
 ### Datadog
 
-To get APP/API keys you should go to
-
+To get APP/API keys you should go to:
 * Integrations -> Organisation Setting -> Service Accounts and create a service account with the
   `Datadog Read Only Role`
 * Then make sure that both API and APP keys are created and use these values in the env vars of the app.
@@ -237,6 +243,12 @@ Create `Read Only`, following the principle of the least privilege.
 
 Unfortunately Datadog API are limited so not many resources are validated at the moment.
 To avoid a lot of false negatives, I just perform "mock" validation on those URLs that are not supported by the API.
+
+#### HashiCorp Vault
+Unfortunately, due to the limitation of KVv1 API, the validator needs to actually read the secret, but the result of the Read(..) call is ignored.
+For the KVv2 API, it can be done more securely; this will be implemented later. 
+
+For better security, a Vault policy with "read-only" and "list" permissions needs to be assigned to the token.
 
 ### Config file vs ENV variables
 

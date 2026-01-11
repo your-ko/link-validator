@@ -2,7 +2,9 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 )
 
@@ -71,10 +73,24 @@ func (cfg HttpConfig) validate() error {
 	return nil
 }
 
+type VaultValidatorConfig struct {
+	Name  string   `yaml:"name"`
+	Urls  []string `yaml:"urls"`
+	Token string
+}
+
+func (cfg VaultValidatorConfig) validate() error {
+	if cfg.Token == "" {
+		return fmt.Errorf("vault '%s' validator is enabled but VAULT_TOKEN_%s is not set", cfg.Name, strings.ToUpper(cfg.Name))
+	}
+	return nil
+}
+
 type ValidatorsConfig struct {
 	GitHub    GitHubConfig    `yaml:"github"`
 	DataDog   DataDogConfig   `yaml:"datadog"`
 	LocalPath ValidatorConfig `yaml:"localPath"`
+	Vaults    []VaultValidatorConfig `yaml:"vaults"`
 	HTTP      HttpConfig      `yaml:"http"`
 }
 
@@ -89,6 +105,11 @@ func (v ValidatorsConfig) validate() []error {
 	var result []error
 	for _, validator := range validators {
 		if err := validator.validate(); err != nil {
+			result = append(result, err)
+		}
+	}
+	for _, vault := range v.Vaults {
+		if err := vault.validate(); err != nil {
 			result = append(result, err)
 		}
 	}
@@ -110,6 +131,7 @@ func Default() *Config {
 			GitHub: GitHubConfig{
 				Enabled: true,
 			},
+			Vaults: []VaultValidatorConfig{},
 		},
 	}
 }
