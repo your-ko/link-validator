@@ -104,7 +104,11 @@ func Default() *Config {
 		Timeout:    3 * time.Second,
 		Validators: ValidatorsConfig{
 			HTTP: HttpConfig{
+				Enabled:   true,
 				Redirects: 3,
+			},
+			GitHub: GitHubConfig{
+				Enabled: true,
 			},
 		},
 	}
