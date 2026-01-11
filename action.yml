@@ -5,19 +5,19 @@ branding:
   icon: 'link'
   color: 'blue'
 inputs:
-  log-level:
+  logLevel:
     description: 'Controls verbosity (debug, info, warn, error).'
     default: "info"
-  file-mask:
-    description: "Comma-separated file patterns to scan. Only markdown is supported in the current version."
+  fileMasks:
+    description: "Comma-separated file patterns to scan."
     default: "*.md"
   pat:
     description: "GitHub.com personal access token. Optional. Used to avoid rate limiting."
     default: ""
-  corp-url:
+  corpUrl:
     description: "GitHub Enterprise base URL, for example, https://github.mycorp.com"
     default: ""
-  corp-pat:
+  corpPat:
     description: "GitHub Enterprise personal access token.  The PAT needs read access to repositories referenced in your documentation."
     default: ""
   ddApiKey:
@@ -26,7 +26,7 @@ inputs:
   ddAppKey:
     description: "Datadog APP key."
     default: ""
-  ignored-domains:
+  ignoredDomains:
     description: "Comma separated list of domains or their parts that should be ignored during validation."
     default: ""
   files:
@@ -35,7 +35,16 @@ inputs:
   timeout:
     description: "HTTP request timeout."
     default: "5s"
-  vault-tokens:
+  redirects:
+    description: "HTTP redirects number."
+    default: "3"
+  exlude:
+    description: "Comma separated list of files or folders to exclude from validation."
+    default: ""
+  lookupPath:
+    description: "A path to look for the files up."
+    default: "./"
+  vaultTokens:
     description: "Comma-separated vault name:token pairs, e.g., 'pre:token1,prod:token2'"
     default: ""
 runs:
@@ -50,34 +59,37 @@ runs:
         # Parse vault tokens (comma-separated name:token pairs) and create environment variables
         vault_env_vars=""
         if [[ -n "${{ inputs.vault-tokens }}" ]]; then
-          # Split by commas and process each name:token pair
-          IFS=',' read -ra VAULT_PAIRS <<< "${{ inputs.vault-tokens }}"
-          for pair in "${VAULT_PAIRS[@]}"; do
-            # Trim whitespace from pair
-            pair=$(echo "$pair" | xargs)
-            if [[ "$pair" =~ ^([^:]+):(.+)$ ]]; then
-              vault_name="${BASH_REMATCH[1]}"
-              vault_token="${BASH_REMATCH[2]}"
-              # Convert vault name to uppercase for environment variable
-              vault_key="VAULT_TOKEN_$(echo "$vault_name" | tr '[:lower:]' '[:upper:]')"
-              vault_env_vars="$vault_env_vars -e '$vault_key=$vault_token'"
-            fi
-          done
+        # Split by commas and process each name:token pair
+        IFS=',' read -ra VAULT_PAIRS <<< "${{ inputs.vault-tokens }}"
+        for pair in "${VAULT_PAIRS[@]}"; do
+        # Trim whitespace from pair
+        pair=$(echo "$pair" | xargs)
+        if [[ "$pair" =~ ^([^:]+):(.+)$ ]]; then
+        vault_name="${BASH_REMATCH[1]}"
+        vault_token="${BASH_REMATCH[2]}"
+        # Convert vault name to uppercase for environment variable
+        vault_key="VAULT_TOKEN_$(echo "$vault_name" | tr '[:lower:]' '[:upper:]')"
+        vault_env_vars="$vault_env_vars -e '$vault_key=$vault_token'"
+        fi
+        done
         fi
 
         # Run docker with vault environment variables
         eval "docker run --rm \
-          -e LOG_LEVEL=${{ inputs.log-level }} \
-          -e 'FILE_MASKS=${{ inputs.file-mask }}' \
+          -e LOG_LEVEL=${{ inputs.logLevel }} \
+          -e 'FILE_MASKS=${{ inputs.fileMasks }}' \
           -e 'PAT=${{ inputs.pat }}' \
-          -e 'CORP_PAT=${{ inputs.corp-pat }}' \
+          -e 'CORP_PAT=${{ inputs.corpPat }}' \
           -e 'DD_API_KEY=${{ inputs.ddApiKey }}' \
           -e 'DD_APP_KEY=${{ inputs.ddAppKey }}' \
-          -e 'CORP_URL=${{ inputs.corp-url }}' \
+          -e 'CORP_URL=${{ inputs.corpUrl }}' \
           -e 'FILES=${{ inputs.files }}' \
           -e 'TIMEOUT=${{ inputs.timeout }}' \
-          -e 'IGNORED_DOMAINS=${{ inputs.ignored-domains }}' \
+          -e 'IGNORED_DOMAINS=${{ inputs.ignoredDomains }}' \
+          -e 'REDIRECTS=${{ inputs.redirects }}' \
+          -e 'EXCLUDE=${{ inputs.exlude }}' \
+          -e 'lookupPath=${{ inputs.lookupPath }}' \
           $vault_env_vars \
-          -v '${{ github.workspace }}:/work' \
+          -v "${{ github.workspace }}:/work" \
           -w /work \
           ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}"

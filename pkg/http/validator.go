@@ -6,13 +6,13 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"link-validator/pkg/config"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/regex"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type LinkProcessor struct {
@@ -21,12 +21,12 @@ type LinkProcessor struct {
 	excluder       func(url string) bool
 }
 
-func New(timeout time.Duration, ignoredDomains []string, excluder func(url string) bool) *LinkProcessor {
+func New(cfg *config.Config, excluder func(url string) bool) *LinkProcessor {
 	httpClient := &http.Client{
-		Timeout: timeout,
+		Timeout: cfg.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			slog.Debug("redirecting", slog.String("to", req.URL.String()), slog.Int("hops", len(via)))
-			redirectLimit := 3
+			redirectLimit := cfg.Validators.HTTP.Redirects
 			if len(via) > redirectLimit {
 				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit), slog.String("url", via[0].URL.String()))
 			}
@@ -43,7 +43,7 @@ func New(timeout time.Duration, ignoredDomains []string, excluder func(url strin
 
 	return &LinkProcessor{
 		httpClient:     httpClient,
-		ignoredDomains: ignoredDomains,
+		ignoredDomains: cfg.Validators.HTTP.IgnoredDomains,
 		excluder:       excluder,
 	}
 }
@@ -62,6 +62,12 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	if err != nil {
 		return err
 	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			slog.With("error", err).Warn("http: can't close response body", slog.String("url", url))
+		}
+	}(resp.Body)
 
 	switch {
 	case resp.StatusCode == 401 || resp.StatusCode == 403:
@@ -80,12 +86,6 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 		return nil
 	case 200 <= resp.StatusCode && resp.StatusCode <= 299:
 		// check just the first 1 KB of the body
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				slog.With("error", err).Warn("http: can't close response body", slog.String("url", url))
-			}
-		}(resp.Body)
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1024))
 		if err != nil {
 			// we can't read body, something is off

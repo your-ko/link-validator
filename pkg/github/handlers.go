@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/v80/github"
+	"github.com/google/go-github/v81/github"
 )
 
 type ghHandler func(
@@ -563,6 +563,9 @@ func handleTeams(ctx context.Context, c client, owner, repo, ref, path, fragment
 	err := handleOrgExist(ctx, c, owner, repo, path, ref, fragment)
 	if err != nil {
 		return err
+	}
+	if ref == "" {
+		return nil
 	}
 	_, _, err = c.GetTeamBySlug(ctx, owner, ref)
 	return err

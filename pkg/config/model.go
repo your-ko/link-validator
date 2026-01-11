@@ -34,7 +34,7 @@ type GitHubConfig struct {
 	Enabled       bool `yaml:"enabled"`
 	PAT           string
 	CorpPAT       string
-	CorpGitHubUrl string `yaml:"corpGitHubUrl"`
+	CorpGitHubUrl string `yaml:"corpUrl"`
 }
 
 func (cfg GitHubConfig) validate() error {
@@ -62,10 +62,14 @@ func (cfg DataDogConfig) validate() error {
 
 type HttpConfig struct {
 	Enabled        bool     `yaml:"enabled"`
+	Redirects      int      `yaml:"redirects"`
 	IgnoredDomains []string `yaml:"ignoredDomains"`
 }
 
 func (cfg HttpConfig) validate() error {
+	if cfg.Enabled && cfg.Redirects <= 0 {
+		return errors.New("redirects should be a positive integer")
+	}
 	return nil
 }
 
@@ -83,11 +87,11 @@ func (cfg VaultValidatorConfig) validate() error {
 }
 
 type ValidatorsConfig struct {
-	GitHub    GitHubConfig           `yaml:"github"`
-	DataDog   DataDogConfig          `yaml:"datadog"`
-	LocalPath ValidatorConfig        `yaml:"localPath"`
+	GitHub    GitHubConfig    `yaml:"github"`
+	DataDog   DataDogConfig   `yaml:"datadog"`
+	LocalPath ValidatorConfig `yaml:"localPath"`
 	Vaults    []VaultValidatorConfig `yaml:"vaults"`
-	HTTP      HttpConfig             `yaml:"http"`
+	HTTP      HttpConfig      `yaml:"http"`
 }
 
 func (v ValidatorsConfig) validate() []error {
@@ -119,6 +123,15 @@ func Default() *Config {
 		LookupPath: ".",
 		FileMasks:  []string{"*.md"},
 		Timeout:    3 * time.Second,
-		Validators: ValidatorsConfig{Vaults: []VaultValidatorConfig{}},
+		Validators: ValidatorsConfig{
+			HTTP: HttpConfig{
+				Enabled:   true,
+				Redirects: 3,
+			},
+			GitHub: GitHubConfig{
+				Enabled: true,
+			},
+			Vaults: []VaultValidatorConfig{},
+		},
 	}
 }

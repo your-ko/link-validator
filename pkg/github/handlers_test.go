@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/go-github/v80/github"
+	"github.com/google/go-github/v81/github"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -2143,6 +2143,15 @@ func Test_handleTeams(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
 				m.EXPECT().GetTeamBySlug(mock.Anything, "mycorp", "sre").Return(team, resp, nil)
+			},
+		},
+		{
+			name: "team is not specified",
+			args: args{"mycorp", "", "", "", ""},
+			setupMock: func(m *mockclient) {
+				org := &github.Organization{Name: github.Ptr("mycorp")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
 			},
 		},
 		{
