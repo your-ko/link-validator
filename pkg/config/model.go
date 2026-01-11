@@ -60,10 +60,14 @@ func (cfg DataDogConfig) validate() error {
 
 type HttpConfig struct {
 	Enabled        bool     `yaml:"enabled"`
+	Redirects      int      `yaml:"redirects"`
 	IgnoredDomains []string `yaml:"ignoredDomains"`
 }
 
-func (h HttpConfig) validate() error {
+func (cfg HttpConfig) validate() error {
+	if cfg.Enabled && cfg.Redirects <= 0 {
+		return errors.New("redirects should be a positive integer")
+	}
 	return nil
 }
 

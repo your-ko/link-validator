@@ -6,13 +6,13 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"link-validator/pkg/config"
 	"link-validator/pkg/errs"
 	"link-validator/pkg/regex"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 type LinkProcessor struct {
@@ -21,12 +21,12 @@ type LinkProcessor struct {
 	excluder       func(url string) bool
 }
 
-func New(timeout time.Duration, ignoredDomains []string, excluder func(url string) bool) *LinkProcessor {
+func New(cfg *config.Config, excluder func(url string) bool) *LinkProcessor {
 	httpClient := &http.Client{
-		Timeout: timeout,
+		Timeout: cfg.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			slog.Debug("redirecting", slog.String("to", req.URL.String()), slog.Int("hops", len(via)))
-			redirectLimit := 3
+			redirectLimit := cfg.Validators.HTTP.Redirects
 			if len(via) > redirectLimit {
 				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit), slog.String("url", via[0].URL.String()))
 			}
@@ -43,7 +43,7 @@ func New(timeout time.Duration, ignoredDomains []string, excluder func(url strin
 
 	return &LinkProcessor{
 		httpClient:     httpClient,
-		ignoredDomains: ignoredDomains,
+		ignoredDomains: cfg.Validators.HTTP.IgnoredDomains,
 		excluder:       excluder,
 	}
 }
