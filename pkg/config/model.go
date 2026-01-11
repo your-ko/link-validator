@@ -102,5 +102,10 @@ func Default() *Config {
 		LookupPath: ".",
 		FileMasks:  []string{"*.md"},
 		Timeout:    3 * time.Second,
+		Validators: ValidatorsConfig{
+			HTTP: HttpConfig{
+				Redirects: 3,
+			},
+		},
 	}
 }

@@ -91,14 +91,14 @@ func readFromEnv() (*Config, error) {
 	if lookupPath := GetEnv("LOOKUP_PATH", "."); lookupPath != "" {
 		cfg.LookupPath = lookupPath
 	}
-	if timeoutStr := GetEnv("TIMEOUT", ""); timeoutStr != "" {
+	if timeoutStr := GetEnv("TIMEOUT", "3s"); timeoutStr != "" {
 		timeout, err := time.ParseDuration(timeoutStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid duration value: %s", timeoutStr)
 		}
 		cfg.Timeout = timeout
 	}
-	if redirectStr := GetEnv("REDIRECTS", ""); redirectStr != "" {
+	if redirectStr := GetEnv("REDIRECTS", "3"); redirectStr != "" {
 		redirects, err := strconv.Atoi(redirectStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid redirects value: %s", redirectStr)
