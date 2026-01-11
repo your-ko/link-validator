@@ -35,6 +35,9 @@ inputs:
   timeout:
     description: "HTTP request timeout."
     default: "5s"
+  redirects:
+    description: "HTTP redirects number."
+    default: "3"
   exlude:
     description: "Comma separated list of files or folders to exclude from validation."
     default: ""
@@ -61,6 +64,7 @@ runs:
           -e 'FILES=${{ inputs.files }}' \
           -e 'TIMEOUT=${{ inputs.timeout }}' \
           -e 'IGNORED_DOMAINS=${{ inputs.ignoredDomains }}' \
+          -e 'REDIRECTS=${{ inputs.redirects }}' \
           -e 'EXCLUDE=${{ inputs.exlude }}' \
           -e 'lookupPath=${{ inputs.lookupPath }}' \
           -v "${{ github.workspace }}:/work" \

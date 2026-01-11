@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -90,12 +91,19 @@ func readFromEnv() (*Config, error) {
 	if lookupPath := GetEnv("LOOKUP_PATH", "."); lookupPath != "" {
 		cfg.LookupPath = lookupPath
 	}
-	if timeoutStr := GetEnv("TIMEOUT", ""); timeoutStr != "" {
+	if timeoutStr := GetEnv("TIMEOUT", "3s"); timeoutStr != "" {
 		timeout, err := time.ParseDuration(timeoutStr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid duration value: %s", timeoutStr)
 		}
 		cfg.Timeout = timeout
+	}
+	if redirectStr := GetEnv("REDIRECTS", "3"); redirectStr != "" {
+		redirects, err := strconv.Atoi(redirectStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid redirects value: %s", redirectStr)
+		}
+		cfg.Validators.HTTP.Redirects = redirects
 	}
 	if ignoredDomainsStr := GetEnv("IGNORED_DOMAINS", ""); ignoredDomainsStr != "" {
 		ignoredDomains := strings.Split(strings.TrimSuffix(ignoredDomainsStr, ","), ",")
@@ -142,6 +150,7 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.Validators.HTTP.Enabled = true
 	}
 	cfg.Validators.HTTP.IgnoredDomains = mergeSlices(cfg.Validators.HTTP.IgnoredDomains, merge.Validators.HTTP.IgnoredDomains)
+	cfg.Validators.HTTP.Redirects = merge.Validators.HTTP.Redirects
 
 	if merge.LookupPath != "" {
 		cfg.LookupPath = merge.LookupPath
@@ -153,7 +162,6 @@ func (cfg *Config) merge(merge *Config) {
 	cfg.FileMasks = mergeSlices(cfg.FileMasks, merge.FileMasks)
 	cfg.Files = mergeSlices(cfg.Files, merge.Files)
 	cfg.Exclude = mergeSlices(cfg.Exclude, merge.Exclude)
-
 }
 
 func GetEnv(key, defaultValue string) string {

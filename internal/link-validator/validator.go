@@ -75,7 +75,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 			}
 			return false
 		}
-		processors = append(processors, http.New(cfg.Timeout, cfg.Validators.HTTP.IgnoredDomains, excluder))
+		processors = append(processors, http.New(cfg, excluder))
 	}
 
 	if len(processors) == 0 {
