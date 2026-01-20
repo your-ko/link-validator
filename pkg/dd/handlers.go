@@ -70,12 +70,12 @@ func handleNotebooks(ctx context.Context, c client, resource ddResource) error {
 		return fmt.Errorf("invalid notebook id: '%s'", resource.id)
 	}
 
-	_, _, err = c.GetNotebook(ctx, notebookId)
+	_, _, err = c.getNotebook(ctx, notebookId)
 	return err
 }
 
 func handleSLO(ctx context.Context, c client, resource ddResource) error {
-	_, _, err := c.GetSLO(c.withAuth(ctx), resource.id)
+	_, _, err := c.getSLO(c.withAuth(ctx), resource.id)
 	return err
 }
 

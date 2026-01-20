@@ -302,7 +302,7 @@ func Test_handleNotebooks(t *testing.T) {
 					Data: &datadogV1.NotebookResponseData{Id: int64(12345), Type: datadogV1.NotebookResourceType("notebooks")},
 				}
 				resp := &http.Response{StatusCode: http.StatusOK}
-				m.EXPECT().GetNotebook(mock.Anything, int64(12345)).Return(notebook, resp, nil)
+				m.EXPECT().getNotebook(mock.Anything, int64(12345)).Return(notebook, resp, nil)
 			},
 		},
 		{
@@ -321,7 +321,7 @@ func Test_handleNotebooks(t *testing.T) {
 					ErrorModel:   []string{"Notebook not found"},
 				}
 				resp := &http.Response{StatusCode: http.StatusNotFound}
-				m.EXPECT().GetNotebook(mock.Anything, int64(12345)).Return(notebook, resp, err)
+				m.EXPECT().getNotebook(mock.Anything, int64(12345)).Return(notebook, resp, err)
 			},
 			wantErr: datadog.GenericOpenAPIError{
 				ErrorMessage: "404 Not Found",
