@@ -10,5 +10,5 @@ validators:
     enabled: true          # Usually always enabled
   http:
     enabled: true          # Usually always enabled (fallback)
-    ignoredDomains:
+    ignore:
     - token.actions.githubusercontent.com

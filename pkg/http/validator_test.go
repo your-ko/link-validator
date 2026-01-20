@@ -389,7 +389,7 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 
 func TestLinkProcessor_urlShouldBeIgnored(t *testing.T) {
 	type fields struct {
-		ignoredDomains []string
+		ignore []string
 	}
 	type args struct {
 		url string
@@ -408,13 +408,13 @@ func TestLinkProcessor_urlShouldBeIgnored(t *testing.T) {
 		},
 		{
 			name:   "no ignored domains",
-			fields: fields{ignoredDomains: []string{"https://github.com"}},
+			fields: fields{ignore: []string{"https://github.com"}},
 			args:   args{url: "https://github.com"},
 			want:   true,
 		},
 		{
 			name:   "ignored https://github.com",
-			fields: fields{ignoredDomains: []string{"https://github.com"}},
+			fields: fields{ignore: []string{"https://github.com"}},
 			args:   args{url: "https://github.com"},
 			want:   true,
 		},
@@ -422,7 +422,7 @@ func TestLinkProcessor_urlShouldBeIgnored(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			proc := &LinkProcessor{
-				ignoredDomains: tt.fields.ignoredDomains,
+				ignored: tt.fields.ignore,
 			}
 			if got := proc.urlShouldBeIgnored(tt.args.url); got != tt.want {
 				t.Errorf("urlShouldBeIgnored() = %v, want %v", got, tt.want)

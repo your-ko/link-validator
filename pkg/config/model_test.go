@@ -161,27 +161,27 @@ func TestHttpConfig_validate(t *testing.T) {
 		{
 			name: "Redirects is positive. Passing",
 			config: HttpConfig{
-				Enabled:        true,
-				Redirects:      3,
-				IgnoredDomains: []string{},
+				Enabled:   true,
+				Redirects: 3,
+				Ignore:    []string{},
 			},
 			wantErr: false,
 		},
 		{
 			name: "Redirects is negative. Config is disabled. Passing",
 			config: HttpConfig{
-				Enabled:        false,
-				Redirects:      -3,
-				IgnoredDomains: []string{},
+				Enabled:   false,
+				Redirects: -3,
+				Ignore:    []string{},
 			},
 			wantErr: false,
 		},
 		{
 			name: "Redirects is negative. Failing",
 			config: HttpConfig{
-				Enabled:        true,
-				Redirects:      -3,
-				IgnoredDomains: []string{},
+				Enabled:   true,
+				Redirects: -3,
+				Ignore:    []string{},
 			},
 			wantErr:       true,
 			expectedError: "redirects should be a positive integer",

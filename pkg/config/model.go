@@ -59,9 +59,9 @@ func (cfg DataDogConfig) validate() error {
 }
 
 type HttpConfig struct {
-	Enabled        bool     `yaml:"enabled"`
-	Redirects      int      `yaml:"redirects"`
-	IgnoredDomains []string `yaml:"ignoredDomains"`
+	Enabled   bool     `yaml:"enabled"`
+	Redirects int      `yaml:"redirects"`
+	Ignore    []string `yaml:"ignore"`
 }
 
 func (cfg HttpConfig) validate() error {
