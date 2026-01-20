@@ -1800,7 +1800,7 @@ func Test_handlePackages(t *testing.T) {
 
 				pkg := &github.Package{Name: github.Ptr("link-validator")}
 				pkgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
+				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
 			},
 		},
 		{
@@ -1816,12 +1816,12 @@ func Test_handlePackages(t *testing.T) {
 					Message:  "Not found",
 				}
 				userResp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(nil, userResp, userErr)
+				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(nil, userResp, userErr)
 
 				// Org package found
 				pkg := &github.Package{Name: github.Ptr("link-validator")}
 				orgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().GetOrgPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, orgResp, nil)
+				m.EXPECT().getOrgPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, orgResp, nil)
 			},
 		},
 		{
@@ -1835,7 +1835,7 @@ func Test_handlePackages(t *testing.T) {
 				// User package found (note: only package name used, version ignored for API call)
 				pkg := &github.Package{Name: github.Ptr("link-validator")}
 				pkgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
+				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
 			},
 		},
 		{
@@ -1851,14 +1851,14 @@ func Test_handlePackages(t *testing.T) {
 					Message:  "Package not found",
 				}
 				userResp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				m.EXPECT().GetUserPackage(mock.Anything, "your-ko", "container", "nonexistent-package").Return(nil, userResp, userErr)
+				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "nonexistent-package").Return(nil, userResp, userErr)
 
 				orgErr := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Package not found",
 				}
 				orgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				m.EXPECT().GetOrgPackage(mock.Anything, "your-ko", "container", "nonexistent-package").Return(nil, orgResp, orgErr)
+				m.EXPECT().getOrgPackage(mock.Anything, "your-ko", "container", "nonexistent-package").Return(nil, orgResp, orgErr)
 			},
 			wantErr: &github.ErrorResponse{
 				Response: &http.Response{StatusCode: http.StatusNotFound},
@@ -2046,7 +2046,7 @@ func Test_handleEnvironments(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-				m.EXPECT().ListEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
+				m.EXPECT().listEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
 			},
 		},
 		{
@@ -2063,7 +2063,7 @@ func Test_handleEnvironments(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-				m.EXPECT().ListEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
+				m.EXPECT().listEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
 			},
 			wantErr: errors.New("environment with id:09876 not found"),
 		},
@@ -2142,7 +2142,7 @@ func Test_handleTeams(t *testing.T) {
 				org := &github.Organization{Name: github.Ptr("mycorp")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
-				m.EXPECT().GetTeamBySlug(mock.Anything, "mycorp", "sre").Return(team, resp, nil)
+				m.EXPECT().getTeamBySlug(mock.Anything, "mycorp", "sre").Return(team, resp, nil)
 			},
 		},
 		{
@@ -2165,7 +2165,7 @@ func Test_handleTeams(t *testing.T) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
 				org := &github.Organization{Name: github.Ptr("mycorp")}
 				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
-				m.EXPECT().GetTeamBySlug(mock.Anything, "mycorp", "sre").Return(nil, resp, err)
+				m.EXPECT().getTeamBySlug(mock.Anything, "mycorp", "sre").Return(nil, resp, err)
 			},
 			wantErr: &github.ErrorResponse{
 				Response: &http.Response{StatusCode: http.StatusNotFound},

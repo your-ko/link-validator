@@ -133,11 +133,11 @@ func (w *wrapper) getGistComment(ctx context.Context, gistID string, commentID i
 }
 
 func (w *wrapper) listEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error) {
-	return w.client.Repositories.ListEnvironments(ctx, owner, repo, opts)
+	return w.client.Repositories.listEnvironments(ctx, owner, repo, opts)
 }
 
 func (w *wrapper) getTeamBySlug(ctx context.Context, org, slug string) (*github.Team, *github.Response, error) {
-	return w.client.Teams.GetTeamBySlug(ctx, org, slug)
+	return w.client.Teams.getTeamBySlug(ctx, org, slug)
 }
 
 func (w *wrapper) getUserPackage(ctx context.Context, user, packageType, packageName string) (*github.Package, *github.Response, error) {
