@@ -26,7 +26,7 @@ inputs:
   ddAppKey:
     description: "Datadog APP key."
     default: ""
-  ignoredDomains:
+  ignore:
     description: "Comma separated list of domains or their parts that should be ignored during validation."
     default: ""
   files:
@@ -63,7 +63,7 @@ runs:
           -e 'CORP_URL=${{ inputs.corpUrl }}' \
           -e 'FILES=${{ inputs.files }}' \
           -e 'TIMEOUT=${{ inputs.timeout }}' \
-          -e 'IGNORED_DOMAINS=${{ inputs.ignoredDomains }}' \
+          -e 'IGNORE=${{ inputs.ignore }}' \
           -e 'REDIRECTS=${{ inputs.redirects }}' \
           -e 'EXCLUDE=${{ inputs.exlude }}' \
           -e 'lookupPath=${{ inputs.lookupPath }}' \

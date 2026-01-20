@@ -105,13 +105,13 @@ func readFromEnv() (*Config, error) {
 		}
 		cfg.Validators.HTTP.Redirects = redirects
 	}
-	if ignoredDomainsStr := GetEnv("IGNORED_DOMAINS", ""); ignoredDomainsStr != "" {
-		ignoredDomains := strings.Split(strings.TrimSuffix(ignoredDomainsStr, ","), ",")
+	if ignoredStr := GetEnv("IGNORE", ""); ignoredStr != "" {
+		ignored := strings.Split(strings.TrimSuffix(ignoredStr, ","), ",")
 
-		for i, s := range ignoredDomains {
-			ignoredDomains[i] = strings.ToLower(s)
+		for i, s := range ignored {
+			ignored[i] = strings.ToLower(s)
 		}
-		cfg.Validators.HTTP.IgnoredDomains = ignoredDomains
+		cfg.Validators.HTTP.Ignore = ignored
 	}
 
 	return cfg, nil
@@ -149,7 +149,7 @@ func (cfg *Config) merge(merge *Config) {
 	if merge.Validators.HTTP.Enabled {
 		cfg.Validators.HTTP.Enabled = true
 	}
-	cfg.Validators.HTTP.IgnoredDomains = mergeSlices(cfg.Validators.HTTP.IgnoredDomains, merge.Validators.HTTP.IgnoredDomains)
+	cfg.Validators.HTTP.Ignore = mergeSlices(cfg.Validators.HTTP.Ignore, merge.Validators.HTTP.Ignore)
 	cfg.Validators.HTTP.Redirects = merge.Validators.HTTP.Redirects
 
 	if merge.LookupPath != "" {

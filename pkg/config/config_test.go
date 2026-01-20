@@ -101,8 +101,8 @@ func TestConfig_merge(t *testing.T) {
 							CorpGitHubUrl: "NEW_URL",
 						},
 						HTTP: HttpConfig{
-							Enabled:        true,
-							IgnoredDomains: []string{"example.com"},
+							Enabled: true,
+							Ignore:  []string{"example.com"},
 						},
 					},
 					Timeout: 10 * time.Second,
@@ -117,8 +117,8 @@ func TestConfig_merge(t *testing.T) {
 						CorpGitHubUrl: "NEW_URL",
 					},
 					HTTP: HttpConfig{
-						Enabled:        true,
-						IgnoredDomains: []string{"example.com"},
+						Enabled: true,
+						Ignore:  []string{"example.com"},
 					},
 				},
 				FileMasks: []string{"*.md"},
@@ -137,8 +137,8 @@ func TestConfig_merge(t *testing.T) {
 							CorpGitHubUrl: "OLD_URL",
 						},
 						HTTP: HttpConfig{
-							Enabled:        true,
-							IgnoredDomains: []string{"example.com"},
+							Enabled: true,
+							Ignore:  []string{"example.com"},
 						},
 					},
 					FileMasks:  []string{"*.md"},
@@ -165,8 +165,8 @@ func TestConfig_merge(t *testing.T) {
 						CorpGitHubUrl: "OLD_URL",
 					},
 					HTTP: HttpConfig{
-						Enabled:        true,
-						IgnoredDomains: []string{"example.com"},
+						Enabled: true,
+						Ignore:  []string{"example.com"},
 					},
 				},
 				FileMasks:  []string{"*.md"},
@@ -208,8 +208,8 @@ func TestConfig_merge(t *testing.T) {
 				cfg: &Config{
 					Validators: ValidatorsConfig{
 						HTTP: HttpConfig{
-							Enabled:        true,
-							IgnoredDomains: []string{"example.com"},
+							Enabled: true,
+							Ignore:  []string{"example.com"},
 						},
 					},
 					FileMasks: []string{"*.md", "*.txt"},
@@ -220,8 +220,8 @@ func TestConfig_merge(t *testing.T) {
 					FileMasks: []string{}, // Empty slice should not override
 					Validators: ValidatorsConfig{
 						HTTP: HttpConfig{
-							Enabled:        true,
-							IgnoredDomains: nil,
+							Enabled: true,
+							Ignore:  nil,
 						},
 					},
 				},
@@ -230,8 +230,8 @@ func TestConfig_merge(t *testing.T) {
 				FileMasks: []string{"*.md", "*.txt"}, // Should remain unchanged
 				Validators: ValidatorsConfig{
 					HTTP: HttpConfig{
-						Enabled:        true,
-						IgnoredDomains: []string{"example.com"},
+						Enabled: true,
+						Ignore:  []string{"example.com"},
 					},
 				},
 			},
@@ -287,7 +287,7 @@ validators:
   github:
     corpUrl: "https://github.mycorp.com"
   http:
-    ignoredDomains:
+    ignore:
      - "example.com"
      - "test.org"`,
 			},
@@ -299,7 +299,7 @@ validators:
 						CorpGitHubUrl: "https://github.mycorp.com",
 					},
 					HTTP: HttpConfig{
-						IgnoredDomains: []string{"example.com", "test.org"},
+						Ignore: []string{"example.com", "test.org"},
 					},
 				},
 			},

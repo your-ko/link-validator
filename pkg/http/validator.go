@@ -16,9 +16,9 @@ import (
 )
 
 type LinkProcessor struct {
-	httpClient     *http.Client
-	ignoredDomains []string
-	excluder       func(url string) bool
+	httpClient *http.Client
+	ignored    []string
+	excluder   func(url string) bool
 }
 
 func New(cfg *config.Config, excluder func(url string) bool) *LinkProcessor {
@@ -42,9 +42,9 @@ func New(cfg *config.Config, excluder func(url string) bool) *LinkProcessor {
 	}
 
 	return &LinkProcessor{
-		httpClient:     httpClient,
-		ignoredDomains: cfg.Validators.HTTP.IgnoredDomains,
-		excluder:       excluder,
+		httpClient: httpClient,
+		ignored:    cfg.Validators.HTTP.Ignore,
+		excluder:   excluder,
 	}
 }
 
@@ -137,7 +137,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 }
 
 func (proc *LinkProcessor) urlShouldBeIgnored(url string) bool {
-	for _, d := range proc.ignoredDomains {
+	for _, d := range proc.ignored {
 		if strings.HasPrefix(url, d) {
 			return true
 		}
