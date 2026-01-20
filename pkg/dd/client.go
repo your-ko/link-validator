@@ -67,7 +67,7 @@ func (w wrapper) listNotebooks(ctx context.Context, o ...datadogV1.ListNotebooks
 
 func (w wrapper) getNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error) {
 	apiV1 := datadogV1.NewNotebooksApi(w.client)
-	return apiV1.getNotebook(w.withAuth(ctx), notebookId)
+	return apiV1.GetNotebook(w.withAuth(ctx), notebookId)
 }
 
 func (w wrapper) getSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error) {
