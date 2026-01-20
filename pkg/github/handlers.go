@@ -467,12 +467,12 @@ func handlePackages(ctx context.Context, c client, owner, repo, packageType, pac
 		packageName := parts[0]
 
 		// Try to get the package - first as user package, then as org package
-		_, _, err := c.GetUserPackage(ctx, owner, packageType, packageName)
+		_, _, err := c.getUserPackage(ctx, owner, packageType, packageName)
 		if err == nil {
 			return nil
 		}
 
-		_, _, orgErr := c.GetOrgPackage(ctx, owner, packageType, packageName)
+		_, _, orgErr := c.getOrgPackage(ctx, owner, packageType, packageName)
 		if orgErr == nil {
 			return nil
 		}
@@ -547,7 +547,7 @@ func handleEnvironments(ctx context.Context, c client, owner, repo, ref, path, f
 		return fmt.Errorf("invalid environment id: '%s'", ref)
 	}
 
-	envs, _, err := c.ListEnvironments(ctx, owner, repo, nil)
+	envs, _, err := c.listEnvironments(ctx, owner, repo, nil)
 	if err != nil {
 		return err
 	}
@@ -567,7 +567,7 @@ func handleTeams(ctx context.Context, c client, owner, repo, ref, path, fragment
 	if ref == "" {
 		return nil
 	}
-	_, _, err = c.GetTeamBySlug(ctx, owner, ref)
+	_, _, err = c.getTeamBySlug(ctx, owner, ref)
 	return err
 }
 

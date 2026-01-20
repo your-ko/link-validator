@@ -15,9 +15,9 @@ type client interface {
 	getMonitor(ctx context.Context, monitorId int64, o ...datadogV1.GetMonitorOptionalParameters) (datadogV1.Monitor, *http.Response, error)
 	getDashboardList(ctx context.Context, listId int64) (datadogV1.DashboardList, *http.Response, error)
 	getDashboard(ctx context.Context, dashboardId string) (datadogV1.Dashboard, *http.Response, error)
-	ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)
-	GetNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error)
-	GetSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error)
+	listNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error)
+	getNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error)
+	getSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error)
 }
 
 type wrapper struct {
@@ -60,17 +60,17 @@ func (w wrapper) getDashboard(ctx context.Context, dashboardId string) (datadogV
 	return apiV1.GetDashboard(w.withAuth(ctx), dashboardId)
 }
 
-func (w wrapper) ListNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error) {
+func (w wrapper) listNotebooks(ctx context.Context, o ...datadogV1.ListNotebooksOptionalParameters) (datadogV1.NotebooksResponse, *http.Response, error) {
 	apiV1 := datadogV1.NewNotebooksApi(w.client)
 	return apiV1.ListNotebooks(w.withAuth(ctx), o...)
 }
 
-func (w wrapper) GetNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error) {
+func (w wrapper) getNotebook(ctx context.Context, notebookId int64) (datadogV1.NotebookResponse, *http.Response, error) {
 	apiV1 := datadogV1.NewNotebooksApi(w.client)
 	return apiV1.GetNotebook(w.withAuth(ctx), notebookId)
 }
 
-func (w wrapper) GetSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error) {
+func (w wrapper) getSLO(ctx context.Context, sloId string, o ...datadogV1.GetSLOOptionalParameters) (datadogV1.SLOResponse, *http.Response, error) {
 	apiV1 := datadogV1.NewServiceLevelObjectivesApi(w.client)
 	return apiV1.GetSLO(w.withAuth(ctx), sloId, o...)
 }

@@ -38,352 +38,6 @@ func (_m *mockclient) EXPECT() *mockclient_Expecter {
 	return &mockclient_Expecter{mock: &_m.Mock}
 }
 
-// GetOrgPackage provides a mock function for the type mockclient
-func (_mock *mockclient) GetOrgPackage(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error) {
-	ret := _mock.Called(ctx, user, packageType, packageName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetOrgPackage")
-	}
-
-	var r0 *github.Package
-	var r1 *github.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*github.Package, *github.Response, error)); ok {
-		return returnFunc(ctx, user, packageType, packageName)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *github.Package); ok {
-		r0 = returnFunc(ctx, user, packageType, packageName)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*github.Package)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) *github.Response); ok {
-		r1 = returnFunc(ctx, user, packageType, packageName)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*github.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
-		r2 = returnFunc(ctx, user, packageType, packageName)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_GetOrgPackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOrgPackage'
-type mockclient_GetOrgPackage_Call struct {
-	*mock.Call
-}
-
-// GetOrgPackage is a helper method to define mock.On call
-//   - ctx context.Context
-//   - user string
-//   - packageType string
-//   - packageName string
-func (_e *mockclient_Expecter) GetOrgPackage(ctx interface{}, user interface{}, packageType interface{}, packageName interface{}) *mockclient_GetOrgPackage_Call {
-	return &mockclient_GetOrgPackage_Call{Call: _e.mock.On("GetOrgPackage", ctx, user, packageType, packageName)}
-}
-
-func (_c *mockclient_GetOrgPackage_Call) Run(run func(ctx context.Context, user string, packageType string, packageName string)) *mockclient_GetOrgPackage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_GetOrgPackage_Call) Return(packageParam *github.Package, response *github.Response, err error) *mockclient_GetOrgPackage_Call {
-	_c.Call.Return(packageParam, response, err)
-	return _c
-}
-
-func (_c *mockclient_GetOrgPackage_Call) RunAndReturn(run func(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error)) *mockclient_GetOrgPackage_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetTeamBySlug provides a mock function for the type mockclient
-func (_mock *mockclient) GetTeamBySlug(ctx context.Context, org string, slug string) (*github.Team, *github.Response, error) {
-	ret := _mock.Called(ctx, org, slug)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTeamBySlug")
-	}
-
-	var r0 *github.Team
-	var r1 *github.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*github.Team, *github.Response, error)); ok {
-		return returnFunc(ctx, org, slug)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *github.Team); ok {
-		r0 = returnFunc(ctx, org, slug)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*github.Team)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) *github.Response); ok {
-		r1 = returnFunc(ctx, org, slug)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*github.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
-		r2 = returnFunc(ctx, org, slug)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_GetTeamBySlug_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTeamBySlug'
-type mockclient_GetTeamBySlug_Call struct {
-	*mock.Call
-}
-
-// GetTeamBySlug is a helper method to define mock.On call
-//   - ctx context.Context
-//   - org string
-//   - slug string
-func (_e *mockclient_Expecter) GetTeamBySlug(ctx interface{}, org interface{}, slug interface{}) *mockclient_GetTeamBySlug_Call {
-	return &mockclient_GetTeamBySlug_Call{Call: _e.mock.On("GetTeamBySlug", ctx, org, slug)}
-}
-
-func (_c *mockclient_GetTeamBySlug_Call) Run(run func(ctx context.Context, org string, slug string)) *mockclient_GetTeamBySlug_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_GetTeamBySlug_Call) Return(team *github.Team, response *github.Response, err error) *mockclient_GetTeamBySlug_Call {
-	_c.Call.Return(team, response, err)
-	return _c
-}
-
-func (_c *mockclient_GetTeamBySlug_Call) RunAndReturn(run func(ctx context.Context, org string, slug string) (*github.Team, *github.Response, error)) *mockclient_GetTeamBySlug_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetUserPackage provides a mock function for the type mockclient
-func (_mock *mockclient) GetUserPackage(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error) {
-	ret := _mock.Called(ctx, user, packageType, packageName)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetUserPackage")
-	}
-
-	var r0 *github.Package
-	var r1 *github.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*github.Package, *github.Response, error)); ok {
-		return returnFunc(ctx, user, packageType, packageName)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *github.Package); ok {
-		r0 = returnFunc(ctx, user, packageType, packageName)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*github.Package)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) *github.Response); ok {
-		r1 = returnFunc(ctx, user, packageType, packageName)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*github.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
-		r2 = returnFunc(ctx, user, packageType, packageName)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_GetUserPackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserPackage'
-type mockclient_GetUserPackage_Call struct {
-	*mock.Call
-}
-
-// GetUserPackage is a helper method to define mock.On call
-//   - ctx context.Context
-//   - user string
-//   - packageType string
-//   - packageName string
-func (_e *mockclient_Expecter) GetUserPackage(ctx interface{}, user interface{}, packageType interface{}, packageName interface{}) *mockclient_GetUserPackage_Call {
-	return &mockclient_GetUserPackage_Call{Call: _e.mock.On("GetUserPackage", ctx, user, packageType, packageName)}
-}
-
-func (_c *mockclient_GetUserPackage_Call) Run(run func(ctx context.Context, user string, packageType string, packageName string)) *mockclient_GetUserPackage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_GetUserPackage_Call) Return(packageParam *github.Package, response *github.Response, err error) *mockclient_GetUserPackage_Call {
-	_c.Call.Return(packageParam, response, err)
-	return _c
-}
-
-func (_c *mockclient_GetUserPackage_Call) RunAndReturn(run func(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error)) *mockclient_GetUserPackage_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListEnvironments provides a mock function for the type mockclient
-func (_mock *mockclient) ListEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error) {
-	ret := _mock.Called(ctx, owner, repo, opts)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListEnvironments")
-	}
-
-	var r0 *github.EnvResponse
-	var r1 *github.Response
-	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)); ok {
-		return returnFunc(ctx, owner, repo, opts)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *github.EnvironmentListOptions) *github.EnvResponse); ok {
-		r0 = returnFunc(ctx, owner, repo, opts)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*github.EnvResponse)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *github.EnvironmentListOptions) *github.Response); ok {
-		r1 = returnFunc(ctx, owner, repo, opts)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*github.Response)
-		}
-	}
-	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, *github.EnvironmentListOptions) error); ok {
-		r2 = returnFunc(ctx, owner, repo, opts)
-	} else {
-		r2 = ret.Error(2)
-	}
-	return r0, r1, r2
-}
-
-// mockclient_ListEnvironments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEnvironments'
-type mockclient_ListEnvironments_Call struct {
-	*mock.Call
-}
-
-// ListEnvironments is a helper method to define mock.On call
-//   - ctx context.Context
-//   - owner string
-//   - repo string
-//   - opts *github.EnvironmentListOptions
-func (_e *mockclient_Expecter) ListEnvironments(ctx interface{}, owner interface{}, repo interface{}, opts interface{}) *mockclient_ListEnvironments_Call {
-	return &mockclient_ListEnvironments_Call{Call: _e.mock.On("ListEnvironments", ctx, owner, repo, opts)}
-}
-
-func (_c *mockclient_ListEnvironments_Call) Run(run func(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions)) *mockclient_ListEnvironments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 *github.EnvironmentListOptions
-		if args[3] != nil {
-			arg3 = args[3].(*github.EnvironmentListOptions)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *mockclient_ListEnvironments_Call) Return(envResponse *github.EnvResponse, response *github.Response, err error) *mockclient_ListEnvironments_Call {
-	_c.Call.Return(envResponse, response, err)
-	return _c
-}
-
-func (_c *mockclient_ListEnvironments_Call) RunAndReturn(run func(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)) *mockclient_ListEnvironments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // compareCommits provides a mock function for the type mockclient
 func (_mock *mockclient) compareCommits(ctx context.Context, owner string, repo string, base string, head string, opts *github.ListOptions) (*github.CommitsComparison, *github.Response, error) {
 	ret := _mock.Called(ctx, owner, repo, base, head, opts)
@@ -1266,6 +920,94 @@ func (_c *mockclient_getMilestone_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// getOrgPackage provides a mock function for the type mockclient
+func (_mock *mockclient) getOrgPackage(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error) {
+	ret := _mock.Called(ctx, user, packageType, packageName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getOrgPackage")
+	}
+
+	var r0 *github.Package
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*github.Package, *github.Response, error)); ok {
+		return returnFunc(ctx, user, packageType, packageName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *github.Package); ok {
+		r0 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Package)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
+		r2 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getOrgPackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getOrgPackage'
+type mockclient_getOrgPackage_Call struct {
+	*mock.Call
+}
+
+// getOrgPackage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user string
+//   - packageType string
+//   - packageName string
+func (_e *mockclient_Expecter) getOrgPackage(ctx interface{}, user interface{}, packageType interface{}, packageName interface{}) *mockclient_getOrgPackage_Call {
+	return &mockclient_getOrgPackage_Call{Call: _e.mock.On("getOrgPackage", ctx, user, packageType, packageName)}
+}
+
+func (_c *mockclient_getOrgPackage_Call) Run(run func(ctx context.Context, user string, packageType string, packageName string)) *mockclient_getOrgPackage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getOrgPackage_Call) Return(packageParam *github.Package, response *github.Response, err error) *mockclient_getOrgPackage_Call {
+	_c.Call.Return(packageParam, response, err)
+	return _c
+}
+
+func (_c *mockclient_getOrgPackage_Call) RunAndReturn(run func(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error)) *mockclient_getOrgPackage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // getOrganization provides a mock function for the type mockclient
 func (_mock *mockclient) getOrganization(ctx context.Context, org string) (*github.Organization, *github.Response, error) {
 	ret := _mock.Called(ctx, org)
@@ -1688,6 +1430,88 @@ func (_c *mockclient_getRepository_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// getTeamBySlug provides a mock function for the type mockclient
+func (_mock *mockclient) getTeamBySlug(ctx context.Context, org string, slug string) (*github.Team, *github.Response, error) {
+	ret := _mock.Called(ctx, org, slug)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getTeamBySlug")
+	}
+
+	var r0 *github.Team
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*github.Team, *github.Response, error)); ok {
+		return returnFunc(ctx, org, slug)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *github.Team); ok {
+		r0 = returnFunc(ctx, org, slug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Team)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, org, slug)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
+		r2 = returnFunc(ctx, org, slug)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getTeamBySlug_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getTeamBySlug'
+type mockclient_getTeamBySlug_Call struct {
+	*mock.Call
+}
+
+// getTeamBySlug is a helper method to define mock.On call
+//   - ctx context.Context
+//   - org string
+//   - slug string
+func (_e *mockclient_Expecter) getTeamBySlug(ctx interface{}, org interface{}, slug interface{}) *mockclient_getTeamBySlug_Call {
+	return &mockclient_getTeamBySlug_Call{Call: _e.mock.On("getTeamBySlug", ctx, org, slug)}
+}
+
+func (_c *mockclient_getTeamBySlug_Call) Run(run func(ctx context.Context, org string, slug string)) *mockclient_getTeamBySlug_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getTeamBySlug_Call) Return(team *github.Team, response *github.Response, err error) *mockclient_getTeamBySlug_Call {
+	_c.Call.Return(team, response, err)
+	return _c
+}
+
+func (_c *mockclient_getTeamBySlug_Call) RunAndReturn(run func(ctx context.Context, org string, slug string) (*github.Team, *github.Response, error)) *mockclient_getTeamBySlug_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // getUser provides a mock function for the type mockclient
 func (_mock *mockclient) getUser(ctx context.Context, user string) (*github.User, *github.Response, error) {
 	ret := _mock.Called(ctx, user)
@@ -1760,6 +1584,94 @@ func (_c *mockclient_getUser_Call) Return(user1 *github.User, response *github.R
 }
 
 func (_c *mockclient_getUser_Call) RunAndReturn(run func(ctx context.Context, user string) (*github.User, *github.Response, error)) *mockclient_getUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// getUserPackage provides a mock function for the type mockclient
+func (_mock *mockclient) getUserPackage(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error) {
+	ret := _mock.Called(ctx, user, packageType, packageName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for getUserPackage")
+	}
+
+	var r0 *github.Package
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*github.Package, *github.Response, error)); ok {
+		return returnFunc(ctx, user, packageType, packageName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *github.Package); ok {
+		r0 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.Package)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) *github.Response); ok {
+		r1 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
+		r2 = returnFunc(ctx, user, packageType, packageName)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_getUserPackage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'getUserPackage'
+type mockclient_getUserPackage_Call struct {
+	*mock.Call
+}
+
+// getUserPackage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user string
+//   - packageType string
+//   - packageName string
+func (_e *mockclient_Expecter) getUserPackage(ctx interface{}, user interface{}, packageType interface{}, packageName interface{}) *mockclient_getUserPackage_Call {
+	return &mockclient_getUserPackage_Call{Call: _e.mock.On("getUserPackage", ctx, user, packageType, packageName)}
+}
+
+func (_c *mockclient_getUserPackage_Call) Run(run func(ctx context.Context, user string, packageType string, packageName string)) *mockclient_getUserPackage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_getUserPackage_Call) Return(packageParam *github.Package, response *github.Response, err error) *mockclient_getUserPackage_Call {
+	_c.Call.Return(packageParam, response, err)
+	return _c
+}
+
+func (_c *mockclient_getUserPackage_Call) RunAndReturn(run func(ctx context.Context, user string, packageType string, packageName string) (*github.Package, *github.Response, error)) *mockclient_getUserPackage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2118,6 +2030,94 @@ func (_c *mockclient_listCommits_Call) Return(repositoryCommits []*github.Reposi
 }
 
 func (_c *mockclient_listCommits_Call) RunAndReturn(run func(ctx context.Context, owner string, repo string, number int, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error)) *mockclient_listCommits_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// listEnvironments provides a mock function for the type mockclient
+func (_mock *mockclient) listEnvironments(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error) {
+	ret := _mock.Called(ctx, owner, repo, opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for listEnvironments")
+	}
+
+	var r0 *github.EnvResponse
+	var r1 *github.Response
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)); ok {
+		return returnFunc(ctx, owner, repo, opts)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, *github.EnvironmentListOptions) *github.EnvResponse); ok {
+		r0 = returnFunc(ctx, owner, repo, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*github.EnvResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, *github.EnvironmentListOptions) *github.Response); ok {
+		r1 = returnFunc(ctx, owner, repo, opts)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*github.Response)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, *github.EnvironmentListOptions) error); ok {
+		r2 = returnFunc(ctx, owner, repo, opts)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// mockclient_listEnvironments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'listEnvironments'
+type mockclient_listEnvironments_Call struct {
+	*mock.Call
+}
+
+// listEnvironments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repo string
+//   - opts *github.EnvironmentListOptions
+func (_e *mockclient_Expecter) listEnvironments(ctx interface{}, owner interface{}, repo interface{}, opts interface{}) *mockclient_listEnvironments_Call {
+	return &mockclient_listEnvironments_Call{Call: _e.mock.On("listEnvironments", ctx, owner, repo, opts)}
+}
+
+func (_c *mockclient_listEnvironments_Call) Run(run func(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions)) *mockclient_listEnvironments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 *github.EnvironmentListOptions
+		if args[3] != nil {
+			arg3 = args[3].(*github.EnvironmentListOptions)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *mockclient_listEnvironments_Call) Return(envResponse *github.EnvResponse, response *github.Response, err error) *mockclient_listEnvironments_Call {
+	_c.Call.Return(envResponse, response, err)
+	return _c
+}
+
+func (_c *mockclient_listEnvironments_Call) RunAndReturn(run func(ctx context.Context, owner string, repo string, opts *github.EnvironmentListOptions) (*github.EnvResponse, *github.Response, error)) *mockclient_listEnvironments_Call {
 	_c.Call.Return(run)
 	return _c
 }
