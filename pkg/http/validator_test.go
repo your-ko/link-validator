@@ -40,7 +40,10 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			       test https://host.{blah}.{blah}/path/path
 			       test https://host.{blah}.{blah}:1234/path/path
 			       test https://host.com/{blah}/{blah}/path/path
-			       test https://host.{{blah}}.{{blah}}/path/path`,
+			       test https://host.{{blah}}.{{blah}}/path/path
+			       test https://services.${each.value.region}.${each.value.env}.com
+			       test https://host.%{var}.example.com/path
+			       test https://host.$(VAR).example.com/path`,
 			want: []string{"https://google.com"},
 		},
 		{
