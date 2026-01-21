@@ -118,7 +118,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			slog.Debug("http: localhost is ignored", slog.String("url", raw))
 			continue // no need to validate localhost
 		}
-		if strings.ContainsAny(raw, "[]{}()") {
+		if strings.ContainsAny(raw, "[]{}()$%") {
 			slog.Debug("http: url seems to be templated", slog.String("url", raw))
 			continue
 		}
