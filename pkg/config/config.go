@@ -191,7 +191,7 @@ func mergeSlices(left []string, right []string) []string {
 	for i := range right {
 		accu[right[i]] = true
 	}
-	result := make([]string, len(accu))
+	result := make([]string, 0, len(accu))
 	for k := range accu {
 		result = append(result, k)
 	}
