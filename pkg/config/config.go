@@ -54,7 +54,7 @@ func loadFromReader(reader io.Reader) (*Config, error) {
 }
 
 func readFromEnv() (*Config, error) {
-	cfg := Default()
+	cfg := &Config{}
 
 	// Only set values if environment variables are actually set
 	if corpURL := GetEnv("CORP_URL", ""); corpURL != "" {
@@ -77,7 +77,7 @@ func readFromEnv() (*Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("can't parse logLevel: '%s', error: %w", LogLevelStr, err)
 		}
-		cfg.LogLevel = slogLevel
+		cfg.LogLevel = &slogLevel
 	}
 	if fileMasks := GetEnv("FILE_MASKS", ""); fileMasks != "" {
 		cfg.FileMasks = strings.Split(strings.TrimSuffix(fileMasks, ","), ",")
@@ -158,7 +158,9 @@ func (cfg *Config) merge(merge *Config) {
 	if merge.Timeout != 0 {
 		cfg.Timeout = merge.Timeout
 	}
-	cfg.LogLevel = merge.LogLevel
+	if merge.LogLevel != nil {
+		cfg.LogLevel = merge.LogLevel
+	}
 	cfg.FileMasks = mergeSlices(cfg.FileMasks, merge.FileMasks)
 	cfg.Files = mergeSlices(cfg.Files, merge.Files)
 	cfg.Exclude = mergeSlices(cfg.Exclude, merge.Exclude)
