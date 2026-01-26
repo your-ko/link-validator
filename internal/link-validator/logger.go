@@ -16,9 +16,13 @@ type CustomHandler struct {
 }
 
 func InitLogger(cfg *config.Config) *CustomHandler {
+	logLevel := slog.LevelInfo // default
+	if cfg.LogLevel != nil {
+		logLevel = *cfg.LogLevel
+	}
 	return &CustomHandler{
 		writer: os.Stderr,
-		level:  cfg.LogLevel.Level(),
+		level:  logLevel.Level(),
 	}
 }
 

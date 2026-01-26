@@ -11,7 +11,7 @@ type validator interface {
 }
 
 type Config struct {
-	LogLevel   slog.Level       `yaml:"logLevel"`
+	LogLevel   *slog.Level      `yaml:"logLevel,omitempty"`
 	FileMasks  []string         `yaml:"fileMasks"`
 	Files      []string         `yaml:"files"`
 	Exclude    []string         `yaml:"exclude"`
@@ -97,8 +97,9 @@ func (v ValidatorsConfig) validate() []error {
 
 // Default generates default config
 func Default() *Config {
+	defaultLogLevel := slog.LevelInfo
 	return &Config{
-		LogLevel:   slog.LevelInfo,
+		LogLevel:   &defaultLogLevel,
 		LookupPath: ".",
 		FileMasks:  []string{"*.md"},
 		Timeout:    3 * time.Second,
