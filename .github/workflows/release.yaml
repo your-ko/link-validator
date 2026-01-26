@@ -142,7 +142,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attest build provenance (GitHub)
-        uses: actions/attest-build-provenance@v3.1.0
+        uses: actions/attest-build-provenance@v3.2.0
         with:
           subject-name: ${{ env.DOCKER_IMAGE_NAME }}
           subject-digest: ${{ needs.build.outputs.digest }}
