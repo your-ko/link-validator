@@ -54,7 +54,7 @@ runs:
         DOCKER_VALIDATOR_VERSION: 2.1.1
       run: |
         docker run --rm \
-          -e LOG_LEVEL=${{ inputs.logLevel }} \
+          -e 'LOG_LEVEL=${{ inputs.logLevel }}' \
           -e 'FILE_MASKS=${{ inputs.fileMasks }}' \
           -e 'PAT=${{ inputs.pat }}' \
           -e 'CORP_PAT=${{ inputs.corpPat }}' \
