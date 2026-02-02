@@ -103,23 +103,6 @@
         'chore',
       ],
     },
-    {
-      matchUpdateTypes: [
-        'patch',
-      ],
-      matchCurrentVersion: '/.*/',
-      vulnerabilityAlerts: {
-        enabled: true,
-      },
-      labels: [
-        'security',
-        'high-priority',
-      ],
-      prPriority: 10,
-      matchPackageNames: [
-        '*',
-      ],
-    },
   ],
   prConcurrentLimit: 3,
   prHourlyLimit: 2,
