@@ -150,7 +150,7 @@ jobs:
           show-summary: 'true'
 
       - name: Generate SBOM (SPDX)
-        uses: anchore/sbom-action@v0.22.1
+        uses: anchore/sbom-action@v0.22.2
         with:
           image: ${{ env.DOCKER_IMAGE_NAME }}@${{ needs.build.outputs.digest }}
           format: spdx-json
