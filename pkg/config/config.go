@@ -84,7 +84,11 @@ func readFromEnv() (*Config, error) {
 	}
 	if files := GetEnv("FILES", ""); files != "" {
 		cfg.Files = strings.Split(strings.TrimSuffix(files, ","), ",")
+	} else if _, exist := os.LookupEnv("FILES"); exist {
+		// the env variable FILES is set but empty, hence I set it as an empty array.
+		cfg.Files = make([]string, 0)
 	}
+
 	if exclude := GetEnv("EXCLUDE", ""); exclude != "" {
 		cfg.Exclude = strings.Split(strings.TrimSuffix(exclude, ","), ",")
 	}

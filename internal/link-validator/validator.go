@@ -82,10 +82,19 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		slog.Warn("you have no validators set up, what are you trying to validate? :)")
 	}
 
-	if len(cfg.Files) != 0 {
+	if cfg.Files != nil && len(cfg.Files) != 0 {
 		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
+	} else if cfg.Files != nil {
+		slog.Warn("env var FILES is empty, hence there is nothing to validate")
+		return &LinkValidador{processors, emptyPipeline()}, nil
 	}
 	return &LinkValidador{processors, walkFilesPipeline(cfg)}, nil
+}
+
+func emptyPipeline() FileProcessorFunc {
+	return func(files []string) ([]string, error) {
+		return []string{}, nil
+	}
 }
 
 func includeFilesPipeline(cfg *config.Config) FileProcessorFunc {
