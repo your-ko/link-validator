@@ -140,7 +140,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 				lines++
 				continue
 			}
-			links := v.processLine(line)
+			links := v.processLine(line, lines)
 			for link, processor := range links {
 				err = processor.Process(ctx, link, fileName)
 				linksFound++
@@ -195,13 +195,15 @@ func (v *LinkValidador) GetFiles() ([]string, error) {
 	return v.fileProcessor([]string{})
 }
 
-func (v *LinkValidador) processLine(line string) map[string]LinkProcessor {
+func (v *LinkValidador) processLine(line string, lines int) map[string]LinkProcessor {
 	found := make(map[string]LinkProcessor)
 	for _, p := range v.processors {
 		links := p.ExtractLinks(line)
 		for _, link := range links {
-			if _, exist := found[link]; exist {
-				slog.Warn("two processors compete for the link", slog.String("link", link))
+			if foundProc, exist := found[link]; exist {
+				if foundProc != p {
+					slog.Warn("two processors compete for the link", slog.String("link", link), slog.Int("line number", lines))
+				}
 			}
 			found[link] = p
 		}
