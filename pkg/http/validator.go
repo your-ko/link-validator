@@ -118,7 +118,7 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			slog.Debug("http: localhost is ignored", slog.String("url", raw))
 			continue // no need to validate localhost
 		}
-		if strings.ContainsAny(raw, "[]{}()$%") {
+		if proc.isTemplatedURL(raw) {
 			slog.Debug("http: url seems to be templated", slog.String("url", raw))
 			continue
 		}
@@ -143,4 +143,24 @@ func (proc *LinkProcessor) urlShouldBeIgnored(url string) bool {
 		}
 	}
 	return false
+}
+
+// isTemplatedURL checks if a URL contains templating syntax that should be ignored
+func (proc *LinkProcessor) isTemplatedURL(raw string) bool {
+	// Check for common templating patterns
+	if strings.ContainsAny(raw, "[]{}$%") {
+		return true
+	}
+
+	// Only check for angle bracket templating if no other patterns found
+	// This handles cases like <var> in hostnames
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false // If we can't parse it, assume it's not templated
+	}
+
+	hostname := u.Hostname()
+	// Check for <word> patterns specifically in hostname (templating)
+	// This excludes HTML-wrapped URLs like <https://site.com/> where <> are delimiters
+	return strings.Contains(hostname, "<") && strings.Contains(hostname, ">")
 }

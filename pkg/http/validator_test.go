@@ -39,6 +39,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 				   https://google.com
 			       test https://host.{blah}.{blah}/path/path
 			       test https://host.{blah}.{blah}:1234/path/path
+			       test https://host.<blah>.<blah>.blah
 			       test https://host.com/{blah}/{blah}/path/path
 			       test https://host.{{blah}}.{{blah}}/path/path
 			       test https://services.${each.value.region}.${each.value.env}.com
@@ -385,6 +386,61 @@ func TestHttpLinkProcessor_Process(t *testing.T) {
 
 			if err.Error() != tt.wantIs.Error() {
 				t.Fatalf("Got error message:\n %s\n want:\n %s", err.Error(), tt.wantIs.Error())
+			}
+		})
+	}
+}
+
+func TestLinkProcessor_isTemplatedURL(t *testing.T) {
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "normal URL",
+			args: args{url: "https://google.com"},
+			want: false,
+		},
+		{
+			name: "braces templating",
+			args: args{url: "https://host.{var}.com"},
+			want: true,
+		},
+		{
+			name: "brackets templating",
+			args: args{url: "https://host.[var].com"},
+			want: true,
+		},
+		{
+			name: "dollar templating",
+			args: args{url: "https://host.${VAR}.com"},
+			want: true,
+		},
+		{
+			name: "percent templating",
+			args: args{url: "https://host.%{var}.com"},
+			want: true,
+		},
+		{
+			name: "angle bracket templating",
+			args: args{url: "https://host.<var>.com"},
+			want: true,
+		},
+		{
+			name: "HTML-wrapped URL (not templated)",
+			args: args{url: "<https://site.com/>"},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			proc := &LinkProcessor{}
+			if got := proc.isTemplatedURL(tt.args.url); got != tt.want {
+				t.Errorf("isTemplatedURL() = %v, want %v", got, tt.want)
 			}
 		})
 	}
