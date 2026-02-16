@@ -37,7 +37,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			name: "Ignores templated urls",
 			line: `test https://host.[blah].[blah]/path/path
 				   https://google.com
-				   <https://github.com>
+				   <https://google.com>
 			       test https://host.{blah}.{blah}/path/path
 			       test https://host.{blah}.{blah}:1234/path/path
 			       test https://host.<blah>.<blah>.blah
@@ -48,7 +48,7 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 			       test https://host.$(VAR).example.com/path`,
 			want: []string{
 				"https://google.com",
-				"https://github.com",
+				"https://google.com",
 			},
 		},
 		{
