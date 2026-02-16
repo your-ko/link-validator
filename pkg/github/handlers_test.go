@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/go-github/v82/github"
+	"github.com/google/go-github/v83/github"
 	"github.com/stretchr/testify/mock"
 )
 
