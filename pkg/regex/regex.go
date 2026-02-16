@@ -11,7 +11,7 @@ var GitHub = regexp.MustCompile(`(?i)https://(?:gist\.)?github\.(?:com|[a-z0-9-]
 var EnterpriseGitHub = regexp.MustCompile(`github\.[a-z0-9-]+\.[a-z0-9.-]+`)
 
 // Url captures all HTTPS URLs that looks valid, including templated URLs for proper filtering.
-var Url = regexp.MustCompile(`https://[a-zA-Z0-9.\[\]{}$%<>_-]+(?::[0-9]+)?(?:/[^\s<>]*[a-zA-Z0-9/#?&=_\[\]{}$%-]|/)?`)
+var Url = regexp.MustCompile(`https://(?:[a-zA-Z0-9.\[\]{}$%_-]|<[^>]*>)+(?::[0-9]+)?(?:/[^\s>]*[a-zA-Z0-9/#?&=_\[\]{}$%-]|/)?`)
 
 // LocalPath captures local Markdown links [text](path)
 var LocalPath = regexp.MustCompile(`\[[^]]*]\(((?:\.{1,2}/)*[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*(?:#[^)\s]*)?)\)`)
