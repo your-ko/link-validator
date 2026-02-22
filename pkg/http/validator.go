@@ -22,13 +22,25 @@ type LinkProcessor struct {
 }
 
 func New(cfg *config.Config, excluder func(url string) bool) *LinkProcessor {
-	httpClient := &http.Client{
+	httpClient := InitHttpClient(cfg)
+
+	return &LinkProcessor{
+		httpClient: httpClient,
+		ignored:    cfg.Validators.HTTP.Ignore,
+		excluder:   excluder,
+	}
+}
+
+// InitHttpClient creates and configures an HTTP client with common settings
+func InitHttpClient(cfg *config.Config) *http.Client {
+	return &http.Client{
 		Timeout: cfg.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			slog.Debug("redirecting", slog.String("to", req.URL.String()), slog.Int("hops", len(via)))
 			redirectLimit := cfg.Validators.HTTP.Redirects
 			if len(via) > redirectLimit {
 				slog.Warn("too many redirects", slog.Int("redirect limit", redirectLimit), slog.String("url", via[0].URL.String()))
+				return http.ErrUseLastResponse
 			}
 			for k, vs := range via[0].Header {
 				if req.Header.Get(k) == "" {
@@ -40,17 +52,15 @@ func New(cfg *config.Config, excluder func(url string) bool) *LinkProcessor {
 			return nil
 		},
 	}
-
-	return &LinkProcessor{
-		httpClient: httpClient,
-		ignored:    cfg.Validators.HTTP.Ignore,
-		excluder:   excluder,
-	}
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
 	slog.Debug("http: starting validation", slog.String("url", url))
 
+	return ProcessRequest(ctx, proc.httpClient, url)
+}
+
+func ProcessRequest(ctx context.Context, httpClient *http.Client, url string) error {
 	req, err := http.NewRequestWithContext(ctx, "GET", url, bytes.NewBuffer(nil))
 	if err != nil {
 		return err
@@ -58,7 +68,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 	req.Header.Set("User-Agent", "link-validator/2.0 (+https://github.com/your-ko/link-validator)")
 
-	resp, err := proc.httpClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}

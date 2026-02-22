@@ -45,7 +45,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
 	httpExcluders := make([]HttpValidatorExcluder, 0)
 	if cfg.Validators.GitHub.Enabled {
-		ghValidator, err := github.New(cfg.Validators.GitHub.CorpGitHubUrl, cfg.Validators.GitHub.CorpPAT, cfg.Validators.GitHub.PAT, cfg.Timeout)
+		ghValidator, err := github.New(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
 		}

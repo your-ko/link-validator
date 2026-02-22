@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-github/v83/github"
@@ -1597,89 +1598,6 @@ func Test_handleLabel(t *testing.T) {
 	}
 }
 
-func Test_handleWiki(t *testing.T) {
-	type args struct {
-		owner    string
-		repo     string
-		ref      string
-		path     string
-		fragment string
-	}
-	tests := []struct {
-		name      string
-		setupMock func(*mockclient)
-		args      args
-		wantErr   error
-	}{
-		{
-			name: "repository with wiki enabled",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			setupMock: func(m *mockclient) {
-				repo := &github.Repository{
-					Name:    github.Ptr("link-validator"),
-					HasWiki: github.Ptr(true),
-				}
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-			},
-		},
-		{
-			name: "repository exists but wiki disabled",
-			args: args{"your-ko", "link-validator", "", "", ""},
-			setupMock: func(m *mockclient) {
-				repo := &github.Repository{
-					Name:    github.Ptr("link-validator"),
-					HasWiki: github.Ptr(false),
-				}
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
-			},
-			wantErr: errors.New("wiki is not enabled for repository your-ko/link-validator"),
-		},
-		{
-			name: "wiki: repository not found",
-			args: args{"your-ko", "nonexistent-repo", "", "", ""},
-			setupMock: func(m *mockclient) {
-				err := &github.ErrorResponse{
-					Response: &http.Response{StatusCode: http.StatusNotFound},
-					Message:  "Not found",
-				}
-				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
-			},
-			wantErr: errors.New("repository 'nonexistent-repo' not found"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockClient := newMockclient(t)
-			tt.setupMock(mockClient)
-
-			err := handleWiki(context.Background(), mockClient, tt.args.owner, tt.args.repo, tt.args.ref, tt.args.path, tt.args.fragment)
-
-			if !mockClient.AssertExpectations(t) {
-				return
-			}
-			if tt.wantErr == nil {
-				if err != nil {
-					t.Fatalf("expected no error, got %s", err)
-				}
-				return
-			}
-
-			if err == nil {
-				t.Fatalf("expected error %v, got nil", tt.wantErr)
-			}
-			if tt.wantErr.Error() != err.Error() {
-				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
-			}
-			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
-				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
-			}
-		})
-	}
-}
-
 func Test_handleOrgExist(t *testing.T) {
 	type args struct {
 		owner    string
@@ -2221,6 +2139,146 @@ func Test_handleTeams(t *testing.T) {
 			if tt.wantErr.Error() != err.Error() {
 				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
 			}
+			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
+				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
+			}
+		})
+	}
+}
+
+func Test_handleHttp(t *testing.T) {
+	tests := []struct {
+		name               string
+		setupMock          func(*mockclient)
+		owner              string
+		repo               string
+		typ                string
+		url                string
+		httpResponseStatus int
+		httpResponseBody   string
+		wantErr            error
+	}{
+		{
+			name:               "repository exists and HTTP request succeeds",
+			owner:              "your-ko",
+			repo:               "link-validator",
+			typ:                "wiki",
+			url:                "https://github.com/your-ko/link-validator/wiki",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "<html><body>Wiki content</body></html>",
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{
+					ID:       github.Ptr(int64(123)),
+					Name:     github.Ptr("link-validator"),
+					FullName: github.Ptr("your-ko/link-validator"),
+					Private:  github.Ptr(false),
+					Owner: &github.User{
+						Login: github.Ptr("your-ko"),
+					},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: nil, // Both repository check and HTTP request should succeed
+		},
+		{
+			name:               "repository exists but HTTP request returns 404",
+			owner:              "your-ko",
+			repo:               "link-validator",
+			typ:                "wiki",
+			url:                "https://github.com/your-ko/link-validator/wiki/nonexistent-page",
+			httpResponseStatus: http.StatusNotFound,
+			httpResponseBody:   "Page not found",
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{
+					ID:       github.Ptr(int64(123)),
+					Name:     github.Ptr("link-validator"),
+					FullName: github.Ptr("your-ko/link-validator"),
+					Private:  github.Ptr(false),
+					Owner: &github.User{
+						Login: github.Ptr("your-ko"),
+					},
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("not found"), // Expected HTTP validation error
+		},
+		{
+			name:               "repository not found",
+			owner:              "your-ko",
+			repo:               "nonexistent-repo",
+			typ:                "wiki",
+			url:                "https://github.com/your-ko/nonexistent-repo/wiki",
+			httpResponseStatus: http.StatusOK, // HTTP response won't be reached
+			httpResponseBody:   "",
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "nonexistent-repo").Return(nil, resp, err)
+			},
+			wantErr: errors.New("repository 'nonexistent-repo' not found"),
+		},
+		{
+			name:               "GitHub API error (non-404)",
+			owner:              "your-ko",
+			repo:               "private-repo",
+			typ:                "discussions",
+			url:                "https://github.com/your-ko/private-repo/discussions",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "",
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusForbidden},
+					Message:  "Forbidden",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusForbidden}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "private-repo").Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusForbidden},
+				Message:  "Forbidden",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+				res.WriteHeader(tt.httpResponseStatus)
+				res.Write([]byte(tt.httpResponseBody))
+			}))
+			defer testServer.Close()
+			httpClient := testServer.Client()
+
+			mockClient := newMockclient(t)
+			tt.setupMock(mockClient)
+
+			ghUrl := &ghURL{enterprise: false, host: "github.com", owner: tt.owner, repo: tt.repo, typ: tt.typ, ref: "", path: "", anchor: "", url: testServer.URL}
+
+			err := handleHttp(context.Background(), mockClient, httpClient, ghUrl)
+
+			if !mockClient.AssertExpectations(t) {
+				return
+			}
+
+			if tt.wantErr == nil {
+				if err != nil {
+					t.Fatalf("expected no error, got %s", err)
+				}
+				return
+			}
+
+			if err == nil {
+				t.Fatalf("expected error %v, got nil", tt.wantErr)
+			}
+
+			if tt.wantErr.Error() != err.Error() {
+				t.Fatalf("expected error message:\n%q\ngot:\n%q", tt.wantErr.Error(), err.Error())
+			}
+
 			if errors.As(tt.wantErr, &gotGitHubErr) && !errors.As(err, &gotGitHubErr) {
 				t.Fatalf("expected error to be *github.ErrorResponse, got %T", err)
 			}

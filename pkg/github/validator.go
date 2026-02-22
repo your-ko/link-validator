@@ -9,101 +9,105 @@ package github
 import (
 	"context"
 	"fmt"
+	"link-validator/pkg/config"
+	httpvalidator "link-validator/pkg/http"
 	"link-validator/pkg/regex"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/google/go-github/v83/github"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
 var handlers = map[string]handlerEntry{
-	"nope": {name: "nope", fn: handleNothing},
-	"":     {name: "nope", fn: handleNothing},
+	"nope": {"nope", APIHandler{fn: handleNothing}},
+	"":     {"nope", APIHandler{fn: handleNothing}},
 
-	"blob":    {name: "contents", fn: handleContents},
-	"tree":    {name: "contents", fn: handleContents},
-	"raw":     {name: "contents", fn: handleContents},
-	"blame":   {name: "contents", fn: handleContents},
-	"compare": {name: "compareCommits", fn: handleCompareCommits},
+	"blob":    {"contents", APIHandler{fn: handleContents}},
+	"tree":    {"contents", APIHandler{fn: handleContents}},
+	"raw":     {"contents", APIHandler{fn: handleContents}},
+	"blame":   {"contents", APIHandler{fn: handleContents}},
+	"compare": {"compareCommits", APIHandler{fn: handleCompareCommits}},
 
 	// Single-object routes
-	"commit":       {name: "commit", fn: handleCommit},
-	"pull":         {name: "pull", fn: handlePull},
-	"milestone":    {name: "milestone", fn: handleMilestone},
-	"advisories":   {name: "advisories", fn: handleSecurityAdvisories},
-	"commits":      {name: "commit", fn: handleCommit},
-	"actions":      {name: "actions", fn: handleWorkflow},
-	"user":         {name: "user", fn: handleUser},
-	"issues":       {name: "issues", fn: handleIssue},
-	"releases":     {name: "releases", fn: handleReleases},
-	"labels":       {name: "labels", fn: handleLabel},
-	"gist":         {name: "gist", fn: handleGist},
-	"environments": {name: "environments", fn: handleEnvironments},
-	"teams":        {name: "teams", fn: handleTeams},
+	"commit":       {"commit", APIHandler{fn: handleCommit}},
+	"pull":         {"pull", APIHandler{fn: handlePull}},
+	"milestone":    {"milestone", APIHandler{fn: handleMilestone}},
+	"advisories":   {"advisories", APIHandler{fn: handleSecurityAdvisories}},
+	"commits":      {"commit", APIHandler{fn: handleCommit}},
+	"actions":      {"actions", APIHandler{fn: handleWorkflow}},
+	"user":         {"user", APIHandler{fn: handleUser}},
+	"issues":       {"issues", APIHandler{fn: handleIssue}},
+	"releases":     {"releases", APIHandler{fn: handleReleases}},
+	"labels":        {"labels", APIHandler{fn: handleLabel}},
+	"gist":         {"gist", APIHandler{fn: handleGist}},
+	"environments": {"environments", APIHandler{fn: handleEnvironments}},
+	"teams":        {"teams", APIHandler{fn: handleTeams}},
 
 	// Generic lists  — we just validate the repo exists
-	"repo":         {name: "repo-exist", fn: handleRepoExist},
-	"pulls":        {name: "repo-exist", fn: handleRepoExist},
-	"tags":         {name: "repo-exist", fn: handleRepoExist},
-	"branches":     {name: "repo-exist", fn: handleRepoExist},
-	"settings":     {name: "repo-exist", fn: handleRepoExist},
-	"milestones":   {name: "repo-exist", fn: handleRepoExist},
-	"discussions":  {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
-	"attestations": {name: "repo-exist", fn: handleRepoExist}, // not available via GitHub API
-	"wiki":         {name: "wiki", fn: handleWiki},            // not available via GitHub API
-	"pkgs":         {name: "pkgs", fn: handlePackages},        // requires authentication, not sure whether it makes sense to implement
-	"packages":     {name: "packages", fn: handlePackages},    // GitHub packages
-	"projects":     {name: "repo-exist", fn: handleRepoExist}, // Classic GitHub projects are not available via GitHub API, only ProjectV2
-	"security":     {name: "repo-exist", fn: handleRepoExist},
-	"search":       {name: "repo-exist", fn: handleRepoExist},
-	"orgs":         {name: "org-exist", fn: handleOrgExist},
+	"repo":       {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"pulls":      {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"tags":       {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"branches":   {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"settings":   {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"milestones": {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"pkgs":       {"pkgs", APIHandler{fn: handlePackages}},
+	"packages":   {"packages", APIHandler{fn: handlePackages}},
+	//"projects":     { "repo-exist", APIHandler{fn:  handleRepoExist}, // Classic GitHub projects are not available via GitHub API, only ProjectV2
+	"security":     {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"search":       {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"orgs":         {"org-exist", APIHandler{fn: handleOrgExist}},
+	"attestations": {"attestations", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
+	"wiki":         {"wiki", HTTPHandler{fn: handleHttp}},         // HTTP-based validation
+	"projects":     {"projects", HTTPHandler{fn: handleHttp}},     // HTTP-based validation
+	"api":          {"api", HTTPHandler{fn: handleHttp}},          // HTTP-based validation
+	"discussions":  {"discussions", HTTPHandler{fn: handleHttp}},  // not available via GitHub API
 }
 
 type LinkProcessor struct {
 	corpGitHubUrl string
 	corpClient    *wrapper
 	client        *wrapper
+	httpClient    *http.Client
 }
 
-func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*LinkProcessor, error) {
-	client := github.NewClient(httpClient(timeout))
-	if publicPat != "" {
-		client = client.WithAuthToken(publicPat)
+func New(cfg *config.Config) (*LinkProcessor, error) {
+	httpClient := httpvalidator.InitHttpClient(cfg)
+
+	client := github.NewClient(httpClient)
+	if cfg.Validators.GitHub.PAT != "" {
+		client = client.WithAuthToken(cfg.Validators.GitHub.PAT)
 	}
-	if corpGitHubUrl == "" {
+	if cfg.Validators.GitHub.CorpPAT == "" {
 		return &LinkProcessor{
-			client: &wrapper{client},
+			client:     &wrapper{client},
+			httpClient: httpClient,
 		}, nil
 	}
 
 	// Derive the bare host from baseUrl, e.g. "github.mycorp.com"
-	u, err := url.Parse(corpGitHubUrl)
+	u, err := url.Parse(cfg.Validators.GitHub.CorpGitHubUrl)
 	if err != nil || u.Hostname() == "" {
-		return nil, fmt.Errorf("invalid enterprise url: '%s'", corpGitHubUrl)
+		return nil, fmt.Errorf("invalid enterprise url: '%s'", cfg.Validators.GitHub.CorpGitHubUrl)
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
-	corpClient, err := github.NewClient(httpClient(timeout)).WithEnterpriseURLs(
+	corpClient, err := github.NewClient(httpClient).WithEnterpriseURLs(
 		host,
 		strings.ReplaceAll(host, "https://", "https://uploads."),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("can't create GitHub Processor: %s", err)
 	}
-	corpClient = corpClient.WithAuthToken(corpPat)
+	corpClient = corpClient.WithAuthToken(cfg.Validators.GitHub.CorpPAT)
 
 	return &LinkProcessor{
 		corpGitHubUrl: u.Hostname(),
 		corpClient:    &wrapper{corpClient},
 		client:        &wrapper{client},
+		httpClient:    httpClient,
 	}, nil
-}
-
-func httpClient(timeout time.Duration) *http.Client {
-	return &http.Client{Timeout: timeout}
 }
 
 type ghURL struct {
@@ -115,6 +119,7 @@ type ghURL struct {
 	ref        string
 	path       string
 	anchor     string
+	url        string
 }
 
 func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) error {
@@ -132,14 +137,13 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	if proc.corpGitHubUrl == strings.TrimPrefix(gh.host, "gist.") {
 		client = proc.corpClient
 	}
-
 	entry, ok := handlers[gh.typ]
 	if !ok {
 		return fmt.Errorf("unsupported GitHub request type %q. Report an issue", gh.typ)
 	}
 	slog.Debug("github: using", slog.String("handler", entry.name))
 
-	return mapGHError(url, entry.fn(ctx, client, gh.owner, gh.repo, gh.ref, gh.path, gh.anchor))
+	return mapGHError(url, entry.handler.Handle(ctx, client, proc.httpClient, gh))
 }
 
 func parseUrl(link string) (*ghURL, error) {
@@ -154,6 +158,14 @@ func parseUrl(link string) (*ghURL, error) {
 		host:       u.Host,
 		enterprise: regex.EnterpriseGitHub.MatchString(u.Hostname()),
 		anchor:     u.Fragment,
+		url:        link,
+	}
+
+	if strings.HasPrefix(u.Hostname(), "api.github.") {
+		gh.host = strings.Replace(u.Host, "api.", "", 1)
+		gh.typ = "api"
+		gh.path = strings.TrimPrefix(u.Path, "/")
+		return gh, nil
 	}
 
 	// Handle root GitHub URL
@@ -177,6 +189,14 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.path = joinPath(parts[2:])
 			return gh, nil
 		}
+	case "users":
+		gh.typ = parts[2] // "projects", etc.
+		gh.owner = parts[1]
+		if len(parts) > 3 && parts[3] != "" {
+			gh.ref = parts[3]
+			gh.path = joinPath(parts[4:])
+		}
+		return gh, nil
 	case "settings", "search", "api":
 		gh.typ = "nope"
 		gh.path = joinPath(parts[1:])
