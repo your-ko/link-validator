@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -2248,7 +2249,10 @@ func Test_handleHttp(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(tt.httpResponseStatus)
-				res.Write([]byte(tt.httpResponseBody))
+				_, err := res.Write([]byte(tt.httpResponseBody))
+				if err != nil {
+					slog.With("error", err).Error("http mock server")
+				}
 			}))
 			defer testServer.Close()
 			httpClient := testServer.Client()
