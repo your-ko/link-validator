@@ -585,13 +585,16 @@ func handleTeams(ctx context.Context, c client, owner, repo, ref, path, fragment
 }
 
 func handleHttp(ctx context.Context, c client, httpClient *http.Client, gh *ghURL) error {
-	_, _, err := c.getRepository(ctx, gh.owner, gh.repo)
-	if err != nil {
-		var gitHubErr *github.ErrorResponse
-		if errors.As(err, &gitHubErr) && gitHubErr.Response.StatusCode == http.StatusNotFound {
-			return errs.NewNotFoundMessage(fmt.Sprintf("repository '%s' not found", gh.repo))
+	if gh.repo == "" {
+		err := handleUser(ctx, c, gh.owner, "", "", "", "")
+		if err != nil {
+			return err
 		}
-		return err
+	} else {
+		err := handleRepoExist(ctx, c, gh.owner, gh.repo, "", "", "")
+		if err != nil {
+			return err
+		}
 	}
 
 	slog.Debug("github: repository exists, delegating to HTTP validator",

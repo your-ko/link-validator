@@ -62,8 +62,9 @@ var handlers = map[string]handlerEntry{
 	"attestations": {"attestations", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
 	"wiki":         {"wiki", HTTPHandler{fn: handleHttp}},         // HTTP-based validation
 	"projects":     {"projects", HTTPHandler{fn: handleHttp}},     // HTTP-based validation
-	"api":          {"api", HTTPHandler{fn: handleHttp}},          // HTTP-based validation
+	"api":          {"api", HTTPHandler{fn: handleHttp}},          // for api.github.com/* URLs
 	"discussions":  {"discussions", HTTPHandler{fn: handleHttp}},  // not available via GitHub API
+	"assets":       {"assets", HTTPHandler{fn: handleHttp}},       // CDN assets, HTTP-only
 }
 
 type LinkProcessor struct {
@@ -80,7 +81,7 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 	if cfg.Validators.GitHub.PAT != "" {
 		client = client.WithAuthToken(cfg.Validators.GitHub.PAT)
 	}
-	if cfg.Validators.GitHub.CorpPAT == "" {
+	if cfg.Validators.GitHub.CorpGitHubUrl == "" {
 		return &LinkProcessor{
 			client:     &wrapper{client},
 			httpClient: httpClient,
@@ -224,7 +225,7 @@ func parseUrl(link string) (*ghURL, error) {
 		} else {
 			gh.typ = "repo"
 		}
-	case "branches", "tags", "labels", "pulls", "milestones", "projects", "search":
+	case "branches", "tags", "labels", "pulls", "milestones", "search":
 	// these above go to simple 'if repo exists' validation
 	case "blob", "tree", "blame", "raw":
 		gh.ref = parts[3]
@@ -247,7 +248,7 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.ref = ""
 			gh.path = joinPath(parts[3:])
 		}
-	case "discussions", "wiki":
+	case "discussions", "wiki", "projects", "assets":
 		// those might be false positive as they are not available via GitHub API
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
@@ -312,16 +313,6 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		}
 		if regex.GitHubExcluded.MatchString(raw) {
 			continue // skip non-API GitHub urls
-		}
-
-		// Filter out GitHub non-API URLs that shouldn't be validated here
-		hostname := strings.ToLower(u.Hostname())
-		if hostname == "github.blog" || // GitHub blog
-			strings.HasPrefix(hostname, "api.github") || // API endpoints
-			strings.HasPrefix(hostname, "uploads.github") || // Upload endpoints
-			strings.HasSuffix(hostname, ".githubusercontent.com") || // Raw content CDN
-			strings.Contains(raw, "/assets/") {
-			continue
 		}
 
 		urls = append(urls, strings.TrimPrefix(raw, "/"))

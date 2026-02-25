@@ -140,7 +140,6 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 			continue // belongs to the other validators
 		}
 
-		//urls = append(urls, strings.TrimSuffix(raw, "/"))
 		urls = append(urls, raw)
 	}
 	return urls

@@ -237,6 +237,17 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://github.com/your-ko/link-validator/wiki/blah",
 			},
 		},
+		{
+			name: "captures assets URLs",
+			line: `
+				Asset: https://github.com/your-ko/link-validator/assets/12345/screenshot.png
+				User project: https://github.com/users/someuser/projects/1
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+				"https://github.com/users/someuser/projects/1",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1302,6 +1313,30 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				ref:   "download",
 				path:  "2.2.2/sbom.spdx.json",
 				url:   "https://github.com/your-ko/link-validator/releases/download/2.2.2/sbom.spdx.json",
+			},
+		},
+		{
+			name: "repo assets url",
+			url:  "https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "assets",
+				ref:   "12345",
+				path:  "screenshot.png",
+				url:   "https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+			},
+		},
+		{
+			name: "user projects url",
+			url:  "https://github.com/users/someuser/projects/1",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "someuser",
+				typ:   "projects",
+				ref:   "1",
+				url:   "https://github.com/users/someuser/projects/1",
 			},
 		},
 	}
