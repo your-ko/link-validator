@@ -41,7 +41,7 @@ var handlers = map[string]handlerEntry{
 	"user":         {"user", APIHandler{fn: handleUser}},
 	"issues":       {"issues", APIHandler{fn: handleIssue}},
 	"releases":     {"releases", APIHandler{fn: handleReleases}},
-	"labels":        {"labels", APIHandler{fn: handleLabel}},
+	"labels":       {"labels", APIHandler{fn: handleLabel}},
 	"gist":         {"gist", APIHandler{fn: handleGist}},
 	"environments": {"environments", APIHandler{fn: handleEnvironments}},
 	"teams":        {"teams", APIHandler{fn: handleTeams}},
@@ -53,16 +53,16 @@ var handlers = map[string]handlerEntry{
 	"branches":     {"repo-exist", APIHandler{fn: handleRepoExist}},
 	"settings":     {"repo-exist", APIHandler{fn: handleRepoExist}},
 	"milestones":   {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"pkgs":         {"pkgs", APIHandler{fn: handlePackages}},
+	"pkgs":         {"packages", APIHandler{fn: handlePackages}},
 	"packages":     {"packages", APIHandler{fn: handlePackages}},
 	"security":     {"repo-exist", APIHandler{fn: handleRepoExist}},
 	"search":       {"repo-exist", APIHandler{fn: handleRepoExist}},
 	"orgs":         {"org-exist", APIHandler{fn: handleOrgExist}},
-	"attestations": {"attestations", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
-	"wiki":         {"wiki", HTTPHandler{fn: handleHttp}},         // HTTP-based validation
-	"projects":     {"projects", HTTPHandler{fn: handleHttp}},     // HTTP-based validation
-	"discussions":  {"discussions", HTTPHandler{fn: handleHttp}},  // not available via GitHub API
-	"assets":       {"assets", HTTPHandler{fn: handleHttp}},       // CDN assets, HTTP-only
+	"attestations": {"http", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
+	"wiki":         {"http", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
+	"projects":     {"http", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
+	"discussions":  {"http", HTTPHandler{fn: handleHttp}}, // not available via GitHub API
+	"assets":       {"http", HTTPHandler{fn: handleHttp}}, // CDN assets, HTTP-only
 }
 
 type LinkProcessor struct {
