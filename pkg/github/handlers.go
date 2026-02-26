@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"link-validator/pkg/errs"
+	lvHttp "link-validator/pkg/http"
 	"link-validator/pkg/regex"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -15,26 +17,64 @@ import (
 	"github.com/google/go-github/v83/github"
 )
 
-type ghHandler func(
+type Handler interface {
+	Handle(ctx context.Context, gitHubClient *wrapper, httpClient *http.Client, gh *ghURL) error
+}
+
+type handlerEntry struct {
+	name    string
+	handler Handler
+}
+
+type APIHandler struct {
+	fn apiHandler
+}
+
+type HTTPHandler struct {
+	fn httpHandler
+}
+
+type apiHandler func(
 	ctx context.Context,
 	c client,
 	owner, repo, ref, path, fragment string,
 ) error
 
-func (h ghHandler) String() string {
+type httpHandler func(
+	ctx context.Context,
+	c client,
+	httpClient *http.Client,
+	url *ghURL,
+) error
+
+func (h APIHandler) Handle(ctx context.Context, gitHubClient *wrapper, _ *http.Client, gh *ghURL) error {
+	return h.fn(ctx, gitHubClient, gh.owner, gh.repo, gh.ref, gh.path, gh.anchor)
+}
+
+func (h HTTPHandler) Handle(ctx context.Context, gitHubClient *wrapper, httpClient *http.Client, gh *ghURL) error {
+	return h.fn(ctx, gitHubClient, httpClient, gh)
+}
+
+func (h apiHandler) String() string {
 	if h == nil {
 		return "<nil>"
 	}
 	pc := reflect.ValueOf(h).Pointer()
 	if fn := runtime.FuncForPC(pc); fn != nil {
-		return fn.Name() // e.g. "github.com/your-org/yourrepo/gh.handleContents"
+		return fn.Name()
 	}
 	return fmt.Sprintf("func@%#x", pc)
 }
 
-type handlerEntry struct {
-	name string
-	fn   ghHandler
+func (h httpHandler) String() string {
+	if h == nil {
+		return "<nil>"
+	}
+	pc := reflect.ValueOf(h).Pointer()
+	if fn := runtime.FuncForPC(pc); fn != nil {
+		return fn.Name()
+	}
+	return fmt.Sprintf("func@%#x", pc)
 }
 
 // handleNope does nothing (quite exciting, right?).
@@ -406,33 +446,6 @@ func handleLabel(ctx context.Context, c client, owner, repo, ref, path, fragment
 	return errs.NewNotFoundMessage(fmt.Sprintf("label '%s' not found", ref))
 }
 
-// handleWiki validates existence of GitHub wiki pages.
-// For the URL pattern: /wiki/{page-name}
-//
-// Note: GitHub wikis are not accessible through the REST API, so we can only
-// validate that the repository exists and has wiki enabled.
-// Handles different wiki URL patterns:
-// - /wiki (wiki home page)
-// - /wiki/{page-name} (specific wiki page)
-func handleWiki(ctx context.Context, c client, owner, repo, _, _, _ string) error {
-	repository, _, err := c.getRepository(ctx, owner, repo)
-	if err != nil {
-		var gitHubErr *github.ErrorResponse
-		if errors.As(err, &gitHubErr) {
-			if gitHubErr.Response.StatusCode == http.StatusNotFound {
-				return fmt.Errorf("repository '%s' not found", repo)
-			}
-		}
-	}
-
-	// Check if wiki is enabled for this repository
-	if !repository.GetHasWiki() {
-		return errs.NewNotFoundMessage(fmt.Sprintf("wiki is not enabled for repository %s/%s", owner, repo))
-	}
-
-	return nil
-}
-
 // handlePackages validates existence of GitHub packages.
 // Handles different package URL patterns:
 // - /packages (list packages for repository)
@@ -512,7 +525,7 @@ func handleOrgExist(ctx context.Context, c client, owner, _, _, _, _ string) err
 //meta:operation GET /gists/{gist_id}
 //meta:operation GET /gists/{gist_id}/{sha}
 //meta:operation GET /gists/{gist_id}/comments/{comment_id}
-func handleGist(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
+func handleGist(ctx context.Context, c client, _, repo, ref, _, fragment string) error {
 	if ref != "" {
 		_, _, err := c.getGistRevision(ctx, repo, ref)
 		return err
@@ -571,6 +584,26 @@ func handleTeams(ctx context.Context, c client, owner, repo, ref, path, fragment
 	return err
 }
 
+func handleHttp(ctx context.Context, c client, httpClient *http.Client, gh *ghURL) error {
+	if gh.repo == "" {
+		err := handleUser(ctx, c, gh.owner, "", "", "", "")
+		if err != nil {
+			return err
+		}
+	} else {
+		err := handleRepoExist(ctx, c, gh.owner, gh.repo, "", "", "")
+		if err != nil {
+			return err
+		}
+	}
+
+	slog.Debug("github: repository exists, delegating to HTTP validator",
+		slog.String("owner", gh.owner),
+		slog.String("repo", gh.repo),
+		slog.String("type", gh.typ))
+	return lvHttp.ProcessRequest(ctx, httpClient, gh.url)
+}
+
 func mapGHError(url string, err error) error {
 	if err == nil {
 		return nil
@@ -578,9 +611,6 @@ func mapGHError(url string, err error) error {
 	var ghErr *github.ErrorResponse
 	if errors.As(err, &ghErr) && ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusNotFound {
 		return errs.NewNotFound(url)
-	}
-	if errors.Is(err, errs.ErrNotFound) {
-		return err
 	}
 	return err
 }

@@ -218,8 +218,14 @@ func TestExternalHttpLinkProcessor_ExtractLinks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			excluder := func(url string) bool {
-				return regex.DataDog.MatchString(url) ||
-					(regex.GitHub.MatchString(url) && !regex.GitHubExcluded.MatchString(url))
+				if regex.DataDog.MatchString(url) {
+					return true
+				}
+				// github.com/features/* are marketing pages with no repo context
+				if strings.HasPrefix(url, "https://github.com/features") {
+					return false
+				}
+				return regex.GitHub.MatchString(url)
 			}
 			proc := New(&config.Config{Timeout: time.Second}, excluder)
 			got := proc.ExtractLinks(tt.line)

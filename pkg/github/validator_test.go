@@ -1,14 +1,22 @@
 package github
 
 import (
+	"link-validator/pkg/config"
 	"reflect"
 	"testing"
 )
 
 func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 	t.Parallel()
-
-	p, _ := New("https://github.mycorp.com", "", "", 0) // PAT not needed for regex tests
+	cfg := &config.Config{
+		Timeout: 0,
+		Validators: config.ValidatorsConfig{
+			GitHub: config.GitHubConfig{
+				CorpGitHubUrl: "https://github.mycorp.com",
+			},
+		},
+	}
+	p, _ := New(cfg) // PAT not needed for regex tests
 
 	type tc struct {
 		name string
@@ -190,6 +198,56 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 				"https://gist.github.com/user/123456789abcdef",
 			},
 		},
+		{
+			name: "captures wiki, attestations, and projects URLs",
+			line: `
+				Wiki page: https://github.com/your-ko/link-validator/wiki/blah
+				Wiki history: https://github.com/your-ko/link-validator/wiki/blah/_history
+				Attestation: https://github.com/your-ko/link-validator/attestations/13059584
+				Projects: https://github.com/your-ko/link-validator/projects/
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/wiki/blah",
+				"https://github.com/your-ko/link-validator/wiki/blah/_history",
+				"https://github.com/your-ko/link-validator/attestations/13059584",
+				"https://github.com/your-ko/link-validator/projects/",
+			},
+		},
+		{
+			name: "captures discussions and captures API URLs",
+			line: `
+				Discussion: https://github.com/your-ko/link-validator/discussions/test
+				API URL: https://github.com/api/v3/repos/xxxx
+				User profile: https://github.com/your-ko's-untitled-project
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/discussions/test",
+				"https://github.com/api/v3/repos/xxxx",
+				"https://github.com/your-ko's-untitled-project",
+			},
+		},
+		{
+			name: "ignores templated GitHub URLs with brackets",
+			line: `
+				Valid: https://github.com/your-ko/link-validator/wiki/blah
+				Templated: https://github.com/your-ko/assets/[userId]/assetId
+				Also templated: https://github.com/your-ko/repo/[path]/file
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/wiki/blah",
+			},
+		},
+		{
+			name: "captures assets URLs",
+			line: `
+				Asset: https://github.com/your-ko/link-validator/assets/12345/screenshot.png
+				User project: https://github.com/users/someuser/projects/1
+			`,
+			want: []string{
+				"https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+				"https://github.com/users/someuser/projects/1",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -219,6 +277,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "repo",
 				owner: "your-ko",
 				repo:  "link-validator",
+				url:   "https://github.com/your-ko/link-validator/",
 			},
 		},
 		{
@@ -231,6 +290,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "blob",
 				ref:   "main",
 				path:  "README.md",
+				url:   "https://github.com/your-ko/link-validator/blob/main/README.md",
 			},
 		},
 		{
@@ -243,6 +303,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "blob",
 				ref:   "main",
 				path:  "docs/README.md",
+				url:   "https://github.com/your-ko/link-validator/blob/main/docs/README.md",
 			},
 		},
 		{
@@ -255,6 +316,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "blob",
 				ref:   "1.0.0",
 				path:  "README.md",
+				url:   "https://github.com/your-ko/link-validator/blob/1.0.0/README.md",
 			},
 		},
 		{
@@ -267,6 +329,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "raw",
 				ref:   "main",
 				path:  "README.md",
+				url:   "https://github.com/your-ko/link-validator/raw/main/README.md",
 			},
 		},
 		{
@@ -279,6 +342,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "tree",
 				ref:   "main",
 				path:  "README.md",
+				url:   "https://github.com/your-ko/link-validator/tree/main/README.md",
 			},
 		},
 		{
@@ -291,6 +355,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "tree",
 				ref:   "refs",
 				path:  "heads/main/Dockerfile",
+				url:   "https://github.com/your-ko/link-validator/tree/refs/heads/main/Dockerfile",
 			},
 		},
 		{
@@ -303,6 +368,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "blame",
 				ref:   "main",
 				path:  "README.md",
+				url:   "https://github.com/your-ko/link-validator/blame/main/README.md",
 			},
 		},
 		{
@@ -315,6 +381,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "tree",
 				ref:   "main",
 				path:  "cmd",
+				url:   "https://github.com/your-ko/link-validator/tree/main/cmd",
 			},
 		},
 		{
@@ -326,6 +393,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "tree",
 				ref:   "test",
+				url:   "https://github.com/your-ko/link-validator/tree/test",
 			},
 		},
 		{
@@ -339,6 +407,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:        "blob",
 				ref:        "main",
 				path:       "README.md",
+				url:        "https://github.mycorp.com/your-ko/link-validator/blob/main/README.md",
 			},
 		},
 		{
@@ -352,6 +421,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				ref:    "main",
 				path:   "README.md",
 				anchor: "features",
+				url:    "https://github.com/your-ko/link-validator/blob/main/README.md#features",
 			},
 		},
 		{
@@ -364,6 +434,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "blob",
 				ref:   "83e43288254d0f36e723ef2cf3328b8b77836560",
 				path:  "README.md",
+				url:   "https://github.com/your-ko/link-validator/blob/83e43288254d0f36e723ef2cf3328b8b77836560/README.md",
 			},
 		},
 		{
@@ -374,6 +445,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "commits",
+				url:   "https://github.com/your-ko/link-validator/commits",
 			},
 		},
 		{
@@ -385,6 +457,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "commit",
 				ref:   "a96366f66ffacd461de10a1dd561ab5a598e9167",
+				url:   "https://github.com/your-ko/link-validator/commit/a96366f66ffacd461de10a1dd561ab5a598e9167",
 			},
 		},
 		{
@@ -395,6 +468,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "releases",
+				url:   "https://github.com/your-ko/link-validator/releases",
 			},
 		},
 		{
@@ -406,6 +480,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "releases",
 				path:  "latest",
+				url:   "https://github.com/your-ko/link-validator/releases/latest",
 			},
 		},
 		{
@@ -418,6 +493,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "releases",
 				ref:   "tag",
 				path:  "1.0.0",
+				url:   "https://github.com/your-ko/link-validator/releases/tag/1.0.0",
 			},
 		},
 		{
@@ -429,6 +505,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "releases",
 				path:  "1.0.0",
+				url:   "https://github.com/your-ko/link-validator/releases/1.0.0",
 			},
 		},
 		{
@@ -440,6 +517,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "releases",
 				path:  "1.0.0",
+				url:   "https://github.com/your-ko/link-validator/releases/1.0.0",
 			},
 		},
 		{
@@ -452,6 +530,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "releases",
 				ref:   "download",
 				path:  "1.0.0/sbom.spdx.json",
+				url:   "https://github.com/your-ko/link-validator/releases/download/1.0.0/sbom.spdx.json",
 			},
 		},
 		{
@@ -462,6 +541,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "issues",
+				url:   "https://github.com/your-ko/link-validator/issues",
 			},
 		},
 		{
@@ -473,6 +553,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "issues",
 				ref:   "123",
+				url:   "https://github.com/your-ko/link-validator/issues/123",
 			},
 		},
 		{
@@ -483,6 +564,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "pulls",
+				url:   "https://github.com/your-ko/link-validator/pulls",
 			},
 		},
 		{
@@ -493,6 +575,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "pulls",
+				url:   "https://github.com/your-ko/link-validator/pulls/your-ko",
 			},
 		},
 		{
@@ -504,6 +587,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "pull",
 				ref:   "1",
+				url:   "https://github.com/your-ko/link-validator/pull/1",
 			},
 		},
 		{
@@ -516,6 +600,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "pull",
 				ref:   "1",
 				path:  "files",
+				url:   "https://github.com/your-ko/link-validator/pull/1/files",
 			},
 		},
 		{
@@ -528,6 +613,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "pull",
 				ref:   "1",
 				path:  "commits",
+				url:   "https://github.com/your-ko/link-validator/pull/1/commits",
 			},
 		},
 		{
@@ -540,6 +626,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:    "pull",
 				ref:    "1",
 				anchor: "issuecomment-123456",
+				url:    "https://github.com/your-ko/link-validator/pull/1#issuecomment-123456",
 			},
 		},
 		{
@@ -552,6 +639,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:    "pull",
 				ref:    "1",
 				anchor: "discussion_r123456",
+				url:    "https://github.com/your-ko/link-validator/pull/1#discussion_r123456",
 			},
 		},
 		{
@@ -563,6 +651,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "commits",
 				ref:   "test",
+				url:   "https://github.com/your-ko/link-validator/commits/test",
 			},
 		},
 		{
@@ -573,6 +662,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "discussions",
+				url:   "https://github.com/your-ko/link-validator/discussions",
 			},
 		},
 		{
@@ -584,6 +674,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "discussions",
 				ref:   "test",
+				url:   "https://github.com/your-ko/link-validator/discussions/test",
 			},
 		},
 		{
@@ -594,6 +685,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "branches",
+				url:   "https://github.com/your-ko/link-validator/branches",
 			},
 		},
 		{
@@ -604,6 +696,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "search",
+				url:   "https://github.com/your-ko/link-validator/search?q=blah",
 			},
 		},
 
@@ -615,6 +708,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "milestones",
+				url:   "https://github.com/your-ko/link-validator/milestones",
 			},
 		},
 		{
@@ -626,6 +720,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "milestone",
 				ref:   "test",
+				url:   "https://github.com/your-ko/link-validator/milestone/test",
 			},
 		},
 		{
@@ -636,6 +731,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "projects",
+				url:   "https://github.com/your-ko/link-validator/projects",
 			},
 		},
 		{
@@ -646,6 +742,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				typ:   "orgs",
 				path:  "projects/1",
+				url:   "https://github.com/orgs/your-ko/projects/1",
 			},
 		},
 		{
@@ -656,6 +753,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "settings",
+				url:   "https://github.com/your-ko/link-validator/settings/secrets/actions",
 			},
 		},
 		{
@@ -666,6 +764,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "settings",
+				url:   "https://github.com/your-ko/link-validator/settings/actions",
 			},
 		},
 		{
@@ -676,6 +775,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "security",
+				url:   "https://github.com/your-ko/link-validator/security/advisories",
 			},
 		},
 		{
@@ -687,6 +787,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "advisories",
 				ref:   "test",
+				url:   "https://github.com/your-ko/link-validator/security/advisories/test",
 			},
 		},
 		{
@@ -697,6 +798,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "security",
+				url:   "https://github.com/your-ko/link-validator/security/policy",
 			},
 		},
 		{
@@ -708,6 +810,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "compare",
 				ref:   "main...dev",
+				url:   "https://github.com/your-ko/link-validator/compare/main...dev",
 			},
 		},
 		{
@@ -719,6 +822,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "compare",
 				ref:   "dev",
+				url:   "https://github.com/your-ko/link-validator/compare/dev",
 			},
 		},
 		{
@@ -729,6 +833,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "actions",
+				url:   "https://github.com/your-ko/link-validator/actions",
 			},
 		},
 		{
@@ -741,6 +846,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "runs",
 				path:  "19221003183",
+				url:   "https://github.com/your-ko/link-validator/actions/runs/19221003183",
 			},
 		},
 		{
@@ -753,6 +859,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "workflows",
 				path:  "main.yaml/badge.svg",
+				url:   "https://github.com/your-ko/link-validator/actions/workflows/main.yaml/badge.svg",
 			},
 		},
 		{
@@ -765,6 +872,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "workflows",
 				path:  "main.yaml",
+				url:   "https://github.com/your-ko/link-validator/actions/workflows/main.yaml",
 			},
 		},
 		{
@@ -777,6 +885,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "runs",
 				path:  "19221003178/attempts/1",
+				url:   "https://github.com/your-ko/link-validator/actions/runs/19221003178/attempts/1",
 			},
 		},
 		{
@@ -789,6 +898,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "runs",
 				path:  "19221003178/attempts/1/logs",
+				url:   "https://github.com/your-ko/link-validator/actions/runs/19221003178/attempts/1/logs",
 			},
 		},
 		{
@@ -801,6 +911,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "runs",
 				path:  "19221003178/job/54938961245",
+				url:   "https://github.com/your-ko/link-validator/actions/runs/19221003178/job/54938961245",
 			},
 		},
 		{
@@ -813,6 +924,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "actions",
 				ref:   "runs",
 				path:  "19221003178/usage",
+				url:   "https://github.com/your-ko/link-validator/actions/runs/19221003178/usage",
 			},
 		},
 		{
@@ -823,6 +935,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "tags",
+				url:   "https://github.com/your-ko/link-validator/tags",
 			},
 		},
 		{
@@ -833,6 +946,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "labels",
+				url:   "https://github.com/your-ko/link-validator/labels",
 			},
 		},
 		{
@@ -843,6 +957,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "labels",
+				url:   "https://github.com/your-ko/link-validator/labels/test",
 			},
 		},
 		{
@@ -852,6 +967,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				host:  "github.com",
 				owner: "your-ko",
 				typ:   "user",
+				url:   "https://github.com/your-ko",
 			},
 		},
 		{
@@ -862,6 +978,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "attestations",
+				url:   "https://github.com/your-ko/link-validator/attestations",
 			},
 		},
 		{
@@ -873,6 +990,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "attestations",
 				ref:   "13059584",
+				url:   "https://github.com/your-ko/link-validator/attestations/13059584",
 			},
 		},
 		{
@@ -884,6 +1002,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:        "orgs",
 				owner:      "your-ko",
 				path:       "settings/apps/test",
+				url:        "https://github.mycorp.com/organizations/your-ko/settings/apps/test",
 			},
 		},
 		{
@@ -894,6 +1013,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				host:       "github.mycorp.com",
 				typ:        "nope",
 				path:       "organizations",
+				url:        "https://github.mycorp.com/settings/organizations",
 			},
 		},
 		{
@@ -905,6 +1025,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:        "orgs",
 				owner:      "your-ko",
 				path:       "repositories",
+				url:        "https://github.mycorp.com/orgs/your-ko/repositories",
 			},
 		},
 		{
@@ -916,6 +1037,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:        "orgs",
 				owner:      "your-ko",
 				path:       "people",
+				url:        "https://github.mycorp.com/orgs/your-ko/people",
 			},
 		},
 		{
@@ -926,6 +1048,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "packages",
+				url:   "https://github.com/your-ko/link-validator/packages",
 			},
 		},
 		{
@@ -938,6 +1061,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "packages",
 				ref:   "",
 				path:  "",
+				url:   "https://github.com/your-ko/link-validator/packages",
 			},
 		},
 		{
@@ -950,6 +1074,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "pkgs",
 				ref:   "container",
 				path:  "link-validator",
+				url:   "https://github.com/your-ko/link-validator/pkgs/container/link-validator",
 			},
 		},
 		{
@@ -962,6 +1087,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "pkgs",
 				ref:   "container",
 				path:  "link-validator/617266022",
+				url:   "https://github.com/your-ko/link-validator/pkgs/container/link-validator/617266022?tag=1.18.1",
 			},
 		},
 		{
@@ -974,32 +1100,35 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "pkgs",
 				ref:   "container",
 				path:  "link-validator/617266022",
+				url:   "https://github.com/your-ko/link-validator/pkgs/container/link-validator/617266022?tag=sha256-85ea5aa29b291cb9213040fc6b6661657ec61dc4",
 			},
 		},
-		//{
-		//	name: "api pull request url",
-		//	url:  "https://api.github.com/repos/your-ko/link-validator",
-		//	want: nil,
-		//},
-		//{
-		//	name: "uploads repo url",
-		//	url:  "https://uploads.github.mycorp.com/org/repo/raw/main/image.png",
-		//	want: nil,
-		//},
 		{
 			name: "GitHub",
 			url:  "https://github.com",
-			want: &ghURL{host: "github.com"},
+			want: &ghURL{
+				host: "github.com",
+				url:  "https://github.com",
+			},
 		},
 		{
 			name: "GitHub enterprise",
 			url:  "https://github.mycorp.com",
-			want: &ghURL{host: "github.mycorp.com", enterprise: true},
+			want: &ghURL{
+				host:       "github.mycorp.com",
+				enterprise: true,
+				url:        "https://github.mycorp.com",
+			},
 		},
 		{
 			name: "user profile",
 			url:  "https://github.com/your-ko",
-			want: &ghURL{host: "github.com", owner: "your-ko", typ: "user"},
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				typ:   "user",
+				url:   "https://github.com/your-ko",
+			},
 		},
 		{
 			name: "repo wiki root",
@@ -1009,6 +1138,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				repo:  "link-validator",
 				typ:   "wiki",
+				url:   "https://github.com/your-ko/link-validator/wiki",
 			},
 		},
 		{
@@ -1020,6 +1150,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				repo:  "link-validator",
 				typ:   "wiki",
 				ref:   "Installation-Guide",
+				url:   "https://github.com/your-ko/link-validator/wiki/Installation-Guide",
 			},
 		},
 		{
@@ -1032,6 +1163,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "wiki",
 				ref:   "Installation-Guide",
 				path:  "_history",
+				url:   "https://github.com/your-ko/link-validator/wiki/Installation-Guide/_history",
 			},
 		},
 		{
@@ -1041,6 +1173,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				host: "github.com",
 				typ:  "nope",
 				path: "v3/repos/xxxx",
+				url:  "https://github.com/api/v3/repos/xxxx",
 			},
 		},
 		{
@@ -1051,6 +1184,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner: "your-ko",
 				typ:   "gist",
 				repo:  "e7ed9b8d381113399342e3d6953d9da7",
+				url:   "https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7",
 			},
 		},
 		{
@@ -1062,6 +1196,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "gist",
 				repo:  "e7ed9b8d381113399342e3d6953d9da7",
 				ref:   "ad9fe8be4adf55922e36904e6cc7745e83d10d10",
+				url:   "https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7/ad9fe8be4adf55922e36904e6cc7745e83d10d10",
 			},
 		},
 		{
@@ -1073,6 +1208,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:    "gist",
 				repo:   "e7ed9b8d381113399342e3d6953d9da7",
 				anchor: "gistcomment-12345",
+				url:    "https://gist.github.com/your-ko/e7ed9b8d381113399342e3d6953d9da7#gistcomment-12345",
 			},
 		},
 		{
@@ -1085,6 +1221,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				typ:   "environments",
 				ref:   "production",
 				path:  "edit",
+				url:   "https://github.com/your-ko/link-validator/settings/environments/production/edit",
 			},
 		},
 		{
@@ -1096,6 +1233,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner:      "mycorp",
 				typ:        "teams",
 				ref:        "sre",
+				url:        "https://github.mycorp.com/orgs/mycorp/teams/sre",
 			},
 		},
 		{
@@ -1107,6 +1245,86 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				owner:      "mycorp",
 				typ:        "teams",
 				ref:        "",
+				url:        "https://github.mycorp.com/orgs/mycorp/teams",
+			},
+		},
+		{
+			name: "projects root with trailing slash",
+			url:  "https://github.com/your-ko/link-validator/projects/",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "projects",
+				url:   "https://github.com/your-ko/link-validator/projects/",
+			},
+		},
+		{
+			name: "organization project with user reference",
+			url:  "https://github.com/users/your-ko/projects/3",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				typ:   "projects",
+				ref:   "3",
+				url:   "https://github.com/users/your-ko/projects/3",
+			},
+		},
+		{
+			name: "discussions with specific discussion",
+			url:  "https://github.com/your-ko/link-validator/discussions/test",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "discussions",
+				ref:   "test",
+				url:   "https://github.com/your-ko/link-validator/discussions/test",
+			},
+		},
+		{
+			// api.github.com URLs are not captured by ExtractLinks (regex.GitHub doesn't match them)
+			// and are handled directly by the HTTP processor instead.
+			name:    "github api url (not handled by GitHub processor)",
+			url:     "https://api.github.com/repos/your-ko/link-validator/milestones/1",
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "github release download (assets) url",
+			url:  "https://github.com/your-ko/link-validator/releases/download/2.2.2/sbom.spdx.json",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "releases",
+				ref:   "download",
+				path:  "2.2.2/sbom.spdx.json",
+				url:   "https://github.com/your-ko/link-validator/releases/download/2.2.2/sbom.spdx.json",
+			},
+		},
+		{
+			name: "repo assets url",
+			url:  "https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "your-ko",
+				repo:  "link-validator",
+				typ:   "assets",
+				ref:   "12345",
+				path:  "screenshot.png",
+				url:   "https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+			},
+		},
+		{
+			name: "user projects url",
+			url:  "https://github.com/users/someuser/projects/1",
+			want: &ghURL{
+				host:  "github.com",
+				owner: "someuser",
+				typ:   "projects",
+				ref:   "1",
+				url:   "https://github.com/users/someuser/projects/1",
 			},
 		},
 	}
