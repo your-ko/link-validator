@@ -55,7 +55,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Accept", "text/html")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 	req.Header.Set("User-Agent", "link-validator/2.0 (+https://github.com/your-ko/link-validator)")
 
 	resp, err := proc.httpClient.Do(req)
