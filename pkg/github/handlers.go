@@ -598,7 +598,8 @@ func handleHttp(ctx context.Context, c client, httpClient *http.Client, gh *ghUR
 	}
 
 	slog.Debug("github: repository exists, delegating to HTTP validator",
-		slog.String("repo", fmt.Sprintf("%s/%s", gh.owner, gh.repo)),
+		slog.String("owner", gh.owner),
+		slog.String("repo", gh.repo),
 		slog.String("type", gh.typ))
 	return lvHttp.ProcessRequest(ctx, httpClient, gh.url)
 }
@@ -610,9 +611,6 @@ func mapGHError(url string, err error) error {
 	var ghErr *github.ErrorResponse
 	if errors.As(err, &ghErr) && ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusNotFound {
 		return errs.NewNotFound(url)
-	}
-	if errors.Is(err, errs.ErrNotFound) {
-		return err
 	}
 	return err
 }
