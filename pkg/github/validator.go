@@ -86,17 +86,14 @@ func New(corpGitHubUrl, corpPat, publicPat string, timeout time.Duration) (*Link
 		return nil, fmt.Errorf("invalid enterprise url: '%s'", corpGitHubUrl)
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
-	var corpClient *github.Client
-	if host != "" {
-		corpClient, err = github.NewClient(httpClient(timeout)).WithEnterpriseURLs(
-			host,
-			strings.ReplaceAll(host, "https://", "https://uploads."),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("can't create GitHub Processor: %s", err)
-		}
-		corpClient = corpClient.WithAuthToken(corpPat)
+	corpClient, err := github.NewClient(httpClient(timeout)).WithEnterpriseURLs(
+		host,
+		strings.ReplaceAll(host, "https://", "https://uploads."),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("can't create GitHub Processor: %s", err)
 	}
+	corpClient = corpClient.WithAuthToken(corpPat)
 
 	return &LinkProcessor{
 		corpGitHubUrl: u.Hostname(),
