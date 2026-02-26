@@ -855,7 +855,7 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "repo: attestations",
+			name: "repo: attestations list",
 			url:  "https://github.com/your-ko/link-validator/attestations",
 			want: &ghURL{
 				host:  "github.com",
