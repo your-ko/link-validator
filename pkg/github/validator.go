@@ -240,7 +240,7 @@ func parseUrl(link string) (*ghURL, error) {
 			gh.path = joinPath(parts[3:])
 		}
 	case "discussions", "wiki", "projects", "assets":
-		// those might be false positive as they are not available via GitHub API
+		// not available via GitHub API — validated via HTTP.
 		gh.ref = parts[3]
 		gh.path = joinPath(parts[4:])
 	case "commit", "commits", "issues", "pull",

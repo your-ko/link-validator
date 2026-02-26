@@ -214,7 +214,7 @@ func TestInternalLinkProcessor_ExtractLinks(t *testing.T) {
 			},
 		},
 		{
-			name: "captures discussions and filters API URLs",
+			name: "captures discussions and captures API URLs",
 			line: `
 				Discussion: https://github.com/your-ko/link-validator/discussions/test
 				API URL: https://github.com/api/v3/repos/xxxx
