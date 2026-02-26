@@ -47,15 +47,14 @@ var handlers = map[string]handlerEntry{
 	"teams":        {"teams", APIHandler{fn: handleTeams}},
 
 	// Generic lists  — we just validate the repo exists
-	"repo":       {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"pulls":      {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"tags":       {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"branches":   {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"settings":   {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"milestones": {"repo-exist", APIHandler{fn: handleRepoExist}},
-	"pkgs":       {"pkgs", APIHandler{fn: handlePackages}},
-	"packages":   {"packages", APIHandler{fn: handlePackages}},
-	//"projects":     { "repo-exist", APIHandler{fn:  handleRepoExist}, // Classic GitHub projects are not available via GitHub API, only ProjectV2
+	"repo":         {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"pulls":        {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"tags":         {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"branches":     {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"settings":     {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"milestones":   {"repo-exist", APIHandler{fn: handleRepoExist}},
+	"pkgs":         {"pkgs", APIHandler{fn: handlePackages}},
+	"packages":     {"packages", APIHandler{fn: handlePackages}},
 	"security":     {"repo-exist", APIHandler{fn: handleRepoExist}},
 	"search":       {"repo-exist", APIHandler{fn: handleRepoExist}},
 	"orgs":         {"org-exist", APIHandler{fn: handleOrgExist}},
