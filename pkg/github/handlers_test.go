@@ -2244,6 +2244,102 @@ func Test_handleHttp(t *testing.T) {
 				Message:  "Forbidden",
 			},
 		},
+		{
+			name:               "user-level URL: user exists and HTTP request succeeds",
+			owner:              "your-ko",
+			repo:               "",
+			typ:                "projects",
+			url:                "https://github.com/users/your-ko/projects/1",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "<html><body>Projects</body></html>",
+			setupMock: func(m *mockclient) {
+				user := &github.User{Login: github.Ptr("your-ko")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getUser(mock.Anything, "your-ko").Return(user, resp, nil)
+			},
+			wantErr: nil,
+		},
+		{
+			name:               "user-level URL: user not found",
+			owner:              "nonexistent-user",
+			repo:               "",
+			typ:                "projects",
+			url:                "https://github.com/users/nonexistent-user/projects/1",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "",
+			setupMock: func(m *mockclient) {
+				err := &github.ErrorResponse{
+					Response: &http.Response{StatusCode: http.StatusNotFound},
+					Message:  "Not Found",
+				}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
+				m.EXPECT().getUser(mock.Anything, "nonexistent-user").Return(nil, resp, err)
+			},
+			wantErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
+		},
+		{
+			name:               "attestations: repo exists and HTTP request succeeds",
+			owner:              "your-ko",
+			repo:               "link-validator",
+			typ:                "attestations",
+			url:                "https://github.com/your-ko/link-validator/attestations/13059584",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "<html><body>Attestation</body></html>",
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: nil,
+		},
+		{
+			name:               "projects: repo exists and HTTP request succeeds",
+			owner:              "your-ko",
+			repo:               "link-validator",
+			typ:                "projects",
+			url:                "https://github.com/your-ko/link-validator/projects/",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "<html><body>Projects</body></html>",
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: nil,
+		},
+		{
+			name:               "assets: repo exists and HTTP request succeeds",
+			owner:              "your-ko",
+			repo:               "link-validator",
+			typ:                "assets",
+			url:                "https://github.com/your-ko/link-validator/assets/12345/screenshot.png",
+			httpResponseStatus: http.StatusOK,
+			httpResponseBody:   "<binary content>",
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: nil,
+		},
+		{
+			name:               "assets: repo exists but asset not found",
+			owner:              "your-ko",
+			repo:               "link-validator",
+			typ:                "assets",
+			url:                "https://github.com/your-ko/link-validator/assets/99999/missing.png",
+			httpResponseStatus: http.StatusNotFound,
+			httpResponseBody:   "Not found",
+			setupMock: func(m *mockclient) {
+				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
+				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
+			},
+			wantErr: errors.New("not found"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

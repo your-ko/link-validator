@@ -1293,14 +1293,12 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 			},
 		},
 		{
-			name: "github api url (should be ignored)",
-			url:  "https://api.github.com/repos/your-ko/link-validator/milestones/1",
-			want: &ghURL{
-				host: "github.com",
-				typ:  "api",
-				path: "repos/your-ko/link-validator/milestones/1",
-				url:  "https://api.github.com/repos/your-ko/link-validator/milestones/1",
-			},
+			// api.github.com URLs are not captured by ExtractLinks (regex.GitHub doesn't match them)
+			// and are handled directly by the HTTP processor instead.
+			name:    "github api url (not handled by GitHub processor)",
+			url:     "https://api.github.com/repos/your-ko/link-validator/milestones/1",
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "github release download (assets) url",

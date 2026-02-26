@@ -62,7 +62,6 @@ var handlers = map[string]handlerEntry{
 	"attestations": {"attestations", HTTPHandler{fn: handleHttp}}, // HTTP-based validation
 	"wiki":         {"wiki", HTTPHandler{fn: handleHttp}},         // HTTP-based validation
 	"projects":     {"projects", HTTPHandler{fn: handleHttp}},     // HTTP-based validation
-	"api":          {"api", HTTPHandler{fn: handleHttp}},          // for api.github.com/* URLs
 	"discussions":  {"discussions", HTTPHandler{fn: handleHttp}},  // not available via GitHub API
 	"assets":       {"assets", HTTPHandler{fn: handleHttp}},       // CDN assets, HTTP-only
 }
@@ -160,13 +159,6 @@ func parseUrl(link string) (*ghURL, error) {
 		enterprise: regex.EnterpriseGitHub.MatchString(u.Hostname()),
 		anchor:     u.Fragment,
 		url:        link,
-	}
-
-	if strings.HasPrefix(u.Hostname(), "api.github.") {
-		gh.host = strings.Replace(u.Host, "api.", "", 1)
-		gh.typ = "api"
-		gh.path = strings.TrimPrefix(u.Path, "/")
-		return gh, nil
 	}
 
 	// Handle root GitHub URL
@@ -311,8 +303,8 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 		if strings.ContainsAny(raw, "[]{}()") {
 			continue // seems it is the templated url
 		}
-		if regex.GitHubExcluded.MatchString(raw) {
-			continue // skip non-API GitHub urls
+		if strings.HasPrefix(raw, "https://github.com/features") {
+			continue // marketing pages, no repo context — handled by HTTP processor
 		}
 
 		urls = append(urls, strings.TrimPrefix(raw, "/"))
@@ -322,5 +314,11 @@ func (proc *LinkProcessor) ExtractLinks(line string) []string {
 }
 
 func (proc *LinkProcessor) Excludes(url string) bool {
-	return regex.GitHub.MatchString(url) && !regex.GitHubExcluded.MatchString(url)
+	// github.com/features/* are marketing pages with no repo context
+	if strings.HasPrefix(url, "https://github.com/features") {
+		return false
+	}
+	// github.blog, docs.github.com, raw.githubusercontent.com don't match
+	// regex.GitHub so they're already handled by the HTTP processor
+	return regex.GitHub.MatchString(url)
 }
