@@ -40,7 +40,7 @@ var handlers = map[string]handlerEntry{
 	"user":         {name: "user", fn: handleUser},
 	"issues":       {name: "issues", fn: handleIssue},
 	"releases":     {name: "releases", fn: handleReleases},
-	"label":        {name: "labels", fn: handleLabel},
+	"labels":       {name: "labels", fn: handleLabel},
 	"gist":         {name: "gist", fn: handleGist},
 	"environments": {name: "environments", fn: handleEnvironments},
 	"teams":        {name: "teams", fn: handleTeams},
@@ -48,7 +48,6 @@ var handlers = map[string]handlerEntry{
 	// Generic lists  — we just validate the repo exists
 	"repo":         {name: "repo-exist", fn: handleRepoExist},
 	"pulls":        {name: "repo-exist", fn: handleRepoExist},
-	"labels":       {name: "repo-exist", fn: handleRepoExist},
 	"tags":         {name: "repo-exist", fn: handleRepoExist},
 	"branches":     {name: "repo-exist", fn: handleRepoExist},
 	"settings":     {name: "repo-exist", fn: handleRepoExist},
