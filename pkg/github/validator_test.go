@@ -1103,16 +1103,6 @@ func TestInternalLinkProcessor_ParseGitHubUrl(t *testing.T) {
 				url:   "https://github.com/your-ko/link-validator/pkgs/container/link-validator/617266022?tag=sha256-85ea5aa29b291cb9213040fc6b6661657ec61dc4",
 			},
 		},
-		//{
-		//	name: "api pull request url",
-		//	url:  "https://api.github.com/repos/your-ko/link-validator",
-		//	want: nil,
-		//},
-		//{
-		//	name: "uploads repo url",
-		//	url:  "https://uploads.github.mycorp.com/org/repo/raw/main/image.png",
-		//	want: nil,
-		//},
 		{
 			name: "GitHub",
 			url:  "https://github.com",
