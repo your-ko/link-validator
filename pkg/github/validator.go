@@ -17,7 +17,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/google/go-github/v83/github"
+	"github.com/google/go-github/v84/github"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
