@@ -281,6 +281,13 @@ Provide `PAT` to increase rate limits from 60/hour to 5000/hour.
 This usually indicates authentication or proxy configuration issues. Enable debug logging with `LOG_LEVEL=debug` to
 trace redirect chains.
 
+** Error validating link **
+```
+{"error":"GET https://api.github.com/repos/your-ko/xxxxx/actions/workflows/link-validator.yaml: 403 Resource not accessible by integration []","filename":"README.md","line":3,"link":"https://github.com/your-ko/xxxx/xxxx"}
+```
+make sure that your repository is public. The link-validator can't access private repositories with 
+the default GITHUB token, unless you configure your PAT. 
+
 ## Exit Codes
 
 - `0`: All links validated successfully
