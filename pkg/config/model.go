@@ -21,7 +21,7 @@ type Config struct {
 }
 
 type ValidatorConfig struct {
-	Enabled bool `yaml:"enabled"`
+	Enabled *bool `yaml:"enabled"`
 }
 
 func (cfg ValidatorConfig) validate() error {
@@ -29,7 +29,7 @@ func (cfg ValidatorConfig) validate() error {
 }
 
 type GitHubConfig struct {
-	Enabled       bool `yaml:"enabled"`
+	Enabled       *bool `yaml:"enabled"`
 	PAT           string
 	CorpPAT       string
 	CorpGitHubUrl string `yaml:"corpUrl"`
@@ -46,30 +46,39 @@ func (cfg GitHubConfig) validate() error {
 }
 
 type DataDogConfig struct {
-	Enabled bool `yaml:"enabled"`
+	Enabled *bool `yaml:"enabled"`
 	ApiKey  string
 	AppKey  string
 }
 
 func (cfg DataDogConfig) validate() error {
-	if cfg.Enabled && (cfg.ApiKey == "" || cfg.AppKey == "") {
+	if cfg.IsEnabled() && (cfg.ApiKey == "" || cfg.AppKey == "") {
 		return errors.New("datadog validator is enabled but DD_API_KEY/DD_APP_KEY are not set")
 	}
 	return nil
 }
 
 type HttpConfig struct {
-	Enabled   bool     `yaml:"enabled"`
+	Enabled   *bool    `yaml:"enabled"`
 	Redirects int      `yaml:"redirects"`
 	Ignore    []string `yaml:"ignore"`
 }
 
 func (cfg HttpConfig) validate() error {
-	if cfg.Enabled && cfg.Redirects <= 0 {
+	if cfg.IsEnabled() && cfg.Redirects <= 0 {
 		return errors.New("redirects should be a positive integer")
 	}
 	return nil
 }
+
+func boolPtr(b bool) *bool { return &b }
+
+func isEnabled(p *bool) bool { return p != nil && *p }
+
+func (cfg ValidatorConfig) IsEnabled() bool { return isEnabled(cfg.Enabled) }
+func (cfg GitHubConfig) IsEnabled() bool    { return isEnabled(cfg.Enabled) }
+func (cfg DataDogConfig) IsEnabled() bool   { return isEnabled(cfg.Enabled) }
+func (cfg HttpConfig) IsEnabled() bool      { return isEnabled(cfg.Enabled) }
 
 type ValidatorsConfig struct {
 	GitHub    GitHubConfig    `yaml:"github"`
@@ -105,11 +114,11 @@ func Default() *Config {
 		Timeout:    3 * time.Second,
 		Validators: ValidatorsConfig{
 			HTTP: HttpConfig{
-				Enabled:   true,
+				Enabled:   boolPtr(true),
 				Redirects: 3,
 			},
 			GitHub: GitHubConfig{
-				Enabled: true,
+				Enabled: boolPtr(true),
 			},
 		},
 	}

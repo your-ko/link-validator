@@ -44,7 +44,7 @@ type LinkValidador struct {
 func New(cfg *config.Config) (*LinkValidador, error) {
 	processors := make([]LinkProcessor, 0)
 	httpExcluders := make([]HttpValidatorExcluder, 0)
-	if cfg.Validators.GitHub.Enabled {
+	if cfg.Validators.GitHub.IsEnabled() {
 		ghValidator, err := github.New(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("can't instantiate GitHub link validator: %w", err)
@@ -52,7 +52,7 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		httpExcluders = append(httpExcluders, ghValidator)
 		processors = append(processors, ghValidator)
 	}
-	if cfg.Validators.DataDog.Enabled {
+	if cfg.Validators.DataDog.IsEnabled() {
 		ddValidator, err := dd.New(cfg)
 		if err != nil {
 			return nil, err
@@ -60,11 +60,11 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 		processors = append(processors, ddValidator)
 		httpExcluders = append(httpExcluders, ddValidator)
 	}
-	if cfg.Validators.LocalPath.Enabled {
+	if cfg.Validators.LocalPath.IsEnabled() {
 		processors = append(processors, local_path.New())
 	}
 
-	if cfg.Validators.HTTP.Enabled {
+	if cfg.Validators.HTTP.IsEnabled() {
 		// Create exclusion function for HTTP processor
 		// This function checks if any other processor can handle the URL
 		excluder := func(url string) bool {
