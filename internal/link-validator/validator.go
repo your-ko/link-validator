@@ -130,6 +130,7 @@ func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) St
 		lines := 0
 		linksFound := 0
 		scanner := bufio.NewScanner(f)
+		scanner.Buffer(make([]byte, 1024*1024), 1024*1024) // 1 MB
 		codeSnippet := false
 		for scanner.Scan() {
 			line := scanner.Text()
