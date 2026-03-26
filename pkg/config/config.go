@@ -158,7 +158,9 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.Validators.HTTP.Enabled = merge.Validators.HTTP.Enabled
 	}
 	cfg.Validators.HTTP.Ignore = mergeSlices(cfg.Validators.HTTP.Ignore, merge.Validators.HTTP.Ignore)
-	cfg.Validators.HTTP.Redirects = merge.Validators.HTTP.Redirects
+	if merge.Validators.HTTP.Redirects != 0 {
+		cfg.Validators.HTTP.Redirects = merge.Validators.HTTP.Redirects
+	}
 
 	if merge.LookupPath != "" {
 		cfg.LookupPath = merge.LookupPath

@@ -203,6 +203,34 @@ func TestConfig_merge(t *testing.T) {
 			},
 		},
 		{
+			name: "merge zero redirects does not override existing value",
+			fields: fields{
+				cfg: &Config{
+					Validators: ValidatorsConfig{
+						HTTP: HttpConfig{
+							Redirects: 5,
+						},
+					},
+				},
+			},
+			args: args{
+				config: &Config{
+					Validators: ValidatorsConfig{
+						HTTP: HttpConfig{
+							Redirects: 0, // Zero should not override
+						},
+					},
+				},
+			},
+			want: &Config{
+				Validators: ValidatorsConfig{
+					HTTP: HttpConfig{
+						Redirects: 5, // Should remain unchanged
+					},
+				},
+			},
+		},
+		{
 			name: "merge slices",
 			fields: fields{
 				cfg: &Config{
