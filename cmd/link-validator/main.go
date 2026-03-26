@@ -47,6 +47,8 @@ func main() {
 	res := cfg.Validate()
 	for _, err = range res {
 		slog.With("error", err).Error("initialisation error:")
+	}
+	if len(res) > 0 {
 		os.Exit(1)
 	}
 
