@@ -127,8 +127,8 @@ func (cfg *Config) merge(merge *Config) {
 	if merge == nil {
 		return
 	}
-	if merge.Validators.GitHub.Enabled {
-		cfg.Validators.GitHub.Enabled = true
+	if merge.Validators.GitHub.Enabled != nil {
+		cfg.Validators.GitHub.Enabled = merge.Validators.GitHub.Enabled
 	}
 	if merge.Validators.GitHub.CorpGitHubUrl != "" {
 		cfg.Validators.GitHub.CorpGitHubUrl = merge.Validators.GitHub.CorpGitHubUrl
@@ -140,8 +140,8 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.Validators.GitHub.PAT = merge.Validators.GitHub.PAT
 	}
 
-	if merge.Validators.DataDog.Enabled {
-		cfg.Validators.DataDog.Enabled = true
+	if merge.Validators.DataDog.Enabled != nil {
+		cfg.Validators.DataDog.Enabled = merge.Validators.DataDog.Enabled
 	}
 	if merge.Validators.DataDog.ApiKey != "" {
 		cfg.Validators.DataDog.ApiKey = merge.Validators.DataDog.ApiKey
@@ -150,8 +150,12 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.Validators.DataDog.AppKey = merge.Validators.DataDog.AppKey
 	}
 
-	if merge.Validators.HTTP.Enabled {
-		cfg.Validators.HTTP.Enabled = true
+	if merge.Validators.LocalPath.Enabled != nil {
+		cfg.Validators.LocalPath.Enabled = merge.Validators.LocalPath.Enabled
+	}
+
+	if merge.Validators.HTTP.Enabled != nil {
+		cfg.Validators.HTTP.Enabled = merge.Validators.HTTP.Enabled
 	}
 	cfg.Validators.HTTP.Ignore = mergeSlices(cfg.Validators.HTTP.Ignore, merge.Validators.HTTP.Ignore)
 	cfg.Validators.HTTP.Redirects = merge.Validators.HTTP.Redirects

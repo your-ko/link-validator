@@ -26,7 +26,7 @@ func TestConfig_merge(t *testing.T) {
 				cfg: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							PAT:     "PAT",
 						},
 					},
@@ -40,7 +40,7 @@ func TestConfig_merge(t *testing.T) {
 			want: &Config{
 				Validators: ValidatorsConfig{
 					GitHub: GitHubConfig{
-						Enabled: true,
+						Enabled: boolPtr(true),
 						PAT:     "PAT",
 					},
 				},
@@ -54,7 +54,7 @@ func TestConfig_merge(t *testing.T) {
 				cfg: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							PAT:     "PAT",
 						},
 					},
@@ -68,7 +68,7 @@ func TestConfig_merge(t *testing.T) {
 			want: &Config{
 				Validators: ValidatorsConfig{
 					GitHub: GitHubConfig{
-						Enabled: true,
+						Enabled: boolPtr(true),
 						PAT:     "PAT",
 					},
 				},
@@ -82,7 +82,7 @@ func TestConfig_merge(t *testing.T) {
 				cfg: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled:       true,
+							Enabled:       boolPtr(true),
 							PAT:           "OLD_PAT",
 							CorpPAT:       "OLD_PAT",
 							CorpGitHubUrl: "OLD_URL",
@@ -96,12 +96,12 @@ func TestConfig_merge(t *testing.T) {
 				config: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled:       true,
+							Enabled:       boolPtr(true),
 							PAT:           "NEW_PAT",
 							CorpGitHubUrl: "NEW_URL",
 						},
 						HTTP: HttpConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							Ignore:  []string{"example.com"},
 						},
 					},
@@ -111,13 +111,13 @@ func TestConfig_merge(t *testing.T) {
 			want: &Config{
 				Validators: ValidatorsConfig{
 					GitHub: GitHubConfig{
-						Enabled:       true,
+						Enabled:       boolPtr(true),
 						PAT:           "NEW_PAT",
 						CorpPAT:       "OLD_PAT",
 						CorpGitHubUrl: "NEW_URL",
 					},
 					HTTP: HttpConfig{
-						Enabled: true,
+						Enabled: boolPtr(true),
 						Ignore:  []string{"example.com"},
 					},
 				},
@@ -131,13 +131,13 @@ func TestConfig_merge(t *testing.T) {
 				cfg: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled:       true,
+							Enabled:       boolPtr(true),
 							PAT:           "OLD_PAT",
 							CorpPAT:       "OLD_PAT",
 							CorpGitHubUrl: "OLD_URL",
 						},
 						HTTP: HttpConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							Ignore:  []string{"example.com"},
 						},
 					},
@@ -150,7 +150,7 @@ func TestConfig_merge(t *testing.T) {
 				config: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							PAT:     "NEW_PAT",
 						},
 					},
@@ -159,13 +159,13 @@ func TestConfig_merge(t *testing.T) {
 			want: &Config{
 				Validators: ValidatorsConfig{
 					GitHub: GitHubConfig{
-						Enabled:       true,
+						Enabled:       boolPtr(true),
 						PAT:           "NEW_PAT",
 						CorpPAT:       "OLD_PAT",
 						CorpGitHubUrl: "OLD_URL",
 					},
 					HTTP: HttpConfig{
-						Enabled: true,
+						Enabled: boolPtr(true),
 						Ignore:  []string{"example.com"},
 					},
 				},
@@ -185,7 +185,7 @@ func TestConfig_merge(t *testing.T) {
 				config: &Config{
 					Validators: ValidatorsConfig{
 						GitHub: GitHubConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							PAT:     "NEW_PAT",
 						},
 					},
@@ -195,7 +195,7 @@ func TestConfig_merge(t *testing.T) {
 			want: &Config{
 				Validators: ValidatorsConfig{
 					GitHub: GitHubConfig{
-						Enabled: true,
+						Enabled: boolPtr(true),
 						PAT:     "NEW_PAT",
 					},
 				},
@@ -208,7 +208,7 @@ func TestConfig_merge(t *testing.T) {
 				cfg: &Config{
 					Validators: ValidatorsConfig{
 						HTTP: HttpConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							Ignore:  []string{"example.com"},
 						},
 					},
@@ -220,7 +220,7 @@ func TestConfig_merge(t *testing.T) {
 					FileMasks: []string{}, // Empty slice should not override
 					Validators: ValidatorsConfig{
 						HTTP: HttpConfig{
-							Enabled: true,
+							Enabled: boolPtr(true),
 							Ignore:  nil,
 						},
 					},
@@ -230,7 +230,7 @@ func TestConfig_merge(t *testing.T) {
 				FileMasks: []string{"*.md", "*.txt"}, // Should remain unchanged
 				Validators: ValidatorsConfig{
 					HTTP: HttpConfig{
-						Enabled: true,
+						Enabled: boolPtr(true),
 						Ignore:  []string{"example.com"},
 					},
 				},
@@ -313,14 +313,9 @@ fileMasks:
  - "*.go"`,
 			},
 			want: &Config{
-				Validators: ValidatorsConfig{
-					GitHub:    GitHubConfig{Enabled: false},
-					DataDog:   DataDogConfig{Enabled: false},
-					LocalPath: ValidatorConfig{Enabled: false},
-					HTTP:      HttpConfig{Enabled: false},
-				},
-				Timeout:   10 * time.Second,
-				FileMasks: []string{"*.go"},
+				Validators: ValidatorsConfig{},
+				Timeout:    10 * time.Second,
+				FileMasks:  []string{"*.go"},
 			},
 			wantErr: false,
 		},

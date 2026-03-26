@@ -12,7 +12,7 @@ func TestDataDogConfig_validate(t *testing.T) {
 		{
 			name: "datadog enabled without API keys should return error",
 			config: DataDogConfig{
-				Enabled: true,
+				Enabled: boolPtr(true),
 				ApiKey:  "",
 				AppKey:  "",
 			},
@@ -22,7 +22,7 @@ func TestDataDogConfig_validate(t *testing.T) {
 		{
 			name: "datadog enabled with valid API keys should pass",
 			config: DataDogConfig{
-				Enabled: true,
+				Enabled: boolPtr(true),
 				ApiKey:  "qwerty",
 				AppKey:  "qwerty",
 			},
@@ -31,7 +31,7 @@ func TestDataDogConfig_validate(t *testing.T) {
 		{
 			name: "datadog disabled should pass validation regardless of keys",
 			config: DataDogConfig{
-				Enabled: false,
+				Enabled: boolPtr(false),
 				ApiKey:  "",
 				AppKey:  "",
 			},
@@ -40,7 +40,7 @@ func TestDataDogConfig_validate(t *testing.T) {
 		{
 			name: "datadog enabled with only API key should return error",
 			config: DataDogConfig{
-				Enabled: true,
+				Enabled: boolPtr(true),
 				ApiKey:  "qwerty",
 				AppKey:  "",
 			},
@@ -50,7 +50,7 @@ func TestDataDogConfig_validate(t *testing.T) {
 		{
 			name: "datadog enabled with only App key should return error",
 			config: DataDogConfig{
-				Enabled: true,
+				Enabled: boolPtr(true),
 				ApiKey:  "",
 				AppKey:  "qwerty",
 			},
@@ -90,7 +90,7 @@ func TestGitHubConfig_validate(t *testing.T) {
 		{
 			name: "corporate GitHub URL without PAT should return error",
 			config: GitHubConfig{
-				Enabled:       true,
+				Enabled:       boolPtr(true),
 				PAT:           "pat",
 				CorpGitHubUrl: "https://github.mycorp.com",
 				CorpPAT:       "",
@@ -101,7 +101,7 @@ func TestGitHubConfig_validate(t *testing.T) {
 		{
 			name: "valid corporate GitHub configuration should pass",
 			config: GitHubConfig{
-				Enabled:       true,
+				Enabled:       boolPtr(true),
 				PAT:           "pat",
 				CorpGitHubUrl: "https://github.mycorp.com",
 				CorpPAT:       "corp-pat",
@@ -111,7 +111,7 @@ func TestGitHubConfig_validate(t *testing.T) {
 		{
 			name: "no corporate GitHub configuration should pass",
 			config: GitHubConfig{
-				Enabled:       true,
+				Enabled:       boolPtr(true),
 				PAT:           "pat",
 				CorpGitHubUrl: "",
 				CorpPAT:       "",
@@ -121,7 +121,7 @@ func TestGitHubConfig_validate(t *testing.T) {
 		{
 			name: "corporate PAT without URL should pass validation",
 			config: GitHubConfig{
-				Enabled:       false,
+				Enabled:       boolPtr(false),
 				PAT:           "",
 				CorpGitHubUrl: "",
 				CorpPAT:       "corp-pat",
@@ -161,7 +161,7 @@ func TestHttpConfig_validate(t *testing.T) {
 		{
 			name: "Redirects is positive. Passing",
 			config: HttpConfig{
-				Enabled:   true,
+				Enabled:   boolPtr(true),
 				Redirects: 3,
 				Ignore:    []string{},
 			},
@@ -170,7 +170,7 @@ func TestHttpConfig_validate(t *testing.T) {
 		{
 			name: "Redirects is negative. Config is disabled. Passing",
 			config: HttpConfig{
-				Enabled:   false,
+				Enabled:   boolPtr(false),
 				Redirects: -3,
 				Ignore:    []string{},
 			},
@@ -179,7 +179,7 @@ func TestHttpConfig_validate(t *testing.T) {
 		{
 			name: "Redirects is negative. Failing",
 			config: HttpConfig{
-				Enabled:   true,
+				Enabled:   boolPtr(true),
 				Redirects: -3,
 				Ignore:    []string{},
 			},
