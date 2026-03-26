@@ -329,23 +329,3 @@ func ProcessFilesPipeline(processors ...FileProcessorFunc) FileProcessorFunc {
 		return result, nil
 	}
 }
-
-// subtraction subtracts the right slice from the left slice
-// so the result will contain elements of left slice that are not present in the right slice
-func subtraction(left, right []string) []string {
-	if len(left) == 0 || len(right) == 0 {
-		return left
-	}
-	accu := make(map[string]bool, len(left))
-	for _, l := range left {
-		accu[l] = true
-	}
-	for _, r := range right {
-		delete(accu, r)
-	}
-	result := make([]string, 0, len(accu))
-	for k := range accu {
-		result = append(result, k)
-	}
-	return result
-}
