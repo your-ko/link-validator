@@ -38,7 +38,7 @@ inputs:
   redirects:
     description: "HTTP redirects number."
     default: "3"
-  exlude:
+  exclude:
     description: "Comma separated list of files or folders to exclude from validation."
     default: ""
   lookupPath:
@@ -65,8 +65,8 @@ runs:
           -e 'TIMEOUT=${{ inputs.timeout }}' \
           -e 'IGNORE=${{ inputs.ignore }}' \
           -e 'REDIRECTS=${{ inputs.redirects }}' \
-          -e 'EXCLUDE=${{ inputs.exlude }}' \
-          -e 'lookupPath=${{ inputs.lookupPath }}' \
+          -e 'EXCLUDE=${{ inputs.exclude }}' \
+          -e 'LOOKUP_PATH=${{ inputs.lookupPath }}' \
           -v "${{ github.workspace }}:/work" \
           -w /work \
           ${DOCKER_VALIDATOR}:${DOCKER_VALIDATOR_VERSION}
