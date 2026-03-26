@@ -414,7 +414,7 @@ func handleReleases(ctx context.Context, c client, owner, repo, ref, path, fragm
 			return err
 		}
 		for _, asset := range r.Assets {
-			if *asset.Name == parts[1] {
+			if asset.GetName() == parts[1] {
 				// we found an asset in the release
 				return nil
 			}
