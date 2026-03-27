@@ -172,7 +172,9 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.LogLevel = merge.LogLevel
 	}
 	cfg.FileMasks = mergeSlices(cfg.FileMasks, merge.FileMasks)
-	cfg.Files = mergeSlices(cfg.Files, merge.Files)
+	if merge.Files != nil {
+		cfg.Files = mergeSlices(cfg.Files, merge.Files)
+	}
 	cfg.Exclude = mergeSlices(cfg.Exclude, merge.Exclude)
 }
 
