@@ -325,16 +325,18 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 
 		switch {
 		case strings.Contains(path, "job"):
-			job := strings.TrimPrefix(path, fmt.Sprintf("%v/job/", runId))
-			jobId, err := strconv.ParseInt(job, 10, 64)
+			// SplitN limits to 2 parts so trailing segments are ignored, e.g. /runs/123/job/456/steps -> jobId=456
+			jobParts := strings.SplitN(strings.TrimPrefix(path, fmt.Sprintf("%v/job/", runId)), "/", 2)
+			jobId, err := strconv.ParseInt(jobParts[0], 10, 64)
 			if err != nil {
 				return fmt.Errorf("invalid job id: '%s'", path)
 			}
 			_, _, err = c.getWorkflowJobByID(ctx, owner, repo, jobId)
 			return err
 		case strings.Contains(path, "attempts"):
-			attemptStr := strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId))
-			attemptId, err := strconv.ParseInt(attemptStr, 10, 64)
+			// SplitN limits to 2 parts so trailing segments are ignored, e.g. /runs/123/attempts/2/jobs -> attemptId=2
+			attemptParts := strings.SplitN(strings.TrimPrefix(path, fmt.Sprintf("%v/attempts/", runId)), "/", 2)
+			attemptId, err := strconv.ParseInt(attemptParts[0], 10, 64)
 			if err != nil {
 				return fmt.Errorf("invalid attempt id: '%s'", path)
 			}
@@ -345,7 +347,7 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 			if attempts != nil && attemptId < int64(*attempts.TotalCount) {
 				return nil
 			}
-			return fmt.Errorf("job attempt '%s' not found", attemptStr)
+			return fmt.Errorf("job attempt '%s' not found", attemptParts[0])
 		default:
 			_, _, err = c.getWorkflowRunByID(ctx, owner, repo, runId)
 			return err
