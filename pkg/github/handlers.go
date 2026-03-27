@@ -307,7 +307,7 @@ func handleWorkflow(ctx context.Context, c client, owner, repo, ref, path, fragm
 	switch {
 	case path == "":
 		// presumably if the repo exists then the actions list exists as well
-		return handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
+		return nil
 	case ref == "workflows":
 		path = strings.TrimSuffix(path, "/badge.svg")
 		_, _, err := c.getWorkflowByFileName(ctx, owner, repo, path)
