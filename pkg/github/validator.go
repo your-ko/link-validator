@@ -145,6 +145,7 @@ func (proc *LinkProcessor) Process(ctx context.Context, url string, _ string) er
 	return mapGHError(url, entry.handler.Handle(ctx, client, proc.httpClient, gh))
 }
 
+// TODO: refactor me
 func parseUrl(link string) (*ghURL, error) {
 	u, err := url.Parse(strings.TrimSuffix(link, ".git"))
 	if err != nil {
