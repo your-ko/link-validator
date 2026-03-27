@@ -111,8 +111,10 @@ func handleContents(ctx context.Context, c client, owner, repo, ref, path, fragm
 	if strings.HasPrefix(path, "heads/") {
 		// extract the branch name
 		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
-		ref = parts[0]
-		path = parts[1]
+		if len(parts) >= 2 {
+			ref = parts[0]
+			path = parts[1]
+		}
 	}
 	_, _, _, err = c.getContents(ctx, owner, repo, ref, path)
 	return err
@@ -193,20 +195,23 @@ func handlePull(ctx context.Context, c client, owner, repo, ref, path, fragment 
 	}
 
 	if strings.HasPrefix(path, "commits") {
-		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa
-		//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dR31
-		SHA := strings.Split(path, "/")[1]
-		commits, _, err := c.listCommits(ctx, owner, repo, prNumber, nil)
-		if err != nil {
-			return err
-		}
-		for _, commit := range commits {
-			if commit.GetSHA() == SHA {
-				// unfortunately there is no API to find diff by SHA, so I ignore that bit
-				return nil
+		if strings.Contains(path, "/") {
+			// for https://github.com/your-ko/link-validator/pull/280/commits PR existence was validated above
+			//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa
+			//https://github.com/your-ko/link-validator/pull/280/commits/9130a7d501f28318d2761756f18b993b626181fa#diff-72ad4ae8af5a8d5be342d002cedff28908ba09b42e17197ed14b62081e62141dR31
+			SHA := strings.Split(path, "/")[1]
+			commits, _, err := c.listCommits(ctx, owner, repo, prNumber, nil)
+			if err != nil {
+				return err
 			}
+			for _, commit := range commits {
+				if commit.GetSHA() == SHA {
+					// unfortunately there is no API to find diff by SHA, so I ignore that bit
+					return nil
+				}
+			}
+			return fmt.Errorf("commit '%s' not found in PR '%s'", SHA, ref)
 		}
-		return fmt.Errorf("commit '%s' not found in PR '%s'", SHA, ref)
 	}
 
 	// Handle fragments
