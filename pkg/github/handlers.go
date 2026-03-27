@@ -103,11 +103,7 @@ func handleRepoExist(ctx context.Context, c client, owner, repo, _, _, _ string)
 // handleContents validates existence either the metadata and content of a single file or subdirectories of a directory
 //
 //meta:operation GET /repos/{owner}/{repo}/contents/{path}
-func handleContents(ctx context.Context, c client, owner, repo, ref, path, fragment string) error {
-	err := handleRepoExist(ctx, c, owner, repo, ref, path, fragment)
-	if err != nil {
-		return err
-	}
+func handleContents(ctx context.Context, c client, owner, repo, ref, path, _ string) error {
 	if strings.HasPrefix(path, "heads/") {
 		// extract the branch name
 		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
@@ -116,7 +112,7 @@ func handleContents(ctx context.Context, c client, owner, repo, ref, path, fragm
 			path = parts[1]
 		}
 	}
-	_, _, _, err = c.getContents(ctx, owner, repo, ref, path)
+	_, _, _, err := c.getContents(ctx, owner, repo, ref, path)
 	return err
 }
 

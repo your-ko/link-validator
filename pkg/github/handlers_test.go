@@ -169,8 +169,6 @@ func Test_handleContents(t *testing.T) {
 					Content: github.Ptr("test content"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(content, nil, resp, nil)
 			},
 		},
@@ -184,8 +182,6 @@ func Test_handleContents(t *testing.T) {
 					Content: github.Ptr("test content"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "docs/README.md").Return(content, nil, resp, nil)
 			},
 		},
@@ -199,8 +195,6 @@ func Test_handleContents(t *testing.T) {
 					Content: github.Ptr("test content"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(content, nil, resp, nil)
 			},
 		},
@@ -213,8 +207,6 @@ func Test_handleContents(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "nonexistent.md").Return(nil, nil, resp, err)
 			},
 			wantErr: &github.ErrorResponse{
@@ -231,8 +223,6 @@ func Test_handleContents(t *testing.T) {
 					Message:  "Server error",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusInternalServerError}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
-				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(nil, nil, resp, err)
 			},
 			wantErr: &github.ErrorResponse{
