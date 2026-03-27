@@ -111,8 +111,10 @@ func handleContents(ctx context.Context, c client, owner, repo, ref, path, fragm
 	if strings.HasPrefix(path, "heads/") {
 		// extract the branch name
 		parts := strings.SplitN(strings.TrimPrefix(path, "heads/"), "/", 2)
-		ref = parts[0]
-		path = parts[1]
+		if len(parts) >= 2 {
+			ref = parts[0]
+			path = parts[1]
+		}
 	}
 	_, _, _, err = c.getContents(ctx, owner, repo, ref, path)
 	return err
