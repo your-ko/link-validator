@@ -36,12 +36,12 @@ type Stats struct {
 	Files         int
 }
 
-type LinkValidador struct {
+type LinkValidator struct {
 	processors    []LinkProcessor
 	fileProcessor FileProcessorFunc
 }
 
-func New(cfg *config.Config) (*LinkValidador, error) {
+func New(cfg *config.Config) (*LinkValidator, error) {
 	processors := make([]LinkProcessor, 0)
 	httpExcluders := make([]HttpValidatorExcluder, 0)
 	if cfg.Validators.GitHub.IsEnabled() {
@@ -83,12 +83,12 @@ func New(cfg *config.Config) (*LinkValidador, error) {
 	}
 
 	if len(cfg.Files) != 0 {
-		return &LinkValidador{processors, includeFilesPipeline(cfg)}, nil
+		return &LinkValidator{processors, includeFilesPipeline(cfg)}, nil
 	} else if cfg.Files != nil {
 		slog.Warn("env var FILES is empty, hence there is nothing to validate")
-		return &LinkValidador{processors, emptyPipeline()}, nil
+		return &LinkValidator{processors, emptyPipeline()}, nil
 	}
-	return &LinkValidador{processors, walkFilesPipeline(cfg)}, nil
+	return &LinkValidator{processors, walkFilesPipeline(cfg)}, nil
 }
 
 func emptyPipeline() FileProcessorFunc {
@@ -115,7 +115,7 @@ func walkFilesPipeline(cfg *config.Config) FileProcessorFunc {
 	)
 }
 
-func (v *LinkValidador) ProcessFiles(ctx context.Context, filesList []string) Stats {
+func (v *LinkValidator) ProcessFiles(ctx context.Context, filesList []string) Stats {
 	stats := Stats{}
 
 	for _, fileName := range filesList {
@@ -192,11 +192,11 @@ func matchesFileMask(filename string, masks []string) bool {
 }
 
 // GetFiles returns a list of files to process based on configuration
-func (v *LinkValidador) GetFiles() ([]string, error) {
+func (v *LinkValidator) GetFiles() ([]string, error) {
 	return v.fileProcessor([]string{})
 }
 
-func (v *LinkValidador) processLine(line string, lines int) map[string]LinkProcessor {
+func (v *LinkValidator) processLine(line string, lines int) map[string]LinkProcessor {
 	found := make(map[string]LinkProcessor)
 	for _, p := range v.processors {
 		links := p.ExtractLinks(line)
