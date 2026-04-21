@@ -13,6 +13,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type Vault struct {
+	Name  string
+	Urls  []string
+	Token string
+}
+
+
 // Load loads the config in the following sequence:
 // Default < Config file < ENV variables
 // If there is no config file, then it is skipped
@@ -35,6 +42,12 @@ func Load(reader io.Reader) (*Config, error) {
 		return nil, err
 	}
 	cfg.merge(tmp)
+
+	// After all merging, populate vault tokens from environment variables
+	if len(cfg.Vaults) > 0 {
+		cfg.Vaults = readVaultTokensFromEnv(cfg.Vaults)
+	}
+
 	return cfg, nil
 }
 
@@ -117,8 +130,28 @@ func readFromEnv() (*Config, error) {
 		}
 		cfg.Validators.HTTP.Ignore = ignored
 	}
-
+	// Note: Vault tokens are handled in the end phase
 	return cfg, nil
+}
+
+// readVaultTokensFromEnv reads vault tokens from environment variables for configured vaults
+func readVaultTokensFromEnv(configVaults []Vault) []Vault {
+	if len(configVaults) == 0 {
+		return []Vault{}
+	}
+
+	vaults := make([]Vault, len(configVaults))
+	copy(vaults, configVaults)
+
+	for i := range vaults {
+		tokenKey := "VAULT_TOKEN_" + strings.ToUpper(vaults[i].Name)
+		if token := os.Getenv(tokenKey); token != "" {
+			vaults[i].Token = token
+		} else {
+			slog.Error("Missing Vault token for %s", slog.String("vault", vaults[i].Name))
+		}
+	}
+	return vaults
 }
 
 // merge merges this config with another config
@@ -176,6 +209,9 @@ func (cfg *Config) merge(merge *Config) {
 		cfg.Files = mergeSlices(cfg.Files, merge.Files)
 	}
 	cfg.Exclude = mergeSlices(cfg.Exclude, merge.Exclude)
+	if len(config.Vaults) != 0 {
+		cfg.Vaults = config.Vaults
+	}
 }
 
 func GetEnv(key, defaultValue string) string {
