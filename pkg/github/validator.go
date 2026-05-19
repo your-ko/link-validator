@@ -17,7 +17,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v87/github"
 )
 
 // handlers is a map from "typ" (blob/tree/raw/…/pulls) to the function.
@@ -75,9 +75,13 @@ type LinkProcessor struct {
 func New(cfg *config.Config) (*LinkProcessor, error) {
 	httpClient := httpvalidator.InitHttpClient(cfg)
 
-	client := github.NewClient(httpClient)
+	opts := []github.ClientOptionsFunc{github.WithHTTPClient(httpClient)}
 	if cfg.Validators.GitHub.PAT != "" {
-		client = client.WithAuthToken(cfg.Validators.GitHub.PAT)
+		opts = append(opts, github.WithAuthToken(cfg.Validators.GitHub.PAT))
+	}
+	client, err := github.NewClient(opts...)
+	if err != nil {
+		return nil, err
 	}
 	if cfg.Validators.GitHub.CorpGitHubUrl == "" {
 		return &LinkProcessor{
@@ -92,14 +96,18 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 		return nil, fmt.Errorf("invalid enterprise url: '%s'", cfg.Validators.GitHub.CorpGitHubUrl)
 	}
 	host := fmt.Sprintf("%s://%s", u.Scheme, u.Hostname())
-	corpClient, err := github.NewClient(httpClient).WithEnterpriseURLs(
+	opts = []github.ClientOptionsFunc{github.WithHTTPClient(httpClient), github.WithEnterpriseURLs(
 		host,
 		strings.ReplaceAll(host, "https://", "https://uploads."),
-	)
+	)}
+	if cfg.Validators.GitHub.PAT != "" {
+		opts = append(opts, github.WithAuthToken(cfg.Validators.GitHub.PAT))
+	}
+
+	corpClient, err := github.NewClient(opts...)
 	if err != nil {
 		return nil, fmt.Errorf("can't create GitHub Processor: %s", err)
 	}
-	corpClient = corpClient.WithAuthToken(cfg.Validators.GitHub.CorpPAT)
 
 	return &LinkProcessor{
 		corpGitHubUrl: u.Hostname(),

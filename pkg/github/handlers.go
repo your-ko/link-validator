@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/v86/github"
+	"github.com/google/go-github/v87/github"
 )
 
 type Handler interface {
