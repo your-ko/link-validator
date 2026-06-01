@@ -100,8 +100,8 @@ func New(cfg *config.Config) (*LinkProcessor, error) {
 		host,
 		strings.ReplaceAll(host, "https://", "https://uploads."),
 	)}
-	if cfg.Validators.GitHub.PAT != "" {
-		opts = append(opts, github.WithAuthToken(cfg.Validators.GitHub.PAT))
+	if cfg.Validators.GitHub.CorpPAT != "" {
+		opts = append(opts, github.WithAuthToken(cfg.Validators.GitHub.CorpPAT))
 	}
 
 	corpClient, err := github.NewClient(opts...)
