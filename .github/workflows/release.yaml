@@ -142,7 +142,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Attest build provenance (GitHub)
-        uses: actions/attest@v4.1.0
+        uses: actions/attest@v4.1.1
         with:
           subject-name: ${{ env.DOCKER_IMAGE_NAME }}
           subject-digest: ${{ needs.build.outputs.digest }}
@@ -157,7 +157,7 @@ jobs:
           output-file: sbom.spdx.json
 
       - name: Attest SBOM (GitHub)
-        uses: actions/attest@v4.1.0
+        uses: actions/attest@v4.1.1
         with:
           subject-name: ${{ env.DOCKER_IMAGE_NAME }}
           subject-digest: ${{ needs.build.outputs.digest }}
