@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/go-github/v88/github"
+	"github.com/google/go-github/v90/github"
 )
 
 type Handler interface {
@@ -442,7 +442,7 @@ func handleLabel(ctx context.Context, c client, owner, repo, ref, path, fragment
 		return err
 	}
 	for _, l := range labels {
-		if *l.Name == ref {
+		if l.GetName() == ref {
 			return nil
 		}
 	}

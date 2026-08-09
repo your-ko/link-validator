@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/google/go-github/v88/github"
+	"github.com/google/go-github/v90/github"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -1515,7 +1515,7 @@ func Test_handleLabel(t *testing.T) {
 			name: "label found in the list",
 			args: args{"your-ko", "link-validator", "enhancement", "", ""},
 			setupMock: func(m *mockclient) {
-				label := []*github.Label{{Name: github.Ptr("enhancement")}}
+				label := []*github.Label{{Name: "enhancement"}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
@@ -1538,7 +1538,7 @@ func Test_handleLabel(t *testing.T) {
 			name: "label not found - case sensitive mismatch",
 			args: args{"your-ko", "link-validator", "Bug", "", ""},
 			setupMock: func(m *mockclient) {
-				label := []*github.Label{{Name: github.Ptr("bug")}}
+				label := []*github.Label{{Name: "bug"}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				repo := &github.Repository{Name: github.Ptr("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
