@@ -442,7 +442,7 @@ func handleLabel(ctx context.Context, c client, owner, repo, ref, path, fragment
 		return err
 	}
 	for _, l := range labels {
-		if *l.Name == ref {
+		if l.GetName() == ref {
 			return nil
 		}
 	}
