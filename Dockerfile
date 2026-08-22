@@ -1,4 +1,4 @@
-FROM golang:1.26.6-alpine3.24 AS builder
+FROM golang:1.27.0-alpine3.24 AS builder
 
 ARG BUILD_DATE
 ARG GIT_COMMIT
