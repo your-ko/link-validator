@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/google/go-github/v90/github"
+	"github.com/google/go-github/v92/github"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -69,12 +69,12 @@ func Test_handleRepoExist(t *testing.T) {
 			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{
-					ID:       github.Ptr(int64(123)),
-					Name:     github.Ptr("link-validator"),
-					FullName: github.Ptr("your-ko/link-validator"),
-					Private:  github.Ptr(false),
+					ID:       new(int64(123)),
+					Name:     new("link-validator"),
+					FullName: new("your-ko/link-validator"),
+					Private:  new(false),
 					Owner: &github.User{
-						Login: github.Ptr("your-ko"),
+						Login: new("your-ko"),
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
@@ -86,13 +86,13 @@ func Test_handleRepoExist(t *testing.T) {
 			args: args{"contributor", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{
-					ID:       github.Ptr(int64(123)),
-					Name:     github.Ptr("link-validator"),
-					FullName: github.Ptr("contributor/link-validator"),
-					Fork:     github.Ptr(true),
-					Private:  github.Ptr(false),
+					ID:       new(int64(123)),
+					Name:     new("link-validator"),
+					FullName: new("contributor/link-validator"),
+					Fork:     new(true),
+					Private:  new(false),
 					Owner: &github.User{
-						Login: github.Ptr("contributor"),
+						Login: new("contributor"),
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
@@ -164,9 +164,9 @@ func Test_handleContents(t *testing.T) {
 			args: args{"your-ko", "link-validator", "main", "README.md", ""},
 			setupMock: func(m *mockclient) {
 				content := &github.RepositoryContent{
-					Name:    github.Ptr("README.md"),
-					Path:    github.Ptr("README.md"),
-					Content: github.Ptr("test content"),
+					Name:    new("README.md"),
+					Path:    new("README.md"),
+					Content: new("test content"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(content, nil, resp, nil)
@@ -177,9 +177,9 @@ func Test_handleContents(t *testing.T) {
 			args: args{"your-ko", "link-validator", "main", "docs/README.md", ""},
 			setupMock: func(m *mockclient) {
 				content := &github.RepositoryContent{
-					Name:    github.Ptr("README.md"),
-					Path:    github.Ptr("/docs"),
-					Content: github.Ptr("test content"),
+					Name:    new("README.md"),
+					Path:    new("/docs"),
+					Content: new("test content"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "docs/README.md").Return(content, nil, resp, nil)
@@ -190,9 +190,9 @@ func Test_handleContents(t *testing.T) {
 			args: args{"your-ko", "link-validator", "refs", "heads/main/README.md", ""},
 			setupMock: func(m *mockclient) {
 				content := &github.RepositoryContent{
-					Name:    github.Ptr("README.md"),
-					Path:    github.Ptr("/"),
-					Content: github.Ptr("test content"),
+					Name:    new("README.md"),
+					Path:    new("/"),
+					Content: new("test content"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getContents(mock.Anything, "your-ko", "link-validator", "main", "README.md").Return(content, nil, resp, nil)
@@ -281,9 +281,9 @@ func Test_handleCommit(t *testing.T) {
 			name: "commits list - repository exists",
 			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
-				commit := &github.RepositoryCommit{SHA: github.Ptr("1234567890")}
+				commit := &github.RepositoryCommit{SHA: new("1234567890")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "", (*github.ListOptions)(nil)).Return(commit, resp, nil)
 			},
@@ -292,9 +292,9 @@ func Test_handleCommit(t *testing.T) {
 			name: "specific commit hash",
 			args: args{"your-ko", "link-validator", "a96366f66ffacd461de10a1dd561ab5a598e9167", "", ""},
 			setupMock: func(m *mockclient) {
-				commit := &github.RepositoryCommit{SHA: github.Ptr("a96366f66ffacd461de10a1dd561ab5a598e9167")}
+				commit := &github.RepositoryCommit{SHA: new("a96366f66ffacd461de10a1dd561ab5a598e9167")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "a96366f66ffacd461de10a1dd561ab5a598e9167", (*github.ListOptions)(nil)).Return(commit, resp, nil)
 			},
@@ -321,7 +321,7 @@ func Test_handleCommit(t *testing.T) {
 					Message:  "No commit found for SHA: nonexistent-commit-hash",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusUnprocessableEntity}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getCommit(mock.Anything, "your-ko", "link-validator", "nonexistent-commit-hash", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
@@ -380,7 +380,7 @@ func Test_handleCompareCommits(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				compare := &github.CommitsComparison{}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "dev", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
@@ -392,9 +392,9 @@ func Test_handleCompareCommits(t *testing.T) {
 				compare := &github.CommitsComparison{}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				repo := &github.Repository{
-					ID:            github.Ptr(int64(123)),
-					Name:          github.Ptr("link-validator"),
-					DefaultBranch: github.Ptr("main"),
+					ID:            new(int64(123)),
+					Name:          new("link-validator"),
+					DefaultBranch: new("main"),
 				}
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "dev", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
@@ -406,7 +406,7 @@ func Test_handleCompareCommits(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				compare := &github.CommitsComparison{}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "a96366f66ffacd461de10a1dd561ab5a598e9167", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
@@ -417,7 +417,7 @@ func Test_handleCompareCommits(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				compare := &github.CommitsComparison{}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "abc123", "def456", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
@@ -428,7 +428,7 @@ func Test_handleCompareCommits(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				compare := &github.CommitsComparison{}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "1.15.0", "main", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
@@ -438,8 +438,8 @@ func Test_handleCompareCommits(t *testing.T) {
 			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{
-					ID:   github.Ptr(int64(123)),
-					Name: github.Ptr("link-validator"),
+					ID:   new(int64(123)),
+					Name: new("link-validator"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
@@ -451,7 +451,7 @@ func Test_handleCompareCommits(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				compare := &github.CommitsComparison{}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "", (*github.ListOptions)(nil)).Return(compare, resp, nil)
 			},
@@ -465,7 +465,7 @@ func Test_handleCompareCommits(t *testing.T) {
 					Message:  "Not found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().compareCommits(mock.Anything, "your-ko", "link-validator", "main", "dev", (*github.ListOptions)(nil)).Return(nil, resp, err)
 			},
@@ -522,9 +522,9 @@ func Test_handlePull(t *testing.T) {
 			name: "particular PR",
 			args: args{"your-ko", "link-validator", "1", "", ""},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
@@ -538,7 +538,7 @@ func Test_handlePull(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(nil, resp, err)
 			},
@@ -557,10 +557,10 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with issue comment",
 			args: args{"your-ko", "link-validator", "1", "", "issuecomment-123456"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
-				comment := &github.IssueComment{Body: github.Ptr("comment")}
+				pr := &github.PullRequest{Title: new("great PR")}
+				comment := &github.IssueComment{Body: new("comment")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 				m.EXPECT().getIssueComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(comment, resp, nil)
@@ -570,13 +570,13 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with not existing issue comment",
 			args: args{"your-ko", "link-validator", "1", "", "issuecomment-123456"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 				m.EXPECT().getIssueComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(nil, resp, err)
@@ -590,9 +590,9 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with malformed issue comment",
 			args: args{"your-ko", "link-validator", "1", "", "issuecomment-aaa"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
@@ -602,10 +602,10 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with discussion comment",
 			args: args{"your-ko", "link-validator", "1", "", "discussion_r123456"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
-				comment := &github.PullRequestComment{Body: github.Ptr("comment")}
+				pr := &github.PullRequest{Title: new("great PR")}
+				comment := &github.PullRequestComment{Body: new("comment")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 				m.EXPECT().getPRComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(comment, resp, nil)
@@ -615,13 +615,13 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with non existing discussion comment",
 			args: args{"your-ko", "link-validator", "1", "", "discussion_r123456"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				err := &github.ErrorResponse{
 					Response: &http.Response{StatusCode: http.StatusNotFound},
 					Message:  "Not found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 				m.EXPECT().getPRComment(mock.Anything, "your-ko", "link-validator", int64(123456)).Return(nil, resp, err)
@@ -635,9 +635,9 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with malformed discussion comment",
 			args: args{"your-ko", "link-validator", "1", "", "discussion_raaaaa"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
@@ -647,9 +647,9 @@ func Test_handlePull(t *testing.T) {
 			name: "unsupported fragment format",
 			args: args{"your-ko", "link-validator", "1", "", "unsupported-fragment"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
@@ -659,9 +659,9 @@ func Test_handlePull(t *testing.T) {
 			name: "PR with diff",
 			args: args{"your-ko", "link-validator", "1", "", "diff-aaa"},
 			setupMock: func(m *mockclient) {
-				pr := &github.PullRequest{Title: github.Ptr("great PR")}
+				pr := &github.PullRequest{Title: new("great PR")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getPR(mock.Anything, "your-ko", "link-validator", 1).Return(pr, resp, nil)
 			},
@@ -729,9 +729,9 @@ func Test_handleMilestone(t *testing.T) {
 			name: "particular milestone by number",
 			args: args{"your-ko", "link-validator", "1", "", ""},
 			setupMock: func(m *mockclient) {
-				milestone := &github.Milestone{Title: github.Ptr("great milestone")}
+				milestone := &github.Milestone{Title: new("great milestone")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getMilestone(mock.Anything, "your-ko", "link-validator", 1).Return(milestone, resp, nil)
 			},
@@ -741,7 +741,7 @@ func Test_handleMilestone(t *testing.T) {
 			args: args{"your-ko", "link-validator", "test", "", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: fmt.Errorf("invalid milestone number \"test\""),
@@ -755,7 +755,7 @@ func Test_handleMilestone(t *testing.T) {
 					Message:  "Not found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getMilestone(mock.Anything, "your-ko", "link-validator", 1).Return(nil, resp, err)
 			},
@@ -827,11 +827,11 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			args: args{"your-ko", "link-validator", "GHSA-1234-5678-9012", "", ""},
 			setupMock: func(m *mockclient) {
 				sa := []*github.SecurityAdvisory{{
-					GHSAID:  github.Ptr("GHSA-1234-5678-9012"),
-					Summary: github.Ptr("be secure"),
+					GHSAID:  new("GHSA-1234-5678-9012"),
+					Summary: new("be secure"),
 				}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "link-validator", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(sa, resp, nil)
 			},
@@ -847,11 +847,11 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			args: args{"your-ko", "link-validator", "GHSA-nonexistent-id", "", ""},
 			setupMock: func(m *mockclient) {
 				sa := []*github.SecurityAdvisory{{
-					GHSAID:  github.Ptr("GHSA-1234-5678-9012"),
-					Summary: github.Ptr("be secure"),
+					GHSAID:  new("GHSA-1234-5678-9012"),
+					Summary: new("be secure"),
 				}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "link-validator", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(sa, resp, nil)
 			},
@@ -862,11 +862,11 @@ func Test_handleSecurityAdvisories(t *testing.T) {
 			args: args{"your-ko", "link-validator", "GHSA-1234-5678-9012", "", ""},
 			setupMock: func(m *mockclient) {
 				sa := []*github.SecurityAdvisory{{
-					GHSAID:  github.Ptr("GHSA-0000-0000-0000"),
-					Summary: github.Ptr("be secure"),
+					GHSAID:  new("GHSA-0000-0000-0000"),
+					Summary: new("be secure"),
 				}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listRepositorySecurityAdvisories(mock.Anything, "your-ko", "link-validator", (*github.ListRepositorySecurityAdvisoriesOptions)(nil)).Return(sa, resp, nil)
 			},
@@ -927,9 +927,9 @@ func Test_handleWorkflow(t *testing.T) {
 			args: args{"your-ko", "link-validator", "actions", "", ""},
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{
-					Name: github.Ptr("link-validator"),
+					Name: new("link-validator"),
 					Owner: &github.User{
-						Login: github.Ptr("your-ko"),
+						Login: new("your-ko"),
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
@@ -940,9 +940,9 @@ func Test_handleWorkflow(t *testing.T) {
 			name: "specific workflow file",
 			args: args{"your-ko", "link-validator", "workflows", "pr.yaml", ""},
 			setupMock: func(m *mockclient) {
-				workflow := &github.Workflow{Name: github.Ptr("pr.yaml")}
+				workflow := &github.Workflow{Name: new("pr.yaml")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowByFileName(mock.Anything, "your-ko", "link-validator", "pr.yaml").Return(workflow, resp, nil)
 			},
@@ -951,9 +951,9 @@ func Test_handleWorkflow(t *testing.T) {
 			name: "specific workflow file with badge",
 			args: args{"your-ko", "link-validator", "workflows", "pr.yaml/badge.svg", ""},
 			setupMock: func(m *mockclient) {
-				workflow := &github.Workflow{Name: github.Ptr("pr.yaml")}
+				workflow := &github.Workflow{Name: new("pr.yaml")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowByFileName(mock.Anything, "your-ko", "link-validator", "pr.yaml").Return(workflow, resp, nil)
 			},
@@ -963,7 +963,7 @@ func Test_handleWorkflow(t *testing.T) {
 			args: args{"your-ko", "link-validator", "runs", "invalid-run-id", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("invalid workflow id: 'invalid-run-id'"),
@@ -977,7 +977,7 @@ func Test_handleWorkflow(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowByFileName(mock.Anything, "your-ko", "link-validator", "nonexistent.yaml").Return(nil, resp, err)
 			},
@@ -990,9 +990,9 @@ func Test_handleWorkflow(t *testing.T) {
 			name: "specific workflow run",
 			args: args{"your-ko", "link-validator", "runs", "1234567890", ""},
 			setupMock: func(m *mockclient) {
-				workflow := &github.WorkflowRun{Name: github.Ptr("pr.yaml")}
+				workflow := &github.WorkflowRun{Name: new("pr.yaml")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowRunByID(mock.Anything, "your-ko", "link-validator", int64(1234567890)).Return(workflow, resp, nil)
 			},
@@ -1006,7 +1006,7 @@ func Test_handleWorkflow(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowRunByID(mock.Anything, "your-ko", "link-validator", int64(1234567890)).Return(nil, resp, err)
 			},
@@ -1019,9 +1019,9 @@ func Test_handleWorkflow(t *testing.T) {
 			name: "workflow run job by id",
 			args: args{"your-ko", "link-validator", "runs", "1234567890/job/9876543210", ""},
 			setupMock: func(m *mockclient) {
-				job := &github.WorkflowJob{Name: github.Ptr("pr.yaml")}
+				job := &github.WorkflowJob{Name: new("pr.yaml")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowJobByID(mock.Anything, "your-ko", "link-validator", int64(9876543210)).Return(job, resp, nil)
 			},
@@ -1031,7 +1031,7 @@ func Test_handleWorkflow(t *testing.T) {
 			args: args{"your-ko", "link-validator", "runs", "1234567890/job/qwerty", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("invalid job id: '1234567890/job/qwerty'"),
@@ -1045,7 +1045,7 @@ func Test_handleWorkflow(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getWorkflowJobByID(mock.Anything, "your-ko", "link-validator", int64(9876543210)).Return(nil, resp, err)
 			},
@@ -1058,9 +1058,9 @@ func Test_handleWorkflow(t *testing.T) {
 			name: "workflow run attempt",
 			args: args{"your-ko", "link-validator", "runs", "1234567890/attempts/2", ""},
 			setupMock: func(m *mockclient) {
-				jobs := &github.Jobs{TotalCount: github.Ptr(5)}
+				jobs := &github.Jobs{TotalCount: new(5)}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listWorkflowJobsAttempt(mock.Anything, "your-ko", "link-validator", int64(1234567890), int64(2), (*github.ListOptions)(nil)).Return(jobs, resp, nil)
 			},
@@ -1069,9 +1069,9 @@ func Test_handleWorkflow(t *testing.T) {
 			name: "workflow run not existing attempt",
 			args: args{"your-ko", "link-validator", "runs", "1234567890/attempts/2", ""},
 			setupMock: func(m *mockclient) {
-				jobs := &github.Jobs{TotalCount: github.Ptr(1)}
+				jobs := &github.Jobs{TotalCount: new(1)}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listWorkflowJobsAttempt(mock.Anything, "your-ko", "link-validator", int64(1234567890), int64(2), (*github.ListOptions)(nil)).Return(jobs, resp, nil)
 			},
@@ -1082,7 +1082,7 @@ func Test_handleWorkflow(t *testing.T) {
 			args: args{"your-ko", "link-validator", "runs", "123456/attempts/invalid-attempt", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("invalid attempt id: '123456/attempts/invalid-attempt'"),
@@ -1092,7 +1092,7 @@ func Test_handleWorkflow(t *testing.T) {
 			args: args{"your-ko", "link-validator", "unsupported", "some-path", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("unsupported ref found, please report a bug"),
@@ -1158,7 +1158,7 @@ func Test_handleUser(t *testing.T) {
 			name: "existing user",
 			args: args{"your-ko", "", "", "", ""},
 			setupMock: func(m *mockclient) {
-				user := &github.User{Name: github.Ptr("your-ko")}
+				user := &github.User{Name: new("your-ko")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getUser(mock.Anything, "your-ko").Return(user, resp, nil)
 			},
@@ -1228,7 +1228,7 @@ func Test_handleIssue(t *testing.T) {
 			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 		},
@@ -1236,9 +1236,9 @@ func Test_handleIssue(t *testing.T) {
 			name: "specific issue by number",
 			args: args{"your-ko", "link-validator", "1", "", ""},
 			setupMock: func(m *mockclient) {
-				issue := &github.Issue{Title: github.Ptr("super issue")}
+				issue := &github.Issue{Title: new("super issue")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getIssue(mock.Anything, "your-ko", "link-validator", 1).Return(issue, resp, nil)
 			},
@@ -1248,7 +1248,7 @@ func Test_handleIssue(t *testing.T) {
 			args: args{"your-ko", "link-validator", "abc", "", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("invalid issue number \"abc\""),
@@ -1262,7 +1262,7 @@ func Test_handleIssue(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getIssue(mock.Anything, "your-ko", "link-validator", 999999).Return(nil, resp, err)
 			},
@@ -1332,9 +1332,9 @@ func Test_handleReleases(t *testing.T) {
 			name: "latest release exists",
 			args: args{"your-ko", "link-validator", "", "latest", ""},
 			setupMock: func(m *mockclient) {
-				release := &github.RepositoryRelease{Name: github.Ptr("cool release")}
+				release := &github.RepositoryRelease{Name: new("cool release")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getLatestRelease(mock.Anything, "your-ko", "link-validator").Return(release, resp, nil)
 			},
@@ -1343,7 +1343,7 @@ func Test_handleReleases(t *testing.T) {
 			name: "releases list - repository exists",
 			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
@@ -1352,9 +1352,9 @@ func Test_handleReleases(t *testing.T) {
 			name: "specific release by tag",
 			args: args{"your-ko", "link-validator", "tag", "v1.0.0", ""},
 			setupMock: func(m *mockclient) {
-				release := &github.RepositoryRelease{Name: github.Ptr("cool release")}
+				release := &github.RepositoryRelease{Name: new("cool release")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(release, resp, nil)
 			},
@@ -1368,7 +1368,7 @@ func Test_handleReleases(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(nil, resp, err)
 			},
@@ -1382,11 +1382,11 @@ func Test_handleReleases(t *testing.T) {
 			args: args{"your-ko", "link-validator", "download", "v1.0.0/sbom.spdx.json", ""},
 			setupMock: func(m *mockclient) {
 				release := &github.RepositoryRelease{
-					Name:   github.Ptr("cool release"),
-					Assets: []*github.ReleaseAsset{{Name: github.Ptr("sbom.spdx.json")}},
+					Name:   new("cool release"),
+					Assets: []*github.ReleaseAsset{{Name: new("sbom.spdx.json")}},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(release, resp, nil)
 			},
@@ -1396,7 +1396,7 @@ func Test_handleReleases(t *testing.T) {
 			args: args{"your-ko", "link-validator", "download", "v1.0.0-binary.tar.gz", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("incorrect download path 'v1.0.0-binary.tar.gz' in the release url"),
@@ -1406,7 +1406,7 @@ func Test_handleReleases(t *testing.T) {
 			args: args{"your-ko", "link-validator", "download", "v1.0.0/assets/binary.tar.gz", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("incorrect download path 'v1.0.0/assets/binary.tar.gz' in the release url"),
@@ -1416,11 +1416,11 @@ func Test_handleReleases(t *testing.T) {
 			args: args{"your-ko", "link-validator", "download", "v1.0.0/nonexistent.zip", ""},
 			setupMock: func(m *mockclient) {
 				release := &github.RepositoryRelease{
-					Name:   github.Ptr("cool release"),
-					Assets: []*github.ReleaseAsset{{Name: github.Ptr("sbom.spdx.json")}},
+					Name:   new("cool release"),
+					Assets: []*github.ReleaseAsset{{Name: new("sbom.spdx.json")}},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getReleaseByTag(mock.Anything, "your-ko", "link-validator", "v1.0.0").Return(release, resp, nil)
 			},
@@ -1431,7 +1431,7 @@ func Test_handleReleases(t *testing.T) {
 			args: args{"your-ko", "link-validator", "unknown", "some-path", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("unexpected release path 'some-path' found. Please report a bug"),
@@ -1445,7 +1445,7 @@ func Test_handleReleases(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().getLatestRelease(mock.Anything, "your-ko", "link-validator").Return(nil, resp, err)
 			},
@@ -1517,7 +1517,7 @@ func Test_handleLabel(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				label := []*github.Label{{Name: "enhancement"}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listLabels(mock.Anything, "your-ko", "link-validator", (*github.ListOptions)(nil)).Return(label, resp, nil)
 			},
@@ -1528,7 +1528,7 @@ func Test_handleLabel(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				var label []*github.Label
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listLabels(mock.Anything, "your-ko", "link-validator", (*github.ListOptions)(nil)).Return(label, resp, nil)
 			},
@@ -1540,7 +1540,7 @@ func Test_handleLabel(t *testing.T) {
 			setupMock: func(m *mockclient) {
 				label := []*github.Label{{Name: "bug"}}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listLabels(mock.Anything, "your-ko", "link-validator", (*github.ListOptions)(nil)).Return(label, resp, nil)
 			},
@@ -1608,7 +1608,7 @@ func Test_handleOrgExist(t *testing.T) {
 			args: args{"your-ko", "", "", "", ""},
 			setupMock: func(m *mockclient) {
 				org := &github.Organization{
-					Name: github.Ptr("your-ko"),
+					Name: new("your-ko"),
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrganization(mock.Anything, "your-ko").Return(org, resp, nil)
@@ -1681,7 +1681,7 @@ func Test_handlePackages(t *testing.T) {
 			name: "packages list - repository exists",
 			args: args{"your-ko", "link-validator", "", "", ""},
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
@@ -1703,11 +1703,11 @@ func Test_handlePackages(t *testing.T) {
 			name: "specific package - container package found as user package",
 			args: args{"your-ko", "link-validator", "container", "link-validator", ""},
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
 
-				pkg := &github.Package{Name: github.Ptr("link-validator")}
+				pkg := &github.Package{Name: new("link-validator")}
 				pkgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
 			},
@@ -1716,7 +1716,7 @@ func Test_handlePackages(t *testing.T) {
 			name: "specific package - container package found as org package",
 			args: args{"your-ko", "link-validator", "container", "link-validator", ""},
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
 
@@ -1728,7 +1728,7 @@ func Test_handlePackages(t *testing.T) {
 				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(nil, userResp, userErr)
 
 				// Org package found
-				pkg := &github.Package{Name: github.Ptr("link-validator")}
+				pkg := &github.Package{Name: new("link-validator")}
 				orgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrgPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, orgResp, nil)
 			},
@@ -1737,12 +1737,12 @@ func Test_handlePackages(t *testing.T) {
 			name: "specific package with version - container package found",
 			args: args{"your-ko", "link-validator", "container", "link-validator/617266022", ""},
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
 
 				// User package found (note: only package name used, version ignored for API call)
-				pkg := &github.Package{Name: github.Ptr("link-validator")}
+				pkg := &github.Package{Name: new("link-validator")}
 				pkgResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getUserPackage(mock.Anything, "your-ko", "container", "link-validator").Return(pkg, pkgResp, nil)
 			},
@@ -1751,7 +1751,7 @@ func Test_handlePackages(t *testing.T) {
 			name: "specific package - package not found",
 			args: args{"your-ko", "link-validator", "container", "nonexistent-package", ""},
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
 
@@ -1779,7 +1779,7 @@ func Test_handlePackages(t *testing.T) {
 			args: args{"your-ko", "link-validator", "container", "", ""},
 			setupMock: func(m *mockclient) {
 				// Repository exists
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				repoResp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, repoResp, nil)
 			},
@@ -1835,7 +1835,7 @@ func Test_handleGist(t *testing.T) {
 			name: "existing gist",
 			args: args{"your-ko", "gist123", "", "", ""},
 			setupMock: func(m *mockclient) {
-				gist := &github.Gist{ID: github.Ptr("your-ko")}
+				gist := &github.Gist{ID: new("your-ko")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getGist(mock.Anything, "gist123").Return(gist, resp, nil)
 			},
@@ -1844,7 +1844,7 @@ func Test_handleGist(t *testing.T) {
 			name: "gist with revision",
 			args: args{"your-ko", "gist123", "12345", "", ""},
 			setupMock: func(m *mockclient) {
-				gist := &github.Gist{ID: github.Ptr("your-ko")}
+				gist := &github.Gist{ID: new("your-ko")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getGistRevision(mock.Anything, "gist123", "12345").Return(gist, resp, nil)
 			},
@@ -1853,7 +1853,7 @@ func Test_handleGist(t *testing.T) {
 			name: "gist with comment fragment",
 			args: args{"your-ko", "gist123", "", "", "gistcomment-12345"},
 			setupMock: func(m *mockclient) {
-				comment := &github.GistComment{ID: github.Ptr(int64(12345))}
+				comment := &github.GistComment{ID: new(int64(12345))}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getGistComment(mock.Anything, "gist123", int64(12345)).Return(comment, resp, nil)
 			},
@@ -1946,14 +1946,14 @@ func Test_handleEnvironments(t *testing.T) {
 			args: args{"your-ko", "link-validator", "12345", "", ""},
 			setupMock: func(m *mockclient) {
 				envs := &github.EnvResponse{
-					TotalCount: github.Ptr(12345),
+					TotalCount: new(12345),
 					Environments: []*github.Environment{{
-						ID:   github.Ptr(int64(12345)),
-						Name: github.Ptr("test"),
+						ID:   new(int64(12345)),
+						Name: new("test"),
 					}},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
 			},
@@ -1963,14 +1963,14 @@ func Test_handleEnvironments(t *testing.T) {
 			args: args{"your-ko", "link-validator", "09876", "", ""},
 			setupMock: func(m *mockclient) {
 				envs := &github.EnvResponse{
-					TotalCount: github.Ptr(12345),
+					TotalCount: new(12345),
 					Environments: []*github.Environment{{
-						ID:   github.Ptr(int64(12345)),
-						Name: github.Ptr("test"),
+						ID:   new(int64(12345)),
+						Name: new("test"),
 					}},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 				m.EXPECT().listEnvironments(mock.Anything, "your-ko", "link-validator", (*github.EnvironmentListOptions)(nil)).Return(envs, resp, nil)
 			},
@@ -1981,7 +1981,7 @@ func Test_handleEnvironments(t *testing.T) {
 			args: args{"your-ko", "link-validator", "qwerty", "", ""},
 			setupMock: func(m *mockclient) {
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
 			wantErr: errors.New("invalid environment id: 'qwerty'"),
@@ -2047,8 +2047,8 @@ func Test_handleTeams(t *testing.T) {
 			name: "team exists",
 			args: args{"mycorp", "", "sre", "", ""},
 			setupMock: func(m *mockclient) {
-				team := &github.Team{Name: github.Ptr("sre")}
-				org := &github.Organization{Name: github.Ptr("mycorp")}
+				team := &github.Team{Name: new("sre")}
+				org := &github.Organization{Name: new("mycorp")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
 				m.EXPECT().getTeamBySlug(mock.Anything, "mycorp", "sre").Return(team, resp, nil)
@@ -2058,7 +2058,7 @@ func Test_handleTeams(t *testing.T) {
 			name: "team is not specified",
 			args: args{"mycorp", "", "", "", ""},
 			setupMock: func(m *mockclient) {
-				org := &github.Organization{Name: github.Ptr("mycorp")}
+				org := &github.Organization{Name: new("mycorp")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
 			},
@@ -2072,7 +2072,7 @@ func Test_handleTeams(t *testing.T) {
 					Message:  "Not Found",
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusNotFound}}
-				org := &github.Organization{Name: github.Ptr("mycorp")}
+				org := &github.Organization{Name: new("mycorp")}
 				m.EXPECT().getOrganization(mock.Anything, "mycorp").Return(org, resp, nil)
 				m.EXPECT().getTeamBySlug(mock.Anything, "mycorp", "sre").Return(nil, resp, err)
 			},
@@ -2159,12 +2159,12 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseBody:   "<html><body>Wiki content</body></html>",
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{
-					ID:       github.Ptr(int64(123)),
-					Name:     github.Ptr("link-validator"),
-					FullName: github.Ptr("your-ko/link-validator"),
-					Private:  github.Ptr(false),
+					ID:       new(int64(123)),
+					Name:     new("link-validator"),
+					FullName: new("your-ko/link-validator"),
+					Private:  new(false),
 					Owner: &github.User{
-						Login: github.Ptr("your-ko"),
+						Login: new("your-ko"),
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
@@ -2182,12 +2182,12 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseBody:   "Page not found",
 			setupMock: func(m *mockclient) {
 				repo := &github.Repository{
-					ID:       github.Ptr(int64(123)),
-					Name:     github.Ptr("link-validator"),
-					FullName: github.Ptr("your-ko/link-validator"),
-					Private:  github.Ptr(false),
+					ID:       new(int64(123)),
+					Name:     new("link-validator"),
+					FullName: new("your-ko/link-validator"),
+					Private:  new(false),
 					Owner: &github.User{
-						Login: github.Ptr("your-ko"),
+						Login: new("your-ko"),
 					},
 				}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
@@ -2243,7 +2243,7 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseStatus: http.StatusOK,
 			httpResponseBody:   "<html><body>Projects</body></html>",
 			setupMock: func(m *mockclient) {
-				user := &github.User{Login: github.Ptr("your-ko")}
+				user := &github.User{Login: new("your-ko")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getUser(mock.Anything, "your-ko").Return(user, resp, nil)
 			},
@@ -2279,7 +2279,7 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseStatus: http.StatusOK,
 			httpResponseBody:   "<html><body>Attestation</body></html>",
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
@@ -2294,7 +2294,7 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseStatus: http.StatusOK,
 			httpResponseBody:   "<html><body>Projects</body></html>",
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
@@ -2309,7 +2309,7 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseStatus: http.StatusOK,
 			httpResponseBody:   "<binary content>",
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
@@ -2324,7 +2324,7 @@ func Test_handleHttp(t *testing.T) {
 			httpResponseStatus: http.StatusNotFound,
 			httpResponseBody:   "Not found",
 			setupMock: func(m *mockclient) {
-				repo := &github.Repository{Name: github.Ptr("link-validator")}
+				repo := &github.Repository{Name: new("link-validator")}
 				resp := &github.Response{Response: &http.Response{StatusCode: http.StatusOK}}
 				m.EXPECT().getRepository(mock.Anything, "your-ko", "link-validator").Return(repo, resp, nil)
 			},
