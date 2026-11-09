@@ -1,5 +1,5 @@
 # renovate: datasource=github-releases depName=vektra/mockery versioning=semver
-MOCKERY_VERSION=v3.9.0
+MOCKERY_VERSION=v3.9.1
 
 download:
 	go mod download
